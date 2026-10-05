@@ -1,1 +1,127 @@
-const form=document.querySelector('#form'),result=document.querySelector('#result'),list=document.querySelector('#list'),key='postpilot-packs';function esc(x=''){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function refresh(){const a=JSON.parse(localStorage.getItem(key)||'[]');list.innerHTML=a.length?a.slice(-5).reverse().map(x=>`<div class="item"><div><strong>${esc(x.topic)}</strong><small>${new Date(x.time).toLocaleString('pt-BR')}</small></div><button class="secondary" data-pack="${x.time}">Abrir</button></div>`).join(''):`<div class="empty">Seus pacotes recentes aparecem aqui.</div>`}function make(x){let lines=x.transcript.split(/[.!?\n]+/).map(z=>z.trim()).filter(z=>z.length>24);if(!lines.length)lines=[x.transcript.trim()||`Uma ideia principal sobre ${x.topic}`];const clips=lines.slice(0,3).map((line,i)=>`Corte ${i+1}: ${line.slice(0,155)}${line.length>155?'…':''}`);result.innerHTML=`<h3>Rascunhos para ${esc(x.channel)}</h3><p><b>Gancho:</b> ${esc(x.topic)} — o que quase ninguém te conta.</p><ul>${clips.map((c,i)=>`<li><b>${c.slice(0,c.indexOf(':'))}:</b> ${esc(c.slice(c.indexOf(':')+1))}</li>`).join('')}<li><b>Legenda:</b> Salve este post e compartilhe sua experiência com ${esc(x.topic)}.</li></ul><button class="secondary" id="copy" style="margin-top:12px">Copiar pacote</button>`;result.classList.add('show');document.querySelector('#copy').onclick=()=>navigator.clipboard?.writeText(result.innerText)}form.addEventListener('submit',e=>{e.preventDefault();const v=Object.fromEntries(new FormData(form));let a=JSON.parse(localStorage.getItem(key)||'[]');const item={topic:v.f0,transcript:v.f1,channel:v.f2,tone:v.f3,time:Date.now()};a.push(item);localStorage.setItem(key,JSON.stringify(a.slice(-20)));make(item);refresh()});list.addEventListener('click',e=>{let id=Number(e.target.dataset.pack);if(!id)return;const x=JSON.parse(localStorage.getItem(key)||'[]').find(z=>z.time===id);if(x)make(x)});refresh();
+const form = document.querySelector('#form');
+const result = document.querySelector('#result');
+const list = document.querySelector('#list');
+const storageKey = 'postpilot-packs';
+
+function escapeHtml(value = '') {
+  return String(value).replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[char]);
+}
+
+function readPacks() {
+  try {
+    const value = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    return Array.isArray(value) ? value : [];
+  } catch {
+    return [];
+  }
+}
+
+function showToast(message) {
+  let toast = document.querySelector('#toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.className = 'toast';
+    document.body.append(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add('on');
+  window.setTimeout(() => toast.classList.remove('on'), 1800);
+}
+
+function splitIntoIdeas(transcript) {
+  const sentences = transcript
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map(sentence => sentence.trim())
+    .filter(sentence => sentence.length >= 20);
+
+  if (sentences.length) return sentences.slice(0, 3);
+  const clean = transcript.trim();
+  if (!clean) return [];
+  return [clean.slice(0, 220)];
+}
+
+function packageText(pack) {
+  const ideas = splitIntoIdeas(pack.transcript);
+  const clips = ideas.map((idea, index) => `IDEIA DE CORTE ${index + 1}\n${idea}`);
+  return [
+    `TEMA: ${pack.topic}`,
+    `CANAL: ${pack.channel}`,
+    `TOM: ${pack.tone}`,
+    `GANCHO: ${pack.topic} — uma ideia para você aplicar hoje.`,
+    ...clips,
+    `LEGENDA: Qual parte mais chamou sua atenção sobre ${pack.topic}? Conte nos comentários.`
+  ].join('\n\n');
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('Pacote copiado.');
+  } catch {
+    const field = document.createElement('textarea');
+    field.value = text;
+    field.style.position = 'fixed';
+    field.style.opacity = '0';
+    document.body.append(field);
+    field.select();
+    const copied = document.execCommand('copy');
+    field.remove();
+    showToast(copied ? 'Pacote copiado.' : 'Não foi possível copiar neste navegador.');
+  }
+}
+
+function renderList() {
+  const packs = readPacks().slice(-5).reverse();
+  list.innerHTML = packs.length
+    ? packs.map(pack => `
+      <div class="item"><div><strong>${escapeHtml(pack.topic)}</strong>
+        <small>${new Date(pack.time).toLocaleString('pt-BR')}</small></div>
+        <button class="secondary" type="button" data-pack="${escapeHtml(pack.id)}">Abrir</button>
+      </div>`).join('')
+    : '<div class="empty">Seus pacotes recentes aparecem aqui.</div>';
+}
+
+function renderPack(pack) {
+  const ideas = splitIntoIdeas(pack.transcript);
+  const hook = `${pack.topic} — uma ideia para você aplicar hoje.`;
+  const caption = `Qual parte mais chamou sua atenção sobre ${pack.topic}? Conte nos comentários.`;
+  result.innerHTML = `
+    <h3>Rascunhos para ${escapeHtml(pack.channel)}</h3>
+    <p><b>Gancho sugerido:</b> ${escapeHtml(hook)}</p>
+    <p><b>Tom:</b> ${escapeHtml(pack.tone)}</p>
+    <h4>Ideias de trechos para revisar</h4>
+    <ol>${ideas.map(idea => `<li>${escapeHtml(idea)}</li>`).join('')}</ol>
+    <p><b>Legenda sugerida:</b> ${escapeHtml(caption)}</p>
+    <button class="secondary" id="copy" type="button" style="margin-top:12px">Copiar pacote completo</button>`;
+  result.classList.add('show');
+  document.querySelector('#copy').addEventListener('click', () => copyText(packageText(pack)));
+}
+
+form.addEventListener('submit', event => {
+  event.preventDefault();
+  if (!form.reportValidity()) return;
+  const values = Object.fromEntries(new FormData(form));
+  const pack = {
+    id: crypto.randomUUID?.() || String(Date.now()),
+    topic: values.f0.trim(), transcript: values.f1.trim(), channel: values.f2, tone: values.f3,
+    time: Date.now()
+  };
+  const packs = readPacks();
+  packs.push(pack);
+  localStorage.setItem(storageKey, JSON.stringify(packs.slice(-20)));
+  renderPack(pack);
+  renderList();
+});
+
+list.addEventListener('click', event => {
+  const button = event.target.closest('[data-pack]');
+  if (!button) return;
+  const pack = readPacks().find(item => item.id === button.dataset.pack);
+  if (pack) renderPack(pack);
+});
+
+renderList();

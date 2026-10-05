@@ -44,6 +44,23 @@ function splitIntoIdeas(transcript) {
   return [clean.slice(0, 220)];
 }
 
+function callToAction(goal) {
+  const messages = {
+    conversa: 'Faça uma pergunta simples para convidar as pessoas a comentar.',
+    alcance: 'Convide alguém que precisa dessa ideia a compartilhar o conteúdo.',
+    oferta: 'Explique como seu serviço ajuda e convide a pessoa a falar com você.'
+  };
+  return messages[goal] || messages.conversa;
+}
+function topicHashtags(topic) {
+  const words = topic.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').match(/[a-z0-9]+/g) || [];
+  return [...new Set(words.filter(word => word.length > 3).slice(0, 3).concat(['criadores', 'conteudo']))].map(word => '#' + word).join(' ');
+}
+const goalField = document.createElement('label');
+goalField.className = 'field';
+goalField.innerHTML = '<span>Objetivo do conteúdo</span><select name="goal"><option value="conversa">Gerar conversa</option><option value="alcance">Alcançar novas pessoas</option><option value="oferta">Apresentar um serviço</option></select>';
+form.querySelector('button').before(goalField);
+
 function packageText(pack) {
   const ideas = splitIntoIdeas(pack.transcript);
   const clips = ideas.map((idea, index) => `IDEIA DE CORTE ${index + 1}\n${idea}`);
@@ -53,7 +70,8 @@ function packageText(pack) {
     `TOM: ${pack.tone}`,
     `GANCHO: ${pack.topic} — uma ideia para você aplicar hoje.`,
     ...clips,
-    `LEGENDA: Qual parte mais chamou sua atenção sobre ${pack.topic}? Conte nos comentários.`
+    `LEGENDA: ${ideas[0] || pack.topic}\n\n${callToAction(pack.goal)}`,
+    `HASHTAGS: ${topicHashtags(pack.topic)}`
   ].join('\n\n');
 }
 
@@ -89,14 +107,16 @@ function renderList() {
 function renderPack(pack) {
   const ideas = splitIntoIdeas(pack.transcript);
   const hook = `${pack.topic} — uma ideia para você aplicar hoje.`;
-  const caption = `Qual parte mais chamou sua atenção sobre ${pack.topic}? Conte nos comentários.`;
+  const caption = callToAction(pack.goal);
   result.innerHTML = `
     <h3>Rascunhos para ${escapeHtml(pack.channel)}</h3>
     <p><b>Gancho sugerido:</b> ${escapeHtml(hook)}</p>
     <p><b>Tom:</b> ${escapeHtml(pack.tone)}</p>
     <h4>Ideias de trechos para revisar</h4>
     <ol>${ideas.map(idea => `<li>${escapeHtml(idea)}</li>`).join('')}</ol>
-    <p><b>Legenda sugerida:</b> ${escapeHtml(caption)}</p>
+    <p><b>Legenda sugerida:</b> ${escapeHtml(ideas[0] || pack.topic)} ${escapeHtml(caption)}</p>
+    <p><b>Hashtags sugeridas:</b> ${escapeHtml(topicHashtags(pack.topic))}</p>
+    <p><small>Rascunho local para revisar; este protótipo não usa IA.</small></p>
     <button class="secondary" id="copy" type="button" style="margin-top:12px">Copiar pacote completo</button>`;
   result.classList.add('show');
   document.querySelector('#copy').addEventListener('click', () => copyText(packageText(pack)));
@@ -108,7 +128,7 @@ form.addEventListener('submit', event => {
   const values = Object.fromEntries(new FormData(form));
   const pack = {
     id: crypto.randomUUID?.() || String(Date.now()),
-    topic: values.f0.trim(), transcript: values.f1.trim(), channel: values.f2, tone: values.f3,
+    topic: values.f0.trim(), transcript: values.f1.trim(), channel: values.f2, tone: values.f3, goal: values.goal,
     time: Date.now()
   };
   const packs = readPacks();

@@ -81,6 +81,7 @@ function renderList() {
       <div class="item"><div><strong>${escapeHtml(pack.topic)}</strong>
         <small>${new Date(pack.time).toLocaleString('pt-BR')}</small></div>
         <button class="secondary" type="button" data-pack="${escapeHtml(pack.id)}">Abrir</button>
+        <button class="secondary" type="button" data-delete="${escapeHtml(pack.id)}" aria-label="Excluir pacote">Excluir</button>
       </div>`).join('')
     : '<div class="empty">Seus pacotes recentes aparecem aqui.</div>';
 }
@@ -118,6 +119,15 @@ form.addEventListener('submit', event => {
 });
 
 list.addEventListener('click', event => {
+  const removeButton = event.target.closest('[data-delete]');
+  if (removeButton) {
+    if (!window.confirm('Excluir este pacote do histórico salvo neste navegador?')) return;
+    const id = removeButton.dataset.delete;
+    localStorage.setItem(storageKey, JSON.stringify(readPacks().filter(item => item.id !== id)));
+    renderList();
+    showToast('Pacote removido do histórico.');
+    return;
+  }
   const button = event.target.closest('[data-pack]');
   if (!button) return;
   const pack = readPacks().find(item => item.id === button.dataset.pack);

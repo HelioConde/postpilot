@@ -53,7 +53,7 @@ function callToAction(goal) {
   return messages[goal] || messages.conversa;
 }
 function topicHashtags(topic) {
-  const words = topic.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').match(/[a-z0-9]+/g) || [];
+  const words = topic.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/\p{M}/gu, '').match(/[a-z0-9]+/g) || [];
   return [...new Set(words.filter(word => word.length > 3).slice(0, 3).concat(['criadores', 'conteudo']))].map(word => '#' + word).join(' ');
 }
 const goalField = document.createElement('label');

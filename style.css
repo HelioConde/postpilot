@@ -399,3 +399,20 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     grid-template-columns:repeat(2,minmax(0,1fr));
   }
 }
+
+/* Mobile history filters — full-width touch targets */
+@media(max-width:500px){
+  .history-toolbar{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .history-search input,
+  .status-filter,
+  .status-filter select{
+    width:100%;
+  }
+  .history-search input,
+  .status-filter select{
+    min-height:40px;
+  }
+}

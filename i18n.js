@@ -122,7 +122,28 @@
     "Descrição":"Description",
     "Gancho para Reels":"Reels hook",
     "Legenda":"Caption",
-    "Carrossel / apoio":"Carousel / support"
+    "Carrossel / apoio":"Carousel / support",
+    "EDIÇÃO":"EDITING",
+    "Editando pacote":"Editing pack",
+    "Cancelar edição":"Cancel editing",
+    "PLANEJAMENTO":"PLANNING",
+    "Calendário editorial":"Editorial calendar",
+    "Veja o que está planejado para cada dia e abra o pacote sem procurar no histórico.":"See what is planned for each day and open the pack without searching the history.",
+    "Navegação do calendário":"Calendar navigation",
+    "Semana anterior":"Previous week",
+    "Esta semana":"This week",
+    "Próxima semana":"Next week",
+    "Livre":"Free",
+    "Editar":"Edit",
+    "Usar como modelo":"Use as template",
+    "Excluir pacote":"Delete pack",
+    "Salvar alterações":"Save changes",
+    "Usando pacote como modelo":"Using pack as template",
+    "Modelo carregado. Ajuste e gere um novo pacote.":"Template loaded. Adjust it and create a new pack.",
+    "Pacote aberto para edição.":"Pack opened for editing.",
+    "Edição cancelada.":"Editing cancelled.",
+    "Alterações salvas na sua conta.":"Changes saved to your account.",
+    "Alterações salvas neste dispositivo.":"Changes saved on this device."
   };
 
   const reverse = Object.fromEntries(Object.entries(translations).map(([pt,en]) => [en,pt]));

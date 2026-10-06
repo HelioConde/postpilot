@@ -33,6 +33,7 @@ jobs:
           test -f FULLSTACK.md
           test -f supabase/migrations/20261006061000_multiplatform_workflow.sql
           test -f supabase/migrations/20261006093000_editorial_planning.sql
+          test -f supabase/migrations/20261006100000_publish_checklist.sql
           test -f i18n.js
           test -f ads-config.js
           test -f ads.js
@@ -69,3 +70,6 @@ jobs:
           grep -qi 'data-edit-pack' app.js
           grep -qi 'data-template-pack' app.js
           grep -qi 'fillComposerFromPack' app.js
+          grep -qi 'publish_checklist' app.js
+          grep -qi 'publish-checklist' style.css
+          grep -qi 'data-check-platform' app.js

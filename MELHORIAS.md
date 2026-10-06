@@ -37,7 +37,7 @@ O objetivo é validar o menor estúdio de conteúdo realmente útil para criador
 - [ ] Edge Function para geração por IA com chave privada no backend.
 - [ ] Upload de vídeo/áudio e transcrição automática.
 - [ ] Sugestões de cortes com timestamps.
-- [ ] Exportações adicionais (Markdown/CSV/JSON).
+- [x] Exportações adicionais (Markdown/CSV/JSON).
 - [ ] Integração opcional com calendário externo.
 - [ ] Publicação assistida por plataforma quando APIs e políticas permitirem.
 

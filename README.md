@@ -180,3 +180,10 @@ As Edge Functions preferem o modelo atual de chaves do Supabase:
 - `SUPABASE_SECRET_KEYS["default"]` para operações internas privilegiadas, como quota e feedback.
 
 `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` permanecem apenas como fallback de compatibilidade temporário enquanto o projeto migra completamente para o novo modelo de API keys. Nenhuma secret key é exposta no frontend.
+
+
+## Dependências reproduzíveis
+
+O repositório versiona `package-lock.json`. A workflow **Dependency Lock** atualiza o lockfile automaticamente quando `package.json` muda, e os jobs de navegador usam `npm ci` para instalar exatamente a árvore versionada.
+
+O Static QA também executa `npm ci --ignore-scripts`, então mudanças incompatíveis entre `package.json` e `package-lock.json` bloqueiam o CI antes dos testes de navegador.

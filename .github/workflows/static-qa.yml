@@ -132,3 +132,6 @@ jobs:
           grep -qi 'Transcrever agora' app.js
           grep -qi 'persistTranscriptionResult' app.js
           grep -qi 'pendingUploadedMedia' app.js
+          grep -qi 'postpilot_usage_status' supabase/functions/postpilot-generate/index.ts
+          grep -qi 'postpilot_usage_status' supabase/functions/postpilot-transcribe/index.ts
+          grep -qi 'disponíveis nesta hora' app.js

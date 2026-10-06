@@ -17,6 +17,7 @@ const projectStatusFilter = document.querySelector('#project-status-filter');
 const projectSearch = document.querySelector('#project-search');
 const productionSummary = document.querySelector('#production-summary');
 const productionInsights = document.querySelector('#production-insights');
+const productionMetrics = document.querySelector('#production-metrics');
 const focusDashboard = document.querySelector('#focus-dashboard');
 const projectPlatformFilter = document.querySelector('#project-platform-filter');
 const projectGoalFilter = document.querySelector('#project-goal-filter');
@@ -1869,8 +1870,7 @@ function renderList() {
   const hasProjects = source.length > 0;
   [
     focusDashboard,
-    productionSummary,
-    productionInsights,
+    productionMetrics,
     projectSearch?.closest('.history-toolbar'),
     document.querySelector('.advanced-filters')
   ].forEach(element => {
@@ -1878,6 +1878,10 @@ function renderList() {
   });
 
   if (hasProjects) {
+    if (productionMetrics && !productionMetrics.dataset.initialized) {
+      productionMetrics.open = !window.matchMedia?.('(max-width: 620px)').matches;
+      productionMetrics.dataset.initialized = 'true';
+    }
     renderFocusDashboard(source);
     renderProductionSummary(source);
     renderProductionInsights(source);

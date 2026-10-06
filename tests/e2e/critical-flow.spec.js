@@ -146,6 +146,12 @@ test('ações secundárias do projeto ficam recolhidas somente no mobile', async
   await expect(item.locator('[data-template-pack]')).toBeVisible();
   await expect(item.locator('[data-delete]')).toBeVisible();
 
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await page.reload();
+  const tabletItem = page.locator('#list .item').filter({ hasText: 'Marketing para pequenos negócios Ações' }).first();
+  await expect(tabletItem.locator('.project-more-actions summary')).toBeVisible();
+  await expect(tabletItem.locator('[data-edit-pack]')).toBeHidden();
+
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.reload();
   const desktopItem = page.locator('#list .item').filter({ hasText: 'Marketing para pequenos negócios Ações' }).first();

@@ -63,7 +63,7 @@ Não adicionar processamento de vídeo pesado, cobrança ou automação de publi
 - [x] Visual Snapshot automático desktop/mobile salvo no GitHub.
 - [x] QA visual inicial aplicado: correção do progresso 0%, card do hero e newline literal.
 - [ ] Aumentar limite real de mídia acima de 6 MB após confirmar limite global do Storage + limite do fornecedor de transcrição.
-- [ ] Política automática de retenção/limpeza de mídia antiga.
+- [x] Limpeza automática de mídia órfã: ao sincronizar a conta, arquivos privados sem projeto correspondente são removidos após retenção conservadora de 30 dias.
 - [ ] Homologação humana de Auth em navegadores reais.
 - [ ] Ativar Publisher ID/slot real do AdSense.
 - [ ] Integrações diretas de postagem via APIs oficiais, somente após aprovação/escopos necessários.

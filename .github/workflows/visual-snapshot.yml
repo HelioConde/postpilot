@@ -82,4 +82,14 @@ jobs:
             exit 0
           fi
           git commit -m "chore: refresh visual snapshots [skip ci]"
-          git push
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "Push raced with another automation; retrying..."
+            sleep 2
+          done
+          echo "Could not publish visual snapshots after 3 attempts."
+          exit 1

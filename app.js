@@ -14,10 +14,21 @@ const syncStatus = document.querySelector('#sync-status');
 const localImportBanner = document.querySelector('#local-import-banner');
 const localImportButton = document.querySelector('#local-import');
 const projectStatusFilter = document.querySelector('#project-status-filter');
+const projectSearch = document.querySelector('#project-search');
+const productionSummary = document.querySelector('#production-summary');
 
 let currentUser = null;
 let cloudPacks = [];
 let cloudLoading = false;
+let openedPackId = null;
+
+function currentLocale() {
+  return window.AppI18n?.locale?.() || 'pt-BR';
+}
+
+function uiText(value) {
+  return window.AppI18n?.t?.(value) || value;
+}
 
 function escapeHtml(value = '') {
   return String(value).replace(/[&<>"']/g, char => ({
@@ -67,7 +78,12 @@ function splitIntoIdeas(transcript) {
 }
 
 function callToAction(goal) {
-  const messages = {
+  const english = currentLocale() === 'en';
+  const messages = english ? {
+    conversa: 'Ask a simple question to invite people to comment.',
+    alcance: 'Invite someone who needs this idea to share the content.',
+    oferta: 'Explain how your service helps and invite the viewer to contact you.'
+  } : {
     conversa: 'Faça uma pergunta simples para convidar as pessoas a comentar.',
     alcance: 'Convide alguém que precisa dessa ideia a compartilhar o conteúdo.',
     oferta: 'Explique como seu serviço ajuda e convide a pessoa a falar com você.'
@@ -96,7 +112,13 @@ function packPlatforms(pack) {
 function platformDeliverable(pack, platform) {
   const ideas = splitIntoIdeas(pack.transcript);
   const lead = ideas[0] || pack.topic;
-  const hook = `${pack.topic} — uma ideia para você aplicar hoje.`;
+  const english = currentLocale() === 'en';
+  const audiencePrefix = pack.audience
+    ? (english ? `For ${pack.audience}: ` : `Para ${pack.audience}: `)
+    : '';
+  const hook = english
+    ? `${audiencePrefix}${pack.topic} — one idea you can apply today.`
+    : `${audiencePrefix}${pack.topic} — uma ideia para você aplicar hoje.`;
   const cta = callToAction(pack.goal);
   const hashtags = topicHashtags(pack.topic);
 
@@ -104,10 +126,10 @@ function platformDeliverable(pack, platform) {
     return {
       title: 'TikTok',
       lines: [
-        ['Gancho de 2 segundos', hook],
-        ['Texto na tela', lead.slice(0, 110)],
-        ['Legenda curta', `${lead} ${cta}`],
-        ['Hashtags', hashtags]
+        [uiText('Gancho de 2 segundos'), hook],
+        [uiText('Texto na tela'), lead.slice(0, 110)],
+        [uiText('Legenda curta'), `${lead} ${cta}`],
+        [uiText('Hashtags'), hashtags]
       ]
     };
   }
@@ -116,10 +138,10 @@ function platformDeliverable(pack, platform) {
     return {
       title: 'YouTube Shorts',
       lines: [
-        ['Título', pack.topic.slice(0, 90)],
-        ['Abertura', hook],
-        ['Descrição', `${lead}\n\n${cta}`],
-        ['Hashtags', hashtags]
+        [uiText('Título'), pack.topic.slice(0, 90)],
+        [uiText('Abertura'), hook],
+        [uiText('Descrição'), `${lead}\n\n${cta}`],
+        [uiText('Hashtags'), hashtags]
       ]
     };
   }
@@ -127,29 +149,34 @@ function platformDeliverable(pack, platform) {
   return {
     title: 'Instagram',
     lines: [
-      ['Gancho para Reels', hook],
-      ['Legenda', `${lead}\n\n${cta}`],
-      ['Carrossel / apoio', ideas.slice(0, 3).map((idea, index) => `${index + 1}. ${idea}`).join('\n')],
-      ['Hashtags', hashtags]
+      [uiText('Gancho para Reels'), hook],
+      [uiText('Legenda'), `${lead}\n\n${cta}`],
+      [uiText('Carrossel / apoio'), ideas.slice(0, 3).map((idea, index) => `${index + 1}. ${idea}`).join('\n')],
+      [uiText('Hashtags'), hashtags]
     ]
   };
 }
 
 function platformText(pack, platform) {
   const deliverable = platformDeliverable(pack, platform);
+  const english = currentLocale() === 'en';
   return [
-    `PLATAFORMA: ${deliverable.title}`,
-    `TEMA: ${pack.topic}`,
-    `TOM: ${pack.tone}`,
+    `${english ? 'PLATFORM' : 'PLATAFORMA'}: ${deliverable.title}`,
+    `${english ? 'TOPIC' : 'TEMA'}: ${pack.topic}`,
+    `${english ? 'TONE' : 'TOM'}: ${pack.tone}`,
+    ...(pack.audience ? [`${english ? 'AUDIENCE' : 'PÚBLICO'}: ${pack.audience}`] : []),
     ...deliverable.lines.map(([label, value]) => `${label.toUpperCase()}: ${value}`)
   ].join('\n\n');
 }
 
 function packageText(pack) {
+  const english = currentLocale() === 'en';
   return [
-    `TEMA: ${pack.topic}`,
-    `OBJETIVO: ${pack.goal}`,
-    `TOM: ${pack.tone}`,
+    `${english ? 'TOPIC' : 'TEMA'}: ${pack.topic}`,
+    `${english ? 'GOAL' : 'OBJETIVO'}: ${pack.goal}`,
+    `${english ? 'TONE' : 'TOM'}: ${pack.tone}`,
+    ...(pack.audience ? [`${english ? 'AUDIENCE' : 'PÚBLICO'}: ${pack.audience}`] : []),
+    ...(pack.publishAt ? [`${english ? 'PLANNED DATE' : 'DATA PLANEJADA'}: ${pack.publishAt}`] : []),
     ...packPlatforms(pack).map(platform => platformText(pack, platform))
   ].join('\n\n---\n\n');
 }
@@ -194,6 +221,8 @@ function mapCloudPack(row) {
     channel: platforms[0],
     tone: row.tone || 'Natural e direto',
     goal: row.goal || 'conversa',
+    audience: row.audience || '',
+    publishAt: row.publish_at || '',
     status: row.status || 'draft',
     time: Date.parse(row.updated_at || row.created_at)
   };
@@ -211,6 +240,8 @@ async function saveCloudPack(pack) {
     platforms: packPlatforms(pack),
     tone: pack.tone,
     goal: pack.goal,
+    audience: String(pack.audience || '').slice(0, 120),
+    publish_at: pack.publishAt || null,
     status: pack.status || 'draft',
     created_at: new Date(pack.time || Date.now()).toISOString(),
     updated_at: now
@@ -230,7 +261,7 @@ async function saveCloudPack(pack) {
     kind: 'platform-package',
     title: 'Pacote para ' + platform,
     body: platformText(pack, platform),
-    metadata: { platform, tone: pack.tone, goal: pack.goal }
+    metadata: { platform, tone: pack.tone, goal: pack.goal, audience: pack.audience || '', publishAt: pack.publishAt || '' }
   }));
   const { error: outputError } = await supabaseClient.from('postpilot_outputs').insert(outputRows);
   if (outputError) console.warn('PostPilot outputs não foram salvos:', outputError.message);
@@ -263,14 +294,42 @@ async function loadCloudPacks() {
 }
 
 function statusLabel(status) {
-  return ({ draft: 'Rascunho', ready: 'Pronto', published: 'Publicado' })[status] || 'Rascunho';
+  const label = ({ draft: 'Rascunho', ready: 'Pronto', published: 'Publicado' })[status] || 'Rascunho';
+  return uiText(label);
+}
+
+function formatPlannedDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ''))) return '';
+  return new Date(value + 'T12:00:00').toLocaleDateString(currentLocale());
+}
+
+function renderProductionSummary(source) {
+  if (!productionSummary) return;
+  const total = source.length;
+  const ready = source.filter(pack => (pack.status || 'draft') === 'ready').length;
+  const published = source.filter(pack => (pack.status || 'draft') === 'published').length;
+  const today = new Date().toISOString().slice(0, 10);
+  const scheduled = source.filter(pack => pack.publishAt && pack.publishAt >= today && (pack.status || 'draft') !== 'published').length;
+  const rate = total ? Math.round((published / total) * 100) : 0;
+  productionSummary.innerHTML =
+    '<article><span>' + uiText('Total') + '</span><strong>' + total + '</strong></article>' +
+    '<article><span>' + uiText('Prontos') + '</span><strong>' + ready + '</strong></article>' +
+    '<article><span>' + uiText('Agendados') + '</span><strong>' + scheduled + '</strong></article>' +
+    '<article><span>' + uiText('Taxa publicada') + '</span><strong>' + rate + '%</strong></article>';
 }
 
 function renderList() {
   const filter = projectStatusFilter?.value || 'all';
+  const searchTerm = String(projectSearch?.value || '').trim().toLocaleLowerCase(currentLocale());
   const source = currentUser ? visiblePacks() : visiblePacks().slice().reverse();
+  renderProductionSummary(source);
   const normalized = source
     .filter(pack => filter === 'all' || (pack.status || 'draft') === filter)
+    .filter(pack => {
+      if (!searchTerm) return true;
+      return [pack.topic, pack.audience, ...packPlatforms(pack)]
+        .some(value => String(value || '').toLocaleLowerCase(currentLocale()).includes(searchTerm));
+    })
     .slice(0, 10);
 
   list.innerHTML = normalized.length
@@ -281,7 +340,9 @@ function renderList() {
       <div class="item">
         <div class="item-summary">
           <div class="item-title-line"><strong>${escapeHtml(pack.topic)}</strong><span class="project-status status-${escapeHtml(status)}">${statusLabel(status)}</span></div>
-          <small>${platforms.map(escapeHtml).join(' · ')} · ${new Date(pack.time).toLocaleString('pt-BR')}</small>
+          <small>${platforms.map(escapeHtml).join(' · ')} · ${new Date(pack.time).toLocaleString(currentLocale())}</small>
+          ${pack.audience ? '<small class="planning-meta">' + escapeHtml(uiText('Público')) + ': ' + escapeHtml(pack.audience) + '</small>' : ''}
+          ${pack.publishAt ? '<small class="planning-meta">' + escapeHtml(uiText('Planejado para')) + ' ' + escapeHtml(formatPlannedDate(pack.publishAt)) + '</small>' : ''}
         </div>
         <div class="item-actions">
           <select class="project-status-select" data-status-id="${escapeHtml(pack.id)}" aria-label="Status do projeto">
@@ -294,10 +355,11 @@ function renderList() {
         </div>
       </div>`;
     }).join('')
-    : '<div class="empty">Nenhum pacote encontrado neste filtro.</div>';
+    : '<div class="empty">' + uiText('Nenhum pacote encontrado neste filtro.') + '</div>';
 }
 
 function renderPack(pack) {
+  openedPackId = pack.id;
   const cards = packPlatforms(pack).map(platform => {
     const deliverable = platformDeliverable(pack, platform);
     return `
@@ -309,7 +371,7 @@ function renderPack(pack) {
 
   result.innerHTML = `
     <div class="result-heading">
-      <div><h3>${escapeHtml(pack.topic)}</h3><p>${packPlatforms(pack).length} plataforma${packPlatforms(pack).length > 1 ? 's' : ''} · ${escapeHtml(pack.tone)}</p></div>
+      <div><h3>${escapeHtml(pack.topic)}</h3><p>${packPlatforms(pack).length} ${packPlatforms(pack).length > 1 ? uiText('plataformas') : uiText('plataforma')} · ${escapeHtml(pack.tone)}${pack.audience ? ' · ' + escapeHtml(uiText('Público')) + ': ' + escapeHtml(pack.audience) : ''}${pack.publishAt ? ' · ' + escapeHtml(uiText('Planejado para')) + ' ' + escapeHtml(formatPlannedDate(pack.publishAt)) : ''}</p></div>
       <span class="project-status status-${escapeHtml(pack.status || 'draft')}">${statusLabel(pack.status || 'draft')}</span>
     </div>
     <div class="platform-grid">${cards}</div>
@@ -509,6 +571,8 @@ form.addEventListener('submit', async event => {
     channel: platforms[0],
     tone: values.f3,
     goal: values.goal,
+    audience: String(values.audience || '').trim(),
+    publishAt: String(values.publishAt || ''),
     status: 'draft',
     time: Date.now()
   };
@@ -540,6 +604,12 @@ form.addEventListener('submit', async event => {
 });
 
 projectStatusFilter?.addEventListener('change', renderList);
+projectSearch?.addEventListener('input', renderList);
+window.addEventListener('app-language-change', () => {
+  renderList();
+  const pack = visiblePacks().find(item => item.id === openedPackId);
+  if (pack) renderPack(pack);
+});
 
 list.addEventListener('change', async event => {
   const select = event.target.closest('[data-status-id]');

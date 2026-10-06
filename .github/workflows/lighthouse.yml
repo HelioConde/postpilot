@@ -1,0 +1,61 @@
+name: Lighthouse QA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'style.css'
+      - 'app.js'
+      - 'i18n.js'
+      - 'ads.js'
+      - 'ads-config.js'
+      - 'pwa.js'
+      - 'sw.js'
+      - 'manifest.webmanifest'
+      - 'lighthouserc.js'
+      - '.github/workflows/lighthouse.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'style.css'
+      - 'app.js'
+      - 'i18n.js'
+      - 'ads.js'
+      - 'ads-config.js'
+      - 'pwa.js'
+      - 'sw.js'
+      - 'manifest.webmanifest'
+      - 'lighthouserc.js'
+      - '.github/workflows/lighthouse.yml'
+
+concurrency:
+  group: postpilot-lighthouse-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run Lighthouse CI
+        run: npx --yes @lhci/cli@0.15.1 autorun --config=./lighthouserc.js
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postpilot-lighthouse
+          path: .lighthouseci
+          retention-days: 30

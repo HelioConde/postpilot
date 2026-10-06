@@ -34,7 +34,7 @@ O objetivo é validar o menor estúdio de conteúdo realmente útil para criador
 
 ## P2 — após validação com usuários
 
-- [ ] Edge Function para geração por IA com chave privada no backend.
+- [ ] Edge Function para geração por IA com chave privada no backend. Código, integração e fallback prontos; falta aplicar migration, implantar a função e configurar os segredos do fornecedor no Supabase.
 - [ ] Upload de vídeo/áudio e transcrição automática.
 - [ ] Sugestões de cortes com timestamps.
 - [x] Exportações adicionais (Markdown/CSV/JSON).

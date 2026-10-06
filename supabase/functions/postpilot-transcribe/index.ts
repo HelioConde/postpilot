@@ -36,6 +36,38 @@ function json(status: number, body: Record<string, unknown>, origin: string | nu
   });
 }
 
+function getSecretKey() {
+  const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");
+  if (secretKeys) {
+    try {
+      const parsed: unknown = JSON.parse(secretKeys);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const key = (parsed as Record<string, unknown>).default;
+        if (typeof key === "string" && key) return key;
+      }
+    } catch {}
+  }
+  return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+}
+
+async function consumeQuota(url: string, userId: string) {
+  const key = getSecretKey();
+  if (!key) return null;
+  const service = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data, error } = await service.rpc("postpilot_consume_usage", {
+    p_user_id: userId,
+    p_feature: "transcription",
+    p_limit: 10,
+  });
+  if (error || !Array.isArray(data) || !data.length) return null;
+  const row = data[0] as Record<string, unknown>;
+  return {
+    allowed: Boolean(row.allowed),
+    remaining: Math.max(0, Number(row.remaining) || 0),
+    resetAt: typeof row.reset_at === "string" ? row.reset_at : "",
+  };
+}
+
 function cleanText(value: unknown, max: number) {
   return typeof value === "string"
     ? value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max)
@@ -94,6 +126,19 @@ Deno.serve(async (request: Request) => {
     return json(400, { error: "Arquivo inválido." }, origin);
   }
 
+  const apiUrl = Deno.env.get("POSTPILOT_TRANSCRIBE_API_URL");
+  const apiKey = Deno.env.get("POSTPILOT_TRANSCRIBE_API_KEY");
+  const model = Deno.env.get("POSTPILOT_TRANSCRIBE_MODEL");
+  if (input.action === "health") {
+    return json(200, {
+      ok: true,
+      configured: Boolean(apiUrl && apiKey && model),
+      feature: "transcription",
+      hourlyLimit: 10,
+      maxBytes: MAX_BYTES,
+    }, origin);
+  }
+
   const path = cleanText(input.path, 400);
   if (!path || !path.startsWith(user.id + "/") || path.includes("..")) {
     return json(403, { error: "Arquivo não permitido." }, origin);
@@ -106,11 +151,17 @@ Deno.serve(async (request: Request) => {
   const mime = file.type || "application/octet-stream";
   if (!allowedMime.has(mime)) return json(415, { error: "Formato de mídia não suportado." }, origin);
 
-  const apiUrl = Deno.env.get("POSTPILOT_TRANSCRIBE_API_URL");
-  const apiKey = Deno.env.get("POSTPILOT_TRANSCRIBE_API_KEY");
-  const model = Deno.env.get("POSTPILOT_TRANSCRIBE_MODEL");
   if (!apiUrl || !apiKey || !model) {
     return json(503, { error: "Transcrição automática ainda não configurada." }, origin);
+  }
+
+  const quota = await consumeQuota(url, user.id);
+  if (!quota) return json(503, { error: "Controle de uso indisponível." }, origin);
+  if (!quota.allowed) {
+    return json(429, {
+      error: "Limite horário de transcrição atingido.",
+      rateLimit: { remaining: 0, resetAt: quota.resetAt },
+    }, origin);
   }
 
   const form = new FormData();
@@ -127,6 +178,7 @@ Deno.serve(async (request: Request) => {
       method: "POST",
       headers: { Authorization: "Bearer " + apiKey },
       body: form,
+      signal: AbortSignal.timeout(120000),
     });
   } catch {
     return json(503, { error: "Serviço de transcrição indisponível." }, origin);
@@ -145,5 +197,10 @@ Deno.serve(async (request: Request) => {
   const segments = cleanSegments(payload.segments);
   if (!transcript) return json(502, { error: "A transcrição retornou vazia." }, origin);
 
-  return json(200, { ok: true, transcript, segments }, origin);
+  return json(200, {
+    ok: true,
+    transcript,
+    segments,
+    rateLimit: { remaining: quota.remaining, resetAt: quota.resetAt },
+  }, origin);
 });

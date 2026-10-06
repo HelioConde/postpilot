@@ -165,6 +165,10 @@
     "Abrir":"Open",
     "Excluir":"Delete",
     "Nenhum pacote encontrado neste filtro.":"No content pack found for this filter.",
+    "Seu primeiro pacote começa no briefing.":"Your first content pack starts with the briefing.",
+    "Preencha o tema e a transcrição à esquerda. O PostPilot organiza o restante para revisão e planejamento.":"Fill in the topic and transcript on the left. PostPilot organizes the rest for review and planning.",
+    "Começar briefing":"Start briefing",
+
     "POSTPILOT GRATUITO":"FREE POSTPILOT",
     "Produza mais sem assinatura.":"Create more without a subscription.",
     "O PostPilot será mantido por anúncios discretos, sempre fora do formulário e dos pacotes de conteúdo.":"PostPilot will be supported by discreet ads, always outside the form and content packs.",

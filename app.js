@@ -1866,9 +1866,22 @@ function renderList() {
   const filter = projectStatusFilter?.value || 'all';
   const searchTerm = String(projectSearch?.value || '').trim().toLocaleLowerCase(currentLocale());
   const source = currentUser ? visiblePacks() : visiblePacks().slice().reverse();
-  renderFocusDashboard(source);
-  renderProductionSummary(source);
-  renderProductionInsights(source);
+  const hasProjects = source.length > 0;
+  [
+    focusDashboard,
+    productionSummary,
+    productionInsights,
+    projectSearch?.closest('.history-toolbar'),
+    document.querySelector('.advanced-filters')
+  ].forEach(element => {
+    if (element) element.hidden = !hasProjects;
+  });
+
+  if (hasProjects) {
+    renderFocusDashboard(source);
+    renderProductionSummary(source);
+    renderProductionInsights(source);
+  }
   renderEditorialCalendar(source);
   const normalized = source
     .filter(pack => filter === 'all' || (pack.status || 'draft') === filter)

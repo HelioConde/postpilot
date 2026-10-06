@@ -23,9 +23,9 @@ O objetivo é validar o menor estúdio de conteúdo realmente útil para criador
 ## P1 — diferenciação
 
 - [ ] Templates de conteúdo por objetivo/nicho.
-- [ ] Calendário editorial visual semanal.
-- [ ] Reaproveitar um pacote como modelo.
-- [ ] Editar pacote gerado sem recriar o projeto.
+- [x] Calendário editorial visual semanal com navegação e abertura direta dos pacotes agendados.
+- [x] Reaproveitar um pacote como modelo sem alterar o original e sem herdar a data de publicação.
+- [x] Editar pacote existente no mesmo formulário, preservando ID e status no modo local e na nuvem.
 - [ ] Checklist de publicação por plataforma.
 - [ ] Backup/restauração no modo local.
 - [ ] Feedback beta dentro do produto.

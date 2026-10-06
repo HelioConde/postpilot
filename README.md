@@ -15,16 +15,35 @@ Estúdio de conteúdo para criadores. A partir de tema e transcrição, organiza
 - exportação do pacote completo em `.txt`, `.md`, `.json` e `.csv`;
 - fluxo de produção por status: rascunho, pronto e publicado;
 - GitHub Pages + CI;
-- SEO básico com canonical e Open Graph.
+- SEO com canonical, Open Graph, sitemap e páginas institucionais bilíngues;
+- dashboard de foco, analytics locais e filtros avançados;
+- calendário semanal/mensal com filtro por plataforma, drag-and-drop e exportação .ics;
+- histórico de até 10 versões por projeto com restauração;
+- upload privado de mídia com TUS, progresso, retomada e cancelamento;
+- player privado com tamanho/duração da mídia;
+- editor de transcrição com timestamps;
+- editor de cortes com favorito, descarte e ajuste de início/fim;
+- regeneração parcial de campos do pacote;
+- publicação assistida por plataforma;
+- snapshots visuais automáticos desktop/mobile salvos em `screenshots/`.
 
-O gerador atual usa regras locais. Processamento de vídeo, transcrição automática e geração por IA externa ainda não estão ligados; quando forem adicionados, chaves privadas devem ficar em backend/Edge Function.
+O gerador local continua sendo o fallback padrão. As Edge Functions de IA e transcrição já estão implantadas no Supabase; a ativação real desses provedores depende apenas das credenciais privadas correspondentes.
 
 ## Backend
 
 Tabelas:
 - `postpilot_projects`
 - `postpilot_outputs`
+- `postpilot_project_versions`
 - `product_subscriptions`
+
+Storage:
+- `postpilot-media` (privado, RLS por usuário)
+
+Edge Functions:
+- `postpilot-beta-feedback`
+- `postpilot-generate`
+- `postpilot-transcribe`
 
 Veja `FULLSTACK.md` para arquitetura e próximos passos.
 
@@ -47,14 +66,14 @@ O PostPilot permanece gratuito e está preparado para anúncios responsivos fora
 
 ## QA no navegador
 
-O PostPilot possui Browser E2E em Chromium cobrindo o fluxo local crítico: briefing com público/data, geração multiplataforma, painel de produção, busca, mudança de status, exportação .txt, troca PT/EN e smoke responsivo em 360 px, 768 px e 1440 px.
+O PostPilot possui Browser E2E em Chromium cobrindo o fluxo local crítico e as evoluções de produto: briefing, geração, busca/filtros, dashboard, analytics, status, exportações, calendário, versionamento, regeneração parcial, editor de transcrição/cortes, publicação assistida, PT/EN e smoke responsivo.
 
-O primeiro run dessa suíte passou integralmente no GitHub Actions.
+A workflow Visual Snapshot também captura a página inteira em desktop e mobile e mantém as imagens atuais versionadas no GitHub.
 
 
 ## Upload de mídia e transcrição
 
-Usuários autenticados podem selecionar áudio ou vídeo para um pacote. A primeira versão aceita arquivos privados de até 6 MB nos formatos MP3/MP4/WAV/WebM/MOV. O upload vai para o bucket privado `postpilot-media`, isolado por pasta do usuário com RLS.
+Usuários autenticados podem selecionar áudio ou vídeo para um pacote. A primeira versão aceita arquivos privados de até 6 MB nos formatos MP3/MP4/WAV/WebM/MOV. O upload vai para o bucket privado `postpilot-media`, isolado por pasta do usuário com RLS. O cliente já usa TUS resumível, com progresso, retomada e cancelamento, deixando a arquitetura pronta para aumentar o limite depois da validação do provedor de transcrição.
 
 A Edge Function `postpilot-transcribe` baixa somente arquivos do próprio usuário e envia a mídia a um endpoint de transcrição configurado no backend. A resposta pode incluir segmentos com timestamps; quando disponíveis, o PostPilot cria sugestões de cortes com início, fim e trecho recomendado.
 
@@ -67,9 +86,9 @@ Sem esses segredos, o upload continua protegido e o usuário pode seguir usando 
 
 ## Geração por IA no backend
 
-O PostPilot possui integração opcional com a Edge Function `postpilot-generate`. A chave do fornecedor nunca fica no navegador: URL, modelo e credencial são lidos apenas dos segredos `POSTPILOT_AI_API_URL`, `POSTPILOT_AI_MODEL` e `POSTPILOT_AI_API_KEY` no backend.
+O PostPilot possui integração opcional com a Edge Function `postpilot-generate`, já implantada no Supabase. A chave do fornecedor nunca fica no navegador: URL, modelo e credencial são lidos apenas dos segredos `POSTPILOT_AI_API_URL`, `POSTPILOT_AI_MODEL` e `POSTPILOT_AI_API_KEY` no backend.
 
-A IA exige sessão autenticada, valida origem, briefing e plataformas, e devolve um pacote estruturado por plataforma. Se a função, a migration ou o fornecedor ainda não estiverem disponíveis, o frontend faz fallback para o gerador local em vez de bloquear a criação. O código está preparado no repositório; ativação real depende de aplicar a migration e implantar/configurar a Edge Function no Supabase.
+A IA exige sessão autenticada, valida origem, briefing e plataformas, e devolve um pacote estruturado por plataforma. A migration e a Edge Function já estão em produção; a ativação real depende somente de configurar os segredos do fornecedor. Se o fornecedor estiver indisponível, o frontend faz fallback para o gerador local.
 
 ## Exportações
 
@@ -81,7 +100,7 @@ O planejamento editorial pode ser exportado em `.ics` usando o padrão iCalendar
 
 ## Calendário editorial e edição
 
-O PostPilot possui uma visão semanal de segunda a domingo baseada na data planejada de publicação. Pacotes agendados podem ser abertos diretamente pelo calendário.
+O PostPilot possui visão semanal e mensal, filtro por plataforma, drag-and-drop para reagendar e abertura direta dos pacotes planejados.
 
 Pacotes existentes também podem ser editados no mesmo formulário sem criar outro projeto. A ação **Usar como modelo** reutiliza briefing, plataformas, tom e objetivo, mas inicia um novo rascunho e não herda a data de publicação para evitar duplicações acidentais.
 
@@ -110,3 +129,18 @@ O feedback beta coleta somente nota, categoria e comentário. Não envia e-mail,
 O isolamento do Supabase foi homologado tecnicamente com duas identidades autenticadas simuladas dentro de uma transação. Cada identidade viu somente 1 projeto/output próprio, 0 registros da outra conta, não conseguiu alterar ou excluir dados alheios e conseguiu modificar os próprios. O teste terminou com `ROLLBACK`, sem deixar usuários ou dados QA no banco.
 
 A etapa restante é humana: cadastro, confirmação de e-mail, login, recuperação de senha e sessão em navegadores reais.
+
+
+## Edição avançada e histórico
+
+Pacotes guardam até 10 versões editoriais restauráveis. Campos individuais podem receber novas versões sem regenerar o pacote inteiro. Quando uma transcrição contém timestamps, o PostPilot oferece editor por segmento, navegação pelo player e operações de dividir/mesclar. Sugestões de cortes podem ser ajustadas, favoritedas ou descartadas.
+
+## Publicação assistida e analytics
+
+Cada plataforma oferece a ação **Copiar e abrir**, que copia o material preparado e abre o ambiente oficial da rede para o usuário concluir a postagem. O PostPilot não publica automaticamente sem autorização da plataforma.
+
+Os analytics locais mostram plataforma mais usada, objetivo dominante, percentual de pacotes com mídia/IA e atividade recente, sem depender de APIs sociais.
+
+## QA visual
+
+A workflow `Visual Snapshot` usa Playwright/Chromium para gerar `screenshots/postpilot-desktop.png` e `screenshots/postpilot-mobile.png`. As capturas também são salvas como artifact por 30 dias, permitindo revisar visualmente cada evolução.

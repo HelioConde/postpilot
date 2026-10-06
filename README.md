@@ -187,3 +187,8 @@ As Edge Functions preferem o modelo atual de chaves do Supabase:
 O repositório versiona `package-lock.json`. A workflow **Dependency Lock** atualiza o lockfile automaticamente quando `package.json` muda, e os jobs de navegador usam `npm ci` para instalar exatamente a árvore versionada.
 
 O Static QA também executa `npm ci --ignore-scripts`, então mudanças incompatíveis entre `package.json` e `package-lock.json` bloqueiam o CI antes dos testes de navegador.
+
+
+## Portabilidade dos dados
+
+Usuários autenticados podem baixar um JSON com todos os projetos sincronizados, versões editoriais e outputs acessíveis pela própria sessão/RLS. O export inclui apenas metadados da mídia privada (nome, tipo e tamanho) e nunca inclui arquivo bruto, `media_path`, signed URLs, tokens ou credenciais.

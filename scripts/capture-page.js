@@ -95,6 +95,7 @@ async function capturePopulated(browser, name, viewport) {
     await capture(browser, 'postpilot-tablet.png', { width: 768, height: 1024 });
     await captureLocale(browser, 'postpilot-mobile-en.png', { width: 390, height: 844 }, 'en');
     await capturePopulated(browser, 'postpilot-desktop-populated.png', { width: 1440, height: 1000 });
+    await capturePopulated(browser, 'postpilot-tablet-populated.png', { width: 768, height: 1024 });
     await capturePopulated(browser, 'postpilot-mobile-populated.png', { width: 390, height: 844 });
 
     fs.writeFileSync(
@@ -108,6 +109,7 @@ async function capturePopulated(browser, name, viewport) {
           tablet: { width: 768, height: 1024, fullPage: true },
           mobileEnglish: { width: 390, height: 844, fullPage: true },
           desktopPopulated: { width: 1440, height: 1000, fullPage: true },
+          tabletPopulated: { width: 768, height: 1024, fullPage: true },
           mobilePopulated: { width: 390, height: 844, fullPage: true }
         }
       }, null, 2) + '\n'

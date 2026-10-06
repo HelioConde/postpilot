@@ -53,6 +53,12 @@ const mediaProgressWrap = document.querySelector('#media-progress-wrap');
 const mediaProgress = document.querySelector('#media-progress');
 const mediaProgressLabel = document.querySelector('#media-progress-label');
 const mediaStatus = document.querySelector('#media-status');
+const serviceHealthHost = document.querySelector('#service-health');
+const aiServiceStatus = document.querySelector('#ai-service-status');
+const aiServiceLimit = document.querySelector('#ai-service-limit');
+const transcriptionServiceStatus = document.querySelector('#transcription-service-status');
+const transcriptionServiceLimit = document.querySelector('#transcription-service-limit');
+const refreshServiceHealthButton = document.querySelector('#refresh-service-health');
 
 let currentUser = null;
 let cloudPacks = [];
@@ -65,6 +71,10 @@ let calendarView = 'week';
 let pendingMediaFile = null;
 let activeMediaUpload = null;
 let activeMediaUploadReject = null;
+let serviceHealth = {
+  ai: { configured: null, hourlyLimit: 20 },
+  transcription: { configured: null, hourlyLimit: 10, maxBytes: 6 * 1024 * 1024 }
+};
 
 function currentLocale() {
   return window.AppI18n?.locale?.() || 'pt-BR';
@@ -1826,6 +1836,77 @@ function showAccountMessage(message) {
   accountMessage.textContent = message;
 }
 
+function serviceStatusLabel(configured) {
+  if (configured === true) return uiText('Ativo');
+  if (configured === false) return uiText('Aguardando configuração');
+  return uiText('Verificando…');
+}
+
+function renderServiceHealth() {
+  if (!serviceHealthHost) return;
+  if (aiServiceStatus) aiServiceStatus.textContent = serviceStatusLabel(serviceHealth.ai.configured);
+  if (transcriptionServiceStatus) transcriptionServiceStatus.textContent = serviceStatusLabel(serviceHealth.transcription.configured);
+  if (aiServiceLimit) aiServiceLimit.textContent = serviceHealth.ai.hourlyLimit
+    ? serviceHealth.ai.hourlyLimit + ' ' + uiText('por hora')
+    : '';
+  if (transcriptionServiceLimit) {
+    const max = formatFileSize(serviceHealth.transcription.maxBytes || 0);
+    transcriptionServiceLimit.textContent = [
+      serviceHealth.transcription.hourlyLimit ? serviceHealth.transcription.hourlyLimit + ' ' + uiText('por hora') : '',
+      max ? uiText('até') + ' ' + max : ''
+    ].filter(Boolean).join(' · ');
+  }
+  if (aiGenerationToggle) {
+    const enabled = Boolean(currentUser) && serviceHealth.ai.configured === true;
+    aiGenerationToggle.disabled = !enabled;
+    if (!enabled) aiGenerationToggle.checked = false;
+  }
+}
+
+async function refreshServiceHealth() {
+  if (!supabaseClient || !currentUser) {
+    serviceHealth = {
+      ai: { configured: null, hourlyLimit: 20 },
+      transcription: { configured: null, hourlyLimit: 10, maxBytes: 6 * 1024 * 1024 }
+    };
+    renderServiceHealth();
+    return serviceHealth;
+  }
+
+  if (refreshServiceHealthButton) refreshServiceHealthButton.disabled = true;
+  try {
+    const [aiResult, transcriptionResult] = await Promise.allSettled([
+      supabaseClient.functions.invoke('postpilot-generate', { body: { action: 'health' } }),
+      supabaseClient.functions.invoke('postpilot-transcribe', { body: { action: 'health' } })
+    ]);
+
+    if (aiResult.status === 'fulfilled' && !aiResult.value.error && aiResult.value.data) {
+      serviceHealth.ai = {
+        configured: Boolean(aiResult.value.data.configured),
+        hourlyLimit: Number(aiResult.value.data.hourlyLimit) || 20
+      };
+    } else {
+      serviceHealth.ai = { configured: null, hourlyLimit: 20 };
+    }
+
+    if (transcriptionResult.status === 'fulfilled' && !transcriptionResult.value.error && transcriptionResult.value.data) {
+      serviceHealth.transcription = {
+        configured: Boolean(transcriptionResult.value.data.configured),
+        hourlyLimit: Number(transcriptionResult.value.data.hourlyLimit) || 10,
+        maxBytes: Number(transcriptionResult.value.data.maxBytes) || 6 * 1024 * 1024
+      };
+    } else {
+      serviceHealth.transcription = { configured: null, hourlyLimit: 10, maxBytes: 6 * 1024 * 1024 };
+    }
+  } catch (error) {
+    console.warn('PostPilot service health:', error);
+  } finally {
+    renderServiceHealth();
+    if (refreshServiceHealthButton) refreshServiceHealthButton.disabled = false;
+  }
+  return serviceHealth;
+}
+
 function updateAccountUi() {
   const localCount = readPacks().length;
   accountOpenButton.disabled = !supabaseClient;
@@ -1837,10 +1918,11 @@ function updateAccountUi() {
   accountForm.hidden = !supabaseClient || Boolean(currentUser);
   accountProfile.hidden = !currentUser;
   if (localBackupControls) localBackupControls.hidden = Boolean(currentUser);
-  if (aiGenerationToggle) {
-    aiGenerationToggle.disabled = !currentUser;
-    if (!currentUser) aiGenerationToggle.checked = false;
+  if (aiGenerationToggle && !currentUser) {
+    aiGenerationToggle.disabled = true;
+    aiGenerationToggle.checked = false;
   }
+  renderServiceHealth();
   if (mediaFileInput) mediaFileInput.disabled = !currentUser;
   if (!currentUser) resetMediaSelection();
   if (currentUser) {
@@ -1969,6 +2051,7 @@ function initAccount() {
   });
 
   localImportButton.addEventListener('click', importLocalPacks);
+  refreshServiceHealthButton?.addEventListener('click', refreshServiceHealth);
 
   if (!supabaseClient) {
     showAccountMessage('Sincronização indisponível. O modo local continua funcionando.');
@@ -1984,8 +2067,13 @@ function initAccount() {
     currentUser = user;
     cloudPacks = [];
     updateAccountUi();
-    if (user) window.setTimeout(loadCloudPacks, 0);
-    else renderList();
+    if (user) {
+      window.setTimeout(loadCloudPacks, 0);
+      window.setTimeout(refreshServiceHealth, 0);
+    } else {
+      renderList();
+      refreshServiceHealth();
+    }
   };
 
   supabaseClient.auth.onAuthStateChange((_event, session) => {

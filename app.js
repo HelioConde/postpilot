@@ -132,6 +132,56 @@ function packPlatforms(pack) {
   return [pack.channel || 'Instagram'];
 }
 
+function normalizePublishChecklist(pack) {
+  const source = pack?.publishChecklist && typeof pack.publishChecklist === 'object'
+    ? pack.publishChecklist
+    : {};
+  const normalized = {};
+  packPlatforms(pack || {}).forEach(platform => {
+    const item = source[platform] && typeof source[platform] === 'object' ? source[platform] : {};
+    normalized[platform] = {
+      reviewed: Boolean(item.reviewed),
+      mediaReady: Boolean(item.mediaReady),
+      published: Boolean(item.published)
+    };
+  });
+  return normalized;
+}
+
+function checklistProgress(pack) {
+  const checklist = normalizePublishChecklist(pack);
+  const values = Object.values(checklist);
+  const total = values.length * 3;
+  const done = values.reduce((sum, item) => sum
+    + Number(item.reviewed)
+    + Number(item.mediaReady)
+    + Number(item.published), 0);
+  return { done, total };
+}
+
+async function persistPublishChecklist(pack, nextChecklist) {
+  const normalized = normalizePublishChecklist({ ...pack, publishChecklist: nextChecklist });
+  const updated = { ...pack, publishChecklist: normalized, time: Date.now() };
+
+  if (currentUser) {
+    const { data, error } = await supabaseClient
+      .from('postpilot_projects')
+      .update({ publish_checklist: normalized, updated_at: new Date().toISOString() })
+      .eq('id', pack.id)
+      .select('*')
+      .single();
+    if (error) throw error;
+    const saved = mapCloudPack(data);
+    cloudPacks = cloudPacks.map(item => item.id === saved.id ? saved : item)
+      .sort((a, b) => b.time - a.time);
+    return saved;
+  }
+
+  const local = readPacks().map(item => item.id === pack.id ? updated : item);
+  localStorage.setItem(storageKey, JSON.stringify(local));
+  return updated;
+}
+
 function platformDeliverable(pack, platform) {
   const ideas = splitIntoIdeas(pack.transcript);
   const lead = ideas[0] || pack.topic;
@@ -246,6 +296,7 @@ function mapCloudPack(row) {
     goal: row.goal || 'conversa',
     audience: row.audience || '',
     publishAt: row.publish_at || '',
+    publishChecklist: row.publish_checklist && typeof row.publish_checklist === 'object' ? row.publish_checklist : {},
     status: row.status || 'draft',
     createdAt: Date.parse(row.created_at),
     time: Date.parse(row.updated_at || row.created_at)
@@ -266,6 +317,7 @@ async function saveCloudPack(pack) {
     goal: pack.goal,
     audience: String(pack.audience || '').slice(0, 120),
     publish_at: pack.publishAt || null,
+    publish_checklist: normalizePublishChecklist(pack),
     status: pack.status || 'draft',
     created_at: new Date(pack.createdAt || pack.time || Date.now()).toISOString(),
     updated_at: now
@@ -479,18 +531,28 @@ function renderList() {
 
 function renderPack(pack) {
   openedPackId = pack.id;
+  const checklist = normalizePublishChecklist(pack);
   const cards = packPlatforms(pack).map(platform => {
     const deliverable = platformDeliverable(pack, platform);
+    const state = checklist[platform];
+    const platformProgress = Number(state.reviewed) + Number(state.mediaReady) + Number(state.published);
     return `
       <article class="platform-card">
-        <div class="platform-card-head"><h4>${escapeHtml(deliverable.title)}</h4><button class="copy-platform" type="button" data-copy-platform="${escapeHtml(platform)}">Copiar</button></div>
+        <div class="platform-card-head"><div><h4>${escapeHtml(deliverable.title)}</h4><small class="platform-progress">${platformProgress}/3 ${uiText('concluídos')}</small></div><button class="copy-platform" type="button" data-copy-platform="${escapeHtml(platform)}">${uiText('Copiar')}</button></div>
         ${deliverable.lines.map(([label, value]) => `<div class="deliverable"><span>${escapeHtml(label)}</span><p>${escapeHtml(value).replace(/\n/g, '<br>')}</p></div>`).join('')}
+        <fieldset class="publish-checklist">
+          <legend>${uiText('Checklist de publicação')}</legend>
+          <label><input type="checkbox" data-check-platform="${escapeHtml(platform)}" data-check-step="reviewed"${state.reviewed ? ' checked' : ''}><span>${uiText('Texto revisado')}</span></label>
+          <label><input type="checkbox" data-check-platform="${escapeHtml(platform)}" data-check-step="mediaReady"${state.mediaReady ? ' checked' : ''}><span>${uiText('Mídia pronta')}</span></label>
+          <label><input type="checkbox" data-check-platform="${escapeHtml(platform)}" data-check-step="published"${state.published ? ' checked' : ''}><span>${uiText('Publicado na plataforma')}</span></label>
+        </fieldset>
       </article>`;
   }).join('');
 
+  const checklistStats = checklistProgress(pack);
   result.innerHTML = `
     <div class="result-heading">
-      <div><h3>${escapeHtml(pack.topic)}</h3><p>${packPlatforms(pack).length} ${packPlatforms(pack).length > 1 ? uiText('plataformas') : uiText('plataforma')} · ${escapeHtml(toneLabel(pack.tone))}${pack.audience ? ' · ' + escapeHtml(uiText('Público')) + ': ' + escapeHtml(pack.audience) : ''}${pack.publishAt ? ' · ' + escapeHtml(uiText('Planejado para')) + ' ' + escapeHtml(formatPlannedDate(pack.publishAt)) : ''}</p></div>
+      <div><h3>${escapeHtml(pack.topic)}</h3><p>${packPlatforms(pack).length} ${packPlatforms(pack).length > 1 ? uiText('plataformas') : uiText('plataforma')} · ${escapeHtml(toneLabel(pack.tone))}${pack.audience ? ' · ' + escapeHtml(uiText('Público')) + ': ' + escapeHtml(pack.audience) : ''}${pack.publishAt ? ' · ' + escapeHtml(uiText('Planejado para')) + ' ' + escapeHtml(formatPlannedDate(pack.publishAt)) : ''}</p><small class="pack-checklist-progress">${uiText('Checklist')}: ${checklistStats.done}/${checklistStats.total}</small></div>
       <span class="project-status status-${escapeHtml(pack.status || 'draft')}">${statusLabel(pack.status || 'draft')}</span>
     </div>
     <div class="platform-grid">${cards}</div>
@@ -503,6 +565,29 @@ function renderPack(pack) {
   document.querySelector('#export').addEventListener('click', () => exportPackage(pack));
   result.querySelectorAll('[data-copy-platform]').forEach(button => {
     button.addEventListener('click', () => copyText(platformText(pack, button.dataset.copyPlatform)));
+  });
+  result.querySelectorAll('[data-check-platform]').forEach(input => {
+    input.addEventListener('change', async () => {
+      input.disabled = true;
+      const platform = input.dataset.checkPlatform;
+      const step = input.dataset.checkStep;
+      const current = normalizePublishChecklist(pack);
+      current[platform][step] = input.checked;
+      try {
+        const saved = await persistPublishChecklist(pack, current);
+        renderPack(saved);
+        renderList();
+        const progress = checklistProgress(saved);
+        showToast(progress.total > 0 && progress.done === progress.total
+          ? 'Checklist completo. Você pode marcar o pacote como publicado.'
+          : 'Checklist atualizado.');
+      } catch (error) {
+        console.error(error);
+        input.disabled = false;
+        input.checked = !input.checked;
+        showToast('Não foi possível atualizar o checklist.');
+      }
+    });
   });
 }
 
@@ -695,6 +780,7 @@ form.addEventListener('submit', async event => {
     goal: values.goal,
     audience: String(values.audience || '').trim(),
     publishAt: String(values.publishAt || ''),
+    publishChecklist: existing ? normalizePublishChecklist(existing) : {},
     status: existing?.status || 'draft',
     createdAt: existing?.createdAt || existing?.time || Date.now(),
     time: Date.now()

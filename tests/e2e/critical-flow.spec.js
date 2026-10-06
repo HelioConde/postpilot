@@ -132,6 +132,27 @@ test('fluxo local cria pacote editorial e atualiza painel de produção', async 
   await expect(page.locator('#production-summary')).toContainText('100%');
 });
 
+test('ações secundárias do projeto ficam recolhidas somente no mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await localMode(page);
+  await createPack(page, ' Ações');
+
+  const item = page.locator('#list .item').filter({ hasText: 'Marketing para pequenos negócios Ações' }).first();
+  const more = item.locator('.project-more-actions');
+  await expect(more.locator('summary')).toBeVisible();
+  await expect(item.locator('[data-edit-pack]')).toBeHidden();
+  await more.locator('summary').click();
+  await expect(item.locator('[data-edit-pack]')).toBeVisible();
+  await expect(item.locator('[data-template-pack]')).toBeVisible();
+  await expect(item.locator('[data-delete]')).toBeVisible();
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.reload();
+  const desktopItem = page.locator('#list .item').filter({ hasText: 'Marketing para pequenos negócios Ações' }).first();
+  await expect(desktopItem.locator('.project-more-actions summary')).toBeHidden();
+  await expect(desktopItem.locator('[data-edit-pack]')).toBeVisible();
+});
+
 test('cards de plataforma usam divulgação progressiva', async ({ page }) => {
   await localMode(page);
   await createPack(page, ' Cards recolhíveis');

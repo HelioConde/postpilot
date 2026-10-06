@@ -51,6 +51,12 @@ jobs:
           test -f supabase/functions/postpilot-transcribe/index.ts
           test -f supabase/migrations/20261006112500_ai_generation.sql
           test -f supabase/migrations/20261006121500_media_transcription.sql
+          test -f supabase/migrations/20261006150000_usage_limits.sql
+          test -f supabase/migrations/20261006150500_consume_usage_rpc.sql
+          test -f supabase/migrations/20261006151000_private_usage_schema.sql
+          test -f supabase/migrations/20261006151200_usage_service_policy.sql
+          test -f supabase/migrations/20261006151500_usage_status_rpc.sql
+          test -f supabase/migrations/20261006152000_usage_retention.sql
           test -f package.json
           test -f playwright.config.js
           test -f tests/e2e/critical-flow.spec.js
@@ -135,3 +141,5 @@ jobs:
           grep -qi 'postpilot_usage_status' supabase/functions/postpilot-generate/index.ts
           grep -qi 'postpilot_usage_status' supabase/functions/postpilot-transcribe/index.ts
           grep -qi 'disponíveis nesta hora' app.js
+          grep -qi '48 hours' supabase/migrations/20261006152000_usage_retention.sql
+          grep -qi 'postpilot-tablet.png' .github/workflows/visual-snapshot.yml

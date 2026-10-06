@@ -509,3 +509,17 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   background:#59468f;
   color:#fff;
 }
+
+/* Mobile calendar — empty days stay compact; populated days keep room for content */
+@media(max-width:620px){
+  .calendar-grid.is-week .calendar-day:has(.calendar-empty){
+    min-height:82px;
+  }
+  .calendar-grid.is-week .calendar-day:has(.calendar-empty) .calendar-day-items{
+    align-content:center;
+    min-height:28px;
+  }
+  .calendar-grid.is-week .calendar-day:has(.calendar-empty) .calendar-empty{
+    align-self:center;
+  }
+}

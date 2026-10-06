@@ -175,3 +175,58 @@ test('checklist de publicação persiste por plataforma', async ({ page }) => {
   await expect(restored.locator('[data-check-step="mediaReady"]')).toBeChecked();
   await expect(restored.locator('[data-check-step="published"]')).not.toBeChecked();
 });
+
+
+test('backup local exporta e restaura pacotes', async ({ page }) => {
+  await localMode(page);
+  await createPack(page, ' Backup');
+  await expect(page.locator('#list')).toContainText('Marketing para pequenos negócios Backup');
+
+  const downloadPromise = page.waitForEvent('download');
+  await page.locator('#export-backup').click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/^postpilot-backup-\d{4}-\d{2}-\d{2}\.json$/);
+
+  const stream = await download.createReadStream();
+  let content = '';
+  for await (const chunk of stream) content += chunk.toString();
+  const backup = JSON.parse(content);
+  expect(backup.format).toBe('postpilot-backup');
+  expect(backup.version).toBe(1);
+  expect(backup.packs.some(pack => pack.topic === 'Marketing para pequenos negócios Backup')).toBe(true);
+
+  await page.evaluate(() => localStorage.removeItem('postpilot-packs'));
+  await page.reload();
+  await expect(page.locator('#list')).not.toContainText('Marketing para pequenos negócios Backup');
+
+  page.once('dialog', dialog => dialog.accept());
+  await page.locator('#import-backup-file').setInputFiles({
+    name: 'postpilot-backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(content)
+  });
+
+  await expect(page.locator('#list')).toContainText('Marketing para pequenos negócios Backup');
+});
+
+test('PWA mantém criação local disponível offline após primeira abertura', async ({ page, context }) => {
+  await localMode(page);
+  await page.waitForFunction(async () => {
+    if (!('serviceWorker' in navigator)) return false;
+    await navigator.serviceWorker.ready;
+    return true;
+  });
+  await page.reload();
+  await expect(page.getByRole('heading', { name: /Seu próximo vídeo|Your next video/i })).toBeVisible();
+
+  await context.setOffline(true);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { name: /Seu próximo vídeo|Your next video/i })).toBeVisible();
+
+  await page.locator('[name="f0"]').fill('Pacote offline');
+  await page.locator('[name="f1"]').fill('Este conteúdo foi criado sem conexão depois que o shell do aplicativo ficou disponível no cache.');
+  await page.getByRole('button', { name: /Montar pacote|Build content pack/i }).click();
+  await expect(page.locator('#result')).toContainText('Pacote offline');
+
+  await context.setOffline(false);
+});

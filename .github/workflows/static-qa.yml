@@ -47,6 +47,10 @@ jobs:
           test -f beta-feedback.js
           test -f supabase/migrations/20261006103000_beta_feedback.sql
           test -f supabase/functions/postpilot-beta-feedback/index.ts
+          test -f supabase/functions/postpilot-generate/index.ts
+          test -f supabase/functions/postpilot-transcribe/index.ts
+          test -f supabase/migrations/20261006112500_ai_generation.sql
+          test -f supabase/migrations/20261006121500_media_transcription.sql
           test -f package.json
           test -f playwright.config.js
           test -f tests/e2e/critical-flow.spec.js
@@ -62,7 +66,9 @@ jobs:
           grep -qi 'project-status-filter' index.html
           grep -qi 'platformDeliverable' app.js
           grep -qi 'data-status-id' app.js
-          grep -qi 'Exportar .txt' app.js
+          grep -qi 'export-format' app.js
+          grep -qi 'packageMarkdown' app.js
+          grep -qi 'packageCsv' app.js
           grep -qi 'data-language="pt-BR"' index.html
           grep -qi 'data-language="en"' index.html
           grep -qi 'project-search' index.html
@@ -93,3 +99,14 @@ jobs:
           grep -qi 'beta-feedback-open' index.html
           grep -qi 'postpilot-beta-feedback-queue-v1' beta-feedback.js
           grep -qi 'postpilot_beta_feedback' supabase/functions/postpilot-beta-feedback/index.ts
+
+      - name: Check AI and media contracts
+        run: |
+          grep -qi 'ai-generation' index.html
+          grep -qi 'postpilot-generate' app.js
+          grep -qi 'media-file' index.html
+          grep -qi 'postpilot-media' app.js
+          grep -qi 'postpilot-transcribe' app.js
+          grep -qi 'cutSuggestions' app.js
+          grep -qi 'calendar-export' index.html
+          grep -qi 'buildCalendarIcs' app.js

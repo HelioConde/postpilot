@@ -1764,6 +1764,13 @@ function fillComposerFromPack(pack, { asTemplate = false } = {}) {
   showToast(asTemplate ? 'Modelo carregado. Ajuste e gere um novo pacote.' : 'Pacote aberto para edição.');
 }
 
+function focusCreatedPackage() {
+  if (!result?.classList.contains('show')) return;
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  result.scrollIntoView?.({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+  window.setTimeout(() => result.focus?.({ preventScroll: true }), reducedMotion ? 0 : 250);
+}
+
 function cancelComposerEdit({ reset = false } = {}) {
   editingPackId = null;
   if (composerMode) composerMode.hidden = true;
@@ -2638,6 +2645,7 @@ form.addEventListener('submit', async event => {
       cancelComposerEdit();
       resetMediaSelection();
       showToast(existing ? 'Alterações salvas na sua conta.' : 'Pacote salvo na sua conta.');
+      if (!existing) focusCreatedPackage();
     } catch (error) {
       console.error(error);
       showToast('Não foi possível sincronizar. Tente novamente.');
@@ -2659,6 +2667,7 @@ form.addEventListener('submit', async event => {
   renderList();
   cancelComposerEdit();
   showToast(existing ? 'Alterações salvas neste dispositivo.' : 'Pacote salvo neste dispositivo.');
+  if (!existing) focusCreatedPackage();
 });
 
 projectStatusFilter?.addEventListener('change', renderList);

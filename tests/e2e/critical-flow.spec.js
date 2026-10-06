@@ -98,6 +98,26 @@ test('hero oferece caminho direto ao briefing em PT e EN', async ({ page }) => {
   await expect(cta).toHaveText('Start my content pack');
 });
 
+test('modal de conta permite mostrar e ocultar a senha', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await localMode(page);
+  await page.locator('#account-open').click();
+
+  const password = page.locator('#auth-form [name="password"]');
+  const toggle = page.locator('#toggle-password');
+  await expect(password).toHaveAttribute('type', 'password');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+
+  await toggle.click();
+  await expect(password).toHaveAttribute('type', 'text');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(toggle).toHaveText(/Ocultar|Hide/i);
+
+  await toggle.click();
+  await expect(password).toHaveAttribute('type', 'password');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+});
+
 test('navegação por teclado oferece skip link e foco principal', async ({ page }) => {
   await localMode(page);
 

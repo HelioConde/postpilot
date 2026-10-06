@@ -231,6 +231,23 @@ test('editor de cortes persiste ajustes no modo local', async ({ page }) => {
   expect(saved.cutOverrides[0].start).toBe(12.5);
 });
 
+test('histórico local permite restaurar uma versão anterior', async ({ page }) => {
+  await localMode(page);
+  await createPack(page, ' Versão');
+  let item = page.locator('#list .item').filter({ hasText: 'Marketing para pequenos negócios Versão' }).first();
+  await item.locator('[data-edit-pack]').click();
+  await page.locator('[name="f0"]').fill('Versão editada');
+  await page.locator('#composer-submit').click();
+
+  await page.locator('#list .item').filter({ hasText: 'Versão editada' }).first().locator('[data-pack]').click();
+  const history = page.locator('.version-history');
+  await history.locator('summary').click();
+  await expect(history.locator('.version-item')).toHaveCount(2);
+
+  await history.locator('[data-restore-version]').last().click();
+  await expect(page.locator('#result')).toContainText('Marketing para pequenos negócios Versão');
+});
+
 test('exporta planejamento editorial em iCalendar', async ({ page }) => {
   await localMode(page);
   await createPack(page, ' Calendário');

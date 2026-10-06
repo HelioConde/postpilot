@@ -16,6 +16,15 @@ const localImportButton = document.querySelector('#local-import');
 const projectStatusFilter = document.querySelector('#project-status-filter');
 const projectSearch = document.querySelector('#project-search');
 const productionSummary = document.querySelector('#production-summary');
+const focusDashboard = document.querySelector('#focus-dashboard');
+const projectPlatformFilter = document.querySelector('#project-platform-filter');
+const projectGoalFilter = document.querySelector('#project-goal-filter');
+const projectToneFilter = document.querySelector('#project-tone-filter');
+const projectGenerationFilter = document.querySelector('#project-generation-filter');
+const projectMediaFilter = document.querySelector('#project-media-filter');
+const projectDateFrom = document.querySelector('#project-date-from');
+const projectDateTo = document.querySelector('#project-date-to');
+const projectFilterReset = document.querySelector('#project-filter-reset');
 const composerMode = document.querySelector('#composer-mode');
 const composerModeTitle = document.querySelector('#composer-mode-title');
 const composerCancelButton = document.querySelector('#composer-cancel');
@@ -917,6 +926,45 @@ function cancelComposerEdit({ reset = false } = {}) {
 }
 
 
+function renderFocusDashboard(source) {
+  if (!focusDashboard) return;
+  const today = localDateKey(new Date());
+  const weekEndDate = new Date();
+  weekEndDate.setDate(weekEndDate.getDate() + 7);
+  const weekEnd = localDateKey(weekEndDate);
+
+  const todayPacks = source.filter(pack => pack.publishAt === today && (pack.status || 'draft') !== 'published');
+  const overdue = source.filter(pack => pack.publishAt && pack.publishAt < today && (pack.status || 'draft') !== 'published');
+  const upcoming = source.filter(pack => pack.publishAt && pack.publishAt > today && pack.publishAt <= weekEnd && (pack.status || 'draft') !== 'published');
+  const drafts = source.filter(pack => (pack.status || 'draft') === 'draft');
+
+  focusDashboard.innerHTML = `
+    <article><span>${uiText('Publicar hoje')}</span><strong>${todayPacks.length}</strong><small>${uiText('pacotes planejados')}</small></article>
+    <article class="${overdue.length ? 'needs-attention' : ''}"><span>${uiText('Atrasados')}</span><strong>${overdue.length}</strong><small>${uiText('precisam de atenção')}</small></article>
+    <article><span>${uiText('Próximos 7 dias')}</span><strong>${upcoming.length}</strong><small>${uiText('no calendário')}</small></article>
+    <article><span>${uiText('Rascunhos')}</span><strong>${drafts.length}</strong><small>${uiText('para continuar')}</small></article>`;
+}
+
+function matchesAdvancedFilters(pack) {
+  const platform = projectPlatformFilter?.value || 'all';
+  const goal = projectGoalFilter?.value || 'all';
+  const tone = projectToneFilter?.value || 'all';
+  const generation = projectGenerationFilter?.value || 'all';
+  const media = projectMediaFilter?.value || 'all';
+  const from = projectDateFrom?.value || '';
+  const to = projectDateTo?.value || '';
+
+  if (platform !== 'all' && !packPlatforms(pack).includes(platform)) return false;
+  if (goal !== 'all' && (pack.goal || 'conversa') !== goal) return false;
+  if (tone !== 'all' && normalizeTone(pack.tone) !== tone) return false;
+  if (generation !== 'all' && (pack.generationMode || 'local') !== generation) return false;
+  if (media === 'with' && !pack.mediaPath) return false;
+  if (media === 'without' && pack.mediaPath) return false;
+  if (from && (!pack.publishAt || pack.publishAt < from)) return false;
+  if (to && (!pack.publishAt || pack.publishAt > to)) return false;
+  return true;
+}
+
 function renderProductionSummary(source) {
   if (!productionSummary) return;
   const total = source.length;
@@ -936,10 +984,12 @@ function renderList() {
   const filter = projectStatusFilter?.value || 'all';
   const searchTerm = String(projectSearch?.value || '').trim().toLocaleLowerCase(currentLocale());
   const source = currentUser ? visiblePacks() : visiblePacks().slice().reverse();
+  renderFocusDashboard(source);
   renderProductionSummary(source);
   renderEditorialCalendar(source);
   const normalized = source
     .filter(pack => filter === 'all' || (pack.status || 'draft') === filter)
+    .filter(matchesAdvancedFilters)
     .filter(pack => {
       if (!searchTerm) return true;
       return [pack.topic, pack.audience, ...packPlatforms(pack)]
@@ -1340,6 +1390,17 @@ form.addEventListener('submit', async event => {
 
 projectStatusFilter?.addEventListener('change', renderList);
 projectSearch?.addEventListener('input', renderList);
+[projectPlatformFilter, projectGoalFilter, projectToneFilter, projectGenerationFilter, projectMediaFilter, projectDateFrom, projectDateTo]
+  .forEach(control => control?.addEventListener('change', renderList));
+projectFilterReset?.addEventListener('click', () => {
+  if (projectStatusFilter) projectStatusFilter.value = 'all';
+  if (projectSearch) projectSearch.value = '';
+  [projectPlatformFilter, projectGoalFilter, projectToneFilter, projectGenerationFilter, projectMediaFilter]
+    .forEach(control => { if (control) control.value = 'all'; });
+  if (projectDateFrom) projectDateFrom.value = '';
+  if (projectDateTo) projectDateTo.value = '';
+  renderList();
+});
 contentTemplateSelect?.addEventListener('change', () => {
   if (applyContentTemplateButton) applyContentTemplateButton.disabled = !contentTemplateSelect.value;
 });

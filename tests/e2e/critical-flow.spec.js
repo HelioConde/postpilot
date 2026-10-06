@@ -263,6 +263,21 @@ test('calendário alterna entre semana e mês e filtra plataforma', async ({ pag
   await expect(page.locator('#calendar-grid')).toContainText('Marketing para pequenos negócios Calendário avançado');
 });
 
+test('regeneração parcial altera somente um campo do pacote', async ({ page }) => {
+  await localMode(page);
+  await createPack(page, ' Regeneração');
+
+  const card = page.locator('.platform-card').filter({ hasText: 'Instagram' }).first();
+  const firstField = card.locator('[data-deliverable-platform]').first();
+  const before = await firstField.locator('p').innerText();
+  await firstField.locator('[data-regenerate-field]').click();
+  const after = await page.locator('.platform-card').filter({ hasText: 'Instagram' }).first().locator('[data-deliverable-platform]').first().locator('p').innerText();
+
+  expect(after).not.toBe(before);
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('postpilot-packs') || '[]')[0]);
+  expect(Object.keys(saved.contentOverrides || {}).length).toBeGreaterThan(0);
+});
+
 test('exporta planejamento editorial em iCalendar', async ({ page }) => {
   await localMode(page);
   await createPack(page, ' Calendário');

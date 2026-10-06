@@ -230,3 +230,40 @@ test('PWA mantém criação local disponível offline após primeira abertura', 
 
   await context.setOffline(false);
 });
+
+
+test('modelo rápido configura briefing sem alterar conteúdo', async ({ page }) => {
+  await localMode(page);
+  await page.locator('[name="f0"]').fill('Tema preservado');
+  await page.locator('[name="f1"]').fill('Transcrição preservada com contexto suficiente para confirmar que o template não substitui o conteúdo.');
+  await page.locator('#content-template').selectOption('local-business');
+  await page.locator('#apply-content-template').click();
+
+  await expect(page.locator('[name="f0"]')).toHaveValue('Tema preservado');
+  await expect(page.locator('[name="f1"]')).toHaveValue(/Transcrição preservada/);
+  await expect(page.locator('[name="audience"]')).toHaveValue('potenciais clientes da sua região');
+  await expect(page.locator('[name="goal"]')).toHaveValue('oferta');
+  await expect(page.locator('[name="f3"]')).toHaveValue('natural');
+  await expect(page.locator('[name="platforms"][value="Instagram"]')).toBeChecked();
+  await expect(page.locator('[name="platforms"][value="TikTok"]')).toBeChecked();
+  await expect(page.locator('[name="platforms"][value="YouTube Shorts"]')).not.toBeChecked();
+});
+
+test('feedback beta entra na fila local quando backend não está disponível', async ({ page }) => {
+  await localMode(page);
+  await page.locator('#beta-feedback-open').click();
+  await expect(page.locator('#beta-feedback-dialog')).toBeVisible();
+
+  await page.locator('#beta-feedback-form label').filter({ hasText: /^5$/ }).click();
+  await page.locator('#beta-feedback-form select[name="category"]').selectOption('quality');
+  await page.locator('#beta-feedback-form textarea[name="comment"]').fill('O calendário editorial ficou claro e rápido de usar.');
+  await page.getByRole('button', { name: /Enviar feedback|Send feedback/i }).click();
+
+  await expect(page.locator('#beta-feedback-status')).toContainText(/Feedback salvo|Feedback saved/);
+  const queue = await page.evaluate(() => JSON.parse(localStorage.getItem('postpilot-beta-feedback-queue-v1') || '[]'));
+  expect(queue).toHaveLength(1);
+  expect(queue[0].rating).toBe(5);
+  expect(queue[0].category).toBe('quality');
+  expect(queue[0]).not.toHaveProperty('email');
+  expect(queue[0]).not.toHaveProperty('transcript');
+});

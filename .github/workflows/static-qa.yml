@@ -143,3 +143,23 @@ jobs:
           grep -qi 'disponíveis nesta hora' app.js
           grep -qi '48 hours' supabase/migrations/20261006152000_usage_retention.sql
           grep -qi 'postpilot-tablet.png' .github/workflows/visual-snapshot.yml
+
+      - name: Check local asset budgets
+        run: |
+          APP_BYTES=$(wc -c < app.js)
+          STYLE_BYTES=$(wc -c < style.css)
+          INDEX_BYTES=$(wc -c < index.html)
+          I18N_BYTES=$(wc -c < i18n.js)
+          TOTAL_BYTES=$((APP_BYTES + STYLE_BYTES + INDEX_BYTES + I18N_BYTES))
+
+          echo "app.js: $APP_BYTES bytes"
+          echo "style.css: $STYLE_BYTES bytes"
+          echo "index.html: $INDEX_BYTES bytes"
+          echo "i18n.js: $I18N_BYTES bytes"
+          echo "critical local total: $TOTAL_BYTES bytes"
+
+          test "$APP_BYTES" -lt 260000
+          test "$STYLE_BYTES" -lt 140000
+          test "$INDEX_BYTES" -lt 90000
+          test "$I18N_BYTES" -lt 70000
+          test "$TOTAL_BYTES" -lt 500000

@@ -168,3 +168,6 @@ jobs:
           test "$INDEX_BYTES" -lt 90000
           test "$I18N_BYTES" -lt 70000
           test "$TOTAL_BYTES" -lt 500000
+
+      - name: Check internal links
+        run: node scripts/check-internal-links.js

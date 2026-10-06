@@ -397,6 +397,131 @@ async function renderMediaPreview(pack) {
   host.innerHTML = '<' + tag + ' id="media-preview-player" controls preload="metadata" src="' + escapeHtml(data.signedUrl) + '"></' + tag + '>';
 }
 
+function packSnapshot(pack) {
+  return {
+    topic: pack.topic || '',
+    transcript: pack.transcript || '',
+    platforms: packPlatforms(pack),
+    tone: normalizeTone(pack.tone),
+    goal: pack.goal || 'conversa',
+    audience: pack.audience || '',
+    publishAt: pack.publishAt || '',
+    publishChecklist: normalizePublishChecklist(pack),
+    generationMode: pack.generationMode === 'ai' ? 'ai' : 'local',
+    generationData: pack.generationData && typeof pack.generationData === 'object' ? pack.generationData : {},
+    transcriptionSegments: Array.isArray(pack.transcriptionSegments) ? pack.transcriptionSegments : [],
+    cutOverrides: normalizeCutOverrides(pack),
+    status: pack.status || 'draft'
+  };
+}
+
+function localVersions(pack) {
+  return Array.isArray(pack?.versions) ? pack.versions.slice(-10) : [];
+}
+
+async function recordCloudVersion(pack) {
+  if (!supabaseClient || !currentUser) return;
+  const { error } = await supabaseClient.from('postpilot_project_versions').insert({
+    project_id: pack.id,
+    user_id: currentUser.id,
+    snapshot: packSnapshot(pack)
+  });
+  if (error) {
+    console.warn('PostPilot version history:', error.message);
+    return;
+  }
+
+  const { data: stale } = await supabaseClient
+    .from('postpilot_project_versions')
+    .select('id')
+    .eq('project_id', pack.id)
+    .order('created_at', { ascending: false })
+    .range(10, 49);
+  if (stale?.length) {
+    await supabaseClient.from('postpilot_project_versions').delete().in('id', stale.map(item => item.id));
+  }
+}
+
+async function restorePackVersion(pack, snapshot) {
+  const restored = {
+    ...pack,
+    ...snapshot,
+    id: pack.id,
+    createdAt: pack.createdAt,
+    time: Date.now()
+  };
+
+  if (currentUser) {
+    const saved = await saveCloudPack(restored);
+    cloudPacks = [saved, ...cloudPacks.filter(item => item.id !== saved.id)].slice(0, 20);
+    renderPack(saved);
+    renderList();
+  } else {
+    const versions = [...localVersions(pack), { createdAt: Date.now(), snapshot: packSnapshot(pack) }].slice(-10);
+    restored.versions = versions;
+    localStorage.setItem(storageKey, JSON.stringify(readPacks().map(item => item.id === pack.id ? restored : item)));
+    renderPack(restored);
+    renderList();
+  }
+  showToast('Versão restaurada.');
+}
+
+async function renderVersionHistory(pack) {
+  const host = result.querySelector('#version-list');
+  if (!host) return;
+
+  let versions = [];
+  if (currentUser) {
+    host.innerHTML = '<small>' + escapeHtml(uiText('Carregando histórico…')) + '</small>';
+    const { data, error } = await supabaseClient
+      .from('postpilot_project_versions')
+      .select('id,snapshot,created_at')
+      .eq('project_id', pack.id)
+      .order('created_at', { ascending: false })
+      .limit(10);
+    if (error) {
+      host.innerHTML = '<small>' + escapeHtml(uiText('Não foi possível carregar o histórico.')) + '</small>';
+      return;
+    }
+    versions = (data || []).map(row => ({ id: String(row.id), createdAt: Date.parse(row.created_at), snapshot: row.snapshot }));
+  } else {
+    versions = localVersions(pack).slice().reverse().map((item, index) => ({
+      id: 'local-' + index,
+      createdAt: Number(item.createdAt) || Date.now(),
+      snapshot: item.snapshot
+    }));
+  }
+
+  if (!versions.length) {
+    host.innerHTML = '<small>' + escapeHtml(uiText('Nenhuma versão anterior ainda.')) + '</small>';
+    return;
+  }
+
+  host.innerHTML = versions.map((version, index) => {
+    const snapshot = version.snapshot || {};
+    return '<article class="version-item">' +
+      '<div><strong>' + escapeHtml(snapshot.topic || pack.topic) + '</strong>' +
+      '<small>' + escapeHtml(new Date(version.createdAt).toLocaleString(currentLocale())) + ' · ' + escapeHtml(statusLabel(snapshot.status || 'draft')) + '</small></div>' +
+      '<button class="secondary compact" type="button" data-restore-version="' + index + '">' + escapeHtml(uiText('Restaurar versão')) + '</button>' +
+    '</article>';
+  }).join('');
+
+  host.querySelectorAll('[data-restore-version]').forEach(button => {
+    button.addEventListener('click', async () => {
+      const version = versions[Number(button.dataset.restoreVersion)];
+      if (!version?.snapshot) return;
+      button.disabled = true;
+      try {
+        await restorePackVersion(pack, version.snapshot);
+      } catch (error) {
+        console.error(error);
+        button.disabled = false;
+        showToast('Não foi possível restaurar a versão.');
+      }
+    });
+  });
+}
+
 function showToast(message) {
   const toast = document.querySelector('#toast');
   toast.textContent = message;
@@ -701,6 +826,7 @@ function mapCloudPack(row) {
     mediaSizeBytes: Number(row.media_size_bytes || 0),
     transcriptionSegments: Array.isArray(row.transcription_segments) ? row.transcription_segments : [],
     cutOverrides: Array.isArray(row.cut_overrides) ? row.cut_overrides : [],
+    versions: [],
     status: row.status || 'draft',
     createdAt: Date.parse(row.created_at),
     time: Date.parse(row.updated_at || row.created_at)
@@ -787,7 +913,9 @@ async function saveCloudPack(pack) {
   const { error: outputError } = await supabaseClient.from('postpilot_outputs').insert(outputRows);
   if (outputError) console.warn('PostPilot outputs não foram salvos:', outputError.message);
 
-  return mapCloudPack(data);
+  const savedPack = mapCloudPack(data);
+  await recordCloudVersion(savedPack);
+  return savedPack;
 }
 
 async function loadCloudPacks() {
@@ -1145,10 +1273,12 @@ function renderPack(pack) {
     ${pack.mediaName ? '<p class="media-linked"><strong>' + escapeHtml(uiText('Mídia vinculada')) + ':</strong> ' + escapeHtml(pack.mediaName) + '</p><div id="media-preview-host" class="media-preview-host"></div>' : ''}
     ${cutsHtml}
     <div class="platform-grid">${cards}</div>
+    <details class="version-history"><summary>${uiText('Histórico de versões')}</summary><div id="version-list" class="version-list"></div></details>
     <p class="generator-note"><small>${currentUser ? 'Projeto sincronizado na sua conta.' : 'Projeto salvo neste dispositivo.'} ${pack.generationMode === 'ai' ? uiText('Conteúdo melhorado com IA no backend.') : uiText('O gerador atual usa regras locais, sem IA externa.')}</small></p>
     <div class="result-actions"><button class="secondary" id="edit-pack" type="button">${uiText('Editar')}</button><button class="secondary" id="template-pack" type="button">${uiText('Usar como modelo')}</button><button class="secondary" id="copy" type="button">${uiText('Copiar pacote completo')}</button><label class="export-format"><span>${uiText('Exportar')}</span><select id="export-format" aria-label="${uiText('Formato de exportação')}"><option value="txt">TXT</option><option value="md">Markdown</option><option value="json">JSON</option><option value="csv">CSV</option></select></label><button class="secondary" id="export" type="button">${uiText('Baixar')}</button></div>`;
   result.classList.add('show');
   if (pack.mediaName) renderMediaPreview(pack);
+  renderVersionHistory(pack);
   document.querySelector('#edit-pack').addEventListener('click', () => fillComposerFromPack(pack));
   document.querySelector('#template-pack').addEventListener('click', () => fillComposerFromPack(pack, { asTemplate: true }));
   document.querySelector('#copy').addEventListener('click', () => copyText(packageText(pack)));
@@ -1439,6 +1569,7 @@ form.addEventListener('submit', async event => {
     mediaSizeBytes: existing?.mediaSizeBytes || 0,
     transcriptionSegments: existing?.transcriptionSegments || [],
     cutOverrides: existing?.cutOverrides || [],
+    versions: existing?.versions || [],
     status: existing?.status || 'draft',
     createdAt: existing?.createdAt || existing?.time || Date.now(),
     time: Date.now()
@@ -1505,6 +1636,10 @@ form.addEventListener('submit', async event => {
     return;
   }
 
+  const versionEntry = { createdAt: Date.now(), snapshot: packSnapshot(pack) };
+  pack.versions = existing
+    ? [...localVersions(existing), versionEntry].slice(-10)
+    : [versionEntry];
   const packs = existing
     ? readPacks().map(item => item.id === pack.id ? pack : item)
     : [...readPacks(), pack];

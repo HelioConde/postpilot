@@ -4,12 +4,30 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f8f8f5">
+  <meta name="application-name" content="PostPilot">
+  <meta name="robots" content="index,follow">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="description" content="Transforme transcrições de vídeos longos em ideias de cortes, legendas e publicações para redes sociais.">
   <meta property="og:title" content="PostPilot — Conteúdo em movimento">
   <meta property="og:description" content="Organize um vídeo longo em cortes, legendas e ideias para publicar.">
   <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:locale:alternate" content="en_US">
   <meta property="og:url" content="https://helioconde.github.io/postpilot/">
   <link rel="canonical" href="https://helioconde.github.io/postpilot/">
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"WebApplication",
+    "name":"PostPilot",
+    "url":"https://helioconde.github.io/postpilot/",
+    "applicationCategory":"MultimediaApplication",
+    "operatingSystem":"Web",
+    "inLanguage":["pt-BR","en"],
+    "isAccessibleForFree":true,
+    "offers":{"@type":"Offer","price":"0","priceCurrency":"BRL"}
+  }
+  </script>
   <title>PostPilot — Conteúdo em movimento</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -18,6 +36,10 @@
     <header class="nav">
       <a class="brand" href="./" aria-label="PostPilot, início">PostPilot<i>.</i></a>
       <div class="nav-actions">
+        <div class="language-switcher" role="group" aria-label="Idioma / Language">
+          <button type="button" data-language="pt-BR" class="active" aria-pressed="true">PT</button>
+          <button type="button" data-language="en" aria-pressed="false">EN</button>
+        </div>
         <span id="sync-status" class="navnote" role="status">Salvo neste dispositivo</span>
         <button id="account-open" class="secondary compact" type="button">Entrar / sincronizar</button>
       </div>
@@ -72,6 +94,10 @@ Uma semana de ideias.</h1>
         <form id="form">
           <label class="field"><span>Tema do vídeo</span><input name="f0" type="text" maxlength="140" placeholder="Ex.: como comecei meu negócio" required></label>
           <label class="field"><span>Transcrição ou resumo</span><textarea name="f1" maxlength="12000" placeholder="Cole aqui uma transcrição ou descreva os pontos principais..." required></textarea></label>
+          <div class="brief-grid">
+            <label class="field"><span>Público-alvo</span><input name="audience" type="text" maxlength="120" placeholder="Ex.: donos de pequenos negócios"></label>
+            <label class="field"><span>Publicar em</span><input name="publishAt" type="date"></label>
+          </div>
           <fieldset class="platform-field">
             <legend>Plataformas do pacote</legend>
             <p class="field-help">Escolha uma ou mais. O PostPilot adapta o material para cada formato.</p>
@@ -89,6 +115,10 @@ Uma semana de ideias.</h1>
       <section class="panel">
         <div class="panel-title-row">
           <div><h2>Pacote de conteúdo</h2><p class="sub">Os últimos projetos aparecem aqui. Entre na sua conta para sincronizar entre dispositivos.</p></div>
+        </div>
+        <div id="production-summary" class="production-summary" aria-label="Resumo de produção"></div>
+        <div class="history-toolbar">
+          <label class="history-search"><span>Buscar</span><input id="project-search" type="search" placeholder="Tema ou público" autocomplete="off"></label>
           <label class="status-filter"><span>Status</span><select id="project-status-filter"><option value="all">Todos</option><option value="draft">Rascunhos</option><option value="ready">Prontos</option><option value="published">Publicados</option></select></label>
         </div>
         <div id="list" class="items"></div>
@@ -96,19 +126,26 @@ Uma semana de ideias.</h1>
       </section>
     </main>
 
-    <section class="plans">
-      <div class="plans-top"><h2>Um modelo simples para começar</h2><p>Exemplos de planos; nenhuma cobrança está ativa.</p></div>
-      <div class="plan-grid">
-        <article class="plan"><strong>Criador</strong><div class="price">R$ 29/mês</div><small>Pacotes de posts e calendário</small></article>
-        <article class="plan"><strong>Studio</strong><div class="price">R$ 59/mês</div><small>Mais créditos e exportação</small></article>
+    <section class="monetization-note" aria-labelledby="monetization-title">
+      <div>
+        <span class="eyebrow">POSTPILOT GRATUITO</span>
+        <h2 id="monetization-title">Produza mais sem assinatura.</h2>
+        <p>O PostPilot será mantido por anúncios discretos, sempre fora do formulário e dos pacotes de conteúdo.</p>
+      </div>
+      <div class="ad-placement" data-ad-placement="app-footer" hidden aria-label="Publicidade">
+        <span class="ad-label">Publicidade</span>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="" data-ad-slot="" data-ad-format="auto" data-full-width-responsive="true"></ins>
       </div>
     </section>
 
-    <footer class="foot">O gerador atual cria rascunhos locais por regras, sem IA externa nem processamento de vídeo. Ao entrar, seus projetos são sincronizados no backend. Pagamentos ainda não estão ativos.</footer>
+    <footer class="foot">O gerador atual cria rascunhos locais por regras, sem IA externa nem processamento de vídeo. Ao entrar, seus projetos são sincronizados no backend.</footer>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
   <script src="supabase-config.js"></script>
+  <script src="ads-config.js"></script>
+  <script src="ads.js"></script>
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

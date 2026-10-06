@@ -181,6 +181,16 @@ test('exibe sugestões de cortes quando existem timestamps de transcrição', as
   await expect(page.locator('.cut-suggestions')).toContainText('0:31–0:49');
 });
 
+test('analytics locais resumem padrões de produção', async ({ page }) => {
+  await localMode(page);
+  await createPack(page, ' Analytics');
+
+  const insights = page.locator('#production-insights');
+  await expect(insights).toBeVisible();
+  await expect(insights).toContainText('Instagram');
+  await expect(insights).toContainText(/Gerar conversa|Start conversation|Your editorial rhythm|Seu ritmo editorial/i);
+});
+
 test('dashboard de foco e filtros avançados organizam a produção', async ({ page }) => {
   await localMode(page);
   await createPack(page, ' Filtros');

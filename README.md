@@ -50,3 +50,10 @@ O PostPilot permanece gratuito e está preparado para anúncios responsivos fora
 O PostPilot possui Browser E2E em Chromium cobrindo o fluxo local crítico: briefing com público/data, geração multiplataforma, painel de produção, busca, mudança de status, exportação .txt, troca PT/EN e smoke responsivo em 360 px, 768 px e 1440 px.
 
 O primeiro run dessa suíte passou integralmente no GitHub Actions.
+
+
+## Calendário editorial e edição
+
+O PostPilot possui uma visão semanal de segunda a domingo baseada na data planejada de publicação. Pacotes agendados podem ser abertos diretamente pelo calendário.
+
+Pacotes existentes também podem ser editados no mesmo formulário sem criar outro projeto. A ação **Usar como modelo** reutiliza briefing, plataformas, tom e objetivo, mas inicia um novo rascunho e não herda a data de publicação para evitar duplicações acidentais.

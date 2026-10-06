@@ -63,6 +63,21 @@ test('layout responsivo não cria overflow e mantém a semana completa', async (
   expect(navBoxes.languageRight).toBeLessThanOrEqual(navBoxes.viewportWidth + 1);
 });
 
+test('estado vazio esconde controles de projeto e traduz o rodapé', async ({ page }) => {
+  await localMode(page);
+
+  await expect(page.locator('.history-toolbar')).toBeHidden();
+  await expect(page.locator('#production-metrics')).toBeHidden();
+  await expect(page.locator('#focus-dashboard')).toBeHidden();
+
+  await page.locator('[data-language="en"]').click();
+  const footer = page.locator('.foot-links');
+  await expect(footer).toContainText('About');
+  await expect(footer).toContainText('Privacy');
+  await expect(footer).toContainText('Terms');
+  await expect(footer).toContainText('Contact');
+});
+
 test('navegação por teclado oferece skip link e foco principal', async ({ page }) => {
   await localMode(page);
 

@@ -62,6 +62,7 @@
     "Formato de mídia não suportado.":"Unsupported media format.",
     "O arquivo deve ter no máximo 6 MB.":"The file must be at most 6 MB.",
     "Mídia vinculada":"Linked media",
+    "Duração":"Duration",
     "CORTES":"CLIPS",
     "Sugestões de cortes":"Clip suggestions",
     "Transcrição com timestamps":"Timestamped transcript",

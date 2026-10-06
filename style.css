@@ -247,3 +247,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .service-health>div>strong{font-size:10px}.service-health>div>small{font-size:8px;color:var(--muted)}
 .service-health>button{grid-column:1/-1;justify-self:start}
 @media(max-width:520px){.service-health{grid-template-columns:1fr}.service-health>button{grid-column:auto;width:100%}}
+
+.media-retranscribe{margin-left:auto}
+@media(max-width:620px){.media-retranscribe{margin-left:0;width:100%}}

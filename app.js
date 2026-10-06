@@ -25,6 +25,10 @@ const calendarRange = document.querySelector('#calendar-range');
 const calendarPrevButton = document.querySelector('#calendar-prev');
 const calendarTodayButton = document.querySelector('#calendar-today');
 const calendarNextButton = document.querySelector('#calendar-next');
+const localBackupControls = document.querySelector('#local-backup-controls');
+const exportBackupButton = document.querySelector('#export-backup');
+const importBackupButton = document.querySelector('#import-backup');
+const importBackupFile = document.querySelector('#import-backup-file');
 
 let currentUser = null;
 let cloudPacks = [];
@@ -79,6 +83,102 @@ function readPacks() {
 
 function visiblePacks() {
   return currentUser ? cloudPacks : readPacks();
+}
+
+function safeBackupText(value, max) {
+  return String(value || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
+}
+
+function sanitizeImportedPack(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const allowedPlatforms = ['Instagram', 'TikTok', 'YouTube Shorts'];
+  const platforms = (Array.isArray(raw.platforms) ? raw.platforms : [raw.channel])
+    .filter(value => allowedPlatforms.includes(value))
+    .slice(0, 3);
+  if (!platforms.length) platforms.push('Instagram');
+
+  const topic = safeBackupText(raw.topic, 140);
+  const transcript = safeBackupText(raw.transcript, 12000);
+  if (!topic || !transcript) return null;
+
+  const id = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(raw.id || ''))
+    ? String(raw.id)
+    : makeUuid();
+  const status = ['draft', 'ready', 'published'].includes(raw.status) ? raw.status : 'draft';
+  const goal = ['conversa', 'alcance', 'oferta'].includes(raw.goal) ? raw.goal : 'conversa';
+  const publishAt = /^\d{4}-\d{2}-\d{2}$/.test(String(raw.publishAt || '')) ? String(raw.publishAt) : '';
+  const time = Number.isFinite(Number(raw.time)) ? Number(raw.time) : Date.now();
+  const createdAt = Number.isFinite(Number(raw.createdAt)) ? Number(raw.createdAt) : time;
+
+  const pack = {
+    id,
+    topic,
+    transcript,
+    platforms,
+    channel: platforms[0],
+    tone: normalizeTone(raw.tone),
+    goal,
+    audience: safeBackupText(raw.audience, 120),
+    publishAt,
+    status,
+    createdAt,
+    time,
+    publishChecklist: raw.publishChecklist && typeof raw.publishChecklist === 'object' ? raw.publishChecklist : {}
+  };
+  pack.publishChecklist = normalizePublishChecklist(pack);
+  return pack;
+}
+
+function exportLocalBackup() {
+  if (currentUser) return;
+  const payload = {
+    format: 'postpilot-backup',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    packs: readPacks().slice(-20)
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'postpilot-backup-' + localDateKey(new Date()) + '.json';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast('Backup exportado.');
+}
+
+async function restoreLocalBackup(file) {
+  if (currentUser || !file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('O arquivo de backup é muito grande.');
+    return;
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(await file.text());
+  } catch {
+    showToast('Arquivo de backup inválido.');
+    return;
+  }
+
+  if (!parsed || parsed.format !== 'postpilot-backup' || parsed.version !== 1 || !Array.isArray(parsed.packs)) {
+    showToast('Arquivo de backup inválido.');
+    return;
+  }
+
+  if (!window.confirm(uiText('Restaurar este backup substituirá os pacotes locais atuais. Continuar?'))) return;
+
+  const packs = parsed.packs.slice(-20).map(sanitizeImportedPack).filter(Boolean);
+  localStorage.setItem(storageKey, JSON.stringify(packs));
+  openedPackId = null;
+  result.classList.remove('show');
+  result.innerHTML = '';
+  cancelComposerEdit({ reset: true });
+  renderList();
+  showToast('Backup restaurado.');
 }
 
 function showToast(message) {
@@ -605,6 +705,7 @@ function updateAccountUi() {
 
   accountForm.hidden = !supabaseClient || Boolean(currentUser);
   accountProfile.hidden = !currentUser;
+  if (localBackupControls) localBackupControls.hidden = Boolean(currentUser);
   if (currentUser) {
     document.querySelector('#account-email').textContent = currentUser.email || 'Conta conectada';
     localImportBanner.hidden = localCount === 0;
@@ -817,6 +918,16 @@ form.addEventListener('submit', async event => {
 
 projectStatusFilter?.addEventListener('change', renderList);
 projectSearch?.addEventListener('input', renderList);
+exportBackupButton?.addEventListener('click', exportLocalBackup);
+importBackupButton?.addEventListener('click', () => importBackupFile?.click());
+importBackupFile?.addEventListener('change', async () => {
+  const file = importBackupFile.files?.[0];
+  try {
+    await restoreLocalBackup(file);
+  } finally {
+    importBackupFile.value = '';
+  }
+});
 composerCancelButton?.addEventListener('click', () => {
   cancelComposerEdit({ reset: true });
   showToast('Edição cancelada.');

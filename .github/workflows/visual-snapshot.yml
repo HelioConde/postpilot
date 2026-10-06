@@ -72,6 +72,7 @@ jobs:
             screenshots/postpilot-tablet.png
             screenshots/postpilot-mobile-en.png
             screenshots/postpilot-desktop-populated.png
+            screenshots/postpilot-tablet-populated.png
             screenshots/postpilot-mobile-populated.png
             screenshots/visual-state.json
           retention-days: 30
@@ -87,6 +88,7 @@ jobs:
           cp screenshots/postpilot-tablet.png /tmp/postpilot-snapshot/
           cp screenshots/postpilot-mobile-en.png /tmp/postpilot-snapshot/
           cp screenshots/postpilot-desktop-populated.png /tmp/postpilot-snapshot/
+          cp screenshots/postpilot-tablet-populated.png /tmp/postpilot-snapshot/
           cp screenshots/postpilot-mobile-populated.png /tmp/postpilot-snapshot/
           cp screenshots/visual-state.json /tmp/postpilot-snapshot/
 
@@ -99,10 +101,11 @@ jobs:
             cp /tmp/postpilot-snapshot/postpilot-tablet.png screenshots/
             cp /tmp/postpilot-snapshot/postpilot-mobile-en.png screenshots/
             cp /tmp/postpilot-snapshot/postpilot-desktop-populated.png screenshots/
+            cp /tmp/postpilot-snapshot/postpilot-tablet-populated.png screenshots/
             cp /tmp/postpilot-snapshot/postpilot-mobile-populated.png screenshots/
             cp /tmp/postpilot-snapshot/visual-state.json screenshots/
 
-            git add screenshots/postpilot-desktop.png screenshots/postpilot-mobile.png screenshots/postpilot-tablet.png screenshots/postpilot-mobile-en.png screenshots/postpilot-desktop-populated.png screenshots/postpilot-mobile-populated.png screenshots/visual-state.json
+            git add screenshots/postpilot-desktop.png screenshots/postpilot-mobile.png screenshots/postpilot-tablet.png screenshots/postpilot-mobile-en.png screenshots/postpilot-desktop-populated.png screenshots/postpilot-tablet-populated.png screenshots/postpilot-mobile-populated.png screenshots/visual-state.json
             if git diff --cached --quiet; then
               echo "No visual changes detected."
               exit 0

@@ -47,6 +47,15 @@ test('fluxo local cria pacote editorial e atualiza painel de produção', async 
   await expect(page.locator('#production-summary')).toContainText('100%');
 });
 
+test('pacotes oferecem publicação assistida por plataforma', async ({ page }) => {
+  await localMode(page);
+  await createPack(page, ' Publicação assistida');
+
+  const actions = page.locator('[data-publish-platform]');
+  await expect(actions).toHaveCount(3);
+  await expect(actions.nth(0)).toHaveText(/Copiar e abrir|Copy & open/i);
+});
+
 test('exportação oferece TXT, Markdown, JSON e CSV', async ({ page }) => {
   await localMode(page);
   await createPack(page, ' Export');

@@ -523,3 +523,22 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     align-self:center;
   }
 }
+
+/* Signed-out media state — informative without looking actionable */
+.media-ingest .eyebrow{margin-bottom:0}
+.media-ingest:has(#media-file:disabled){
+  grid-template-columns:1fr;
+  gap:4px;
+  padding:10px 12px;
+  border-style:solid;
+  background:#faf9fd;
+}
+.media-ingest:has(#media-file:disabled) .media-upload-button,
+.media-ingest:has(#media-file:disabled) #media-clear,
+.media-ingest:has(#media-file:disabled) #media-cancel-upload,
+.media-ingest:has(#media-file:disabled) .media-progress-wrap{
+  display:none!important;
+}
+.media-ingest:has(#media-file:disabled)>.field-help{
+  min-height:0;
+}

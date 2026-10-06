@@ -73,8 +73,8 @@ let activeMediaUpload = null;
 let activeMediaUploadReject = null;
 let pendingUploadedMedia = null;
 let serviceHealth = {
-  ai: { configured: null, hourlyLimit: 20 },
-  transcription: { configured: null, hourlyLimit: 10, maxBytes: 6 * 1024 * 1024 }
+  ai: { configured: null, hourlyLimit: 20, remaining: 20, resetAt: '' },
+  transcription: { configured: null, hourlyLimit: 10, remaining: 10, resetAt: '', maxBytes: 6 * 1024 * 1024 }
 };
 
 function currentLocale() {
@@ -427,6 +427,11 @@ async function uploadAndTranscribeMedia(file, packId, { transcribe = true } = {}
     });
     if (error) throw error;
     if (!data?.transcript) throw new Error('Transcrição vazia.');
+    if (data.rateLimit) {
+      serviceHealth.transcription.remaining = Number(data.rateLimit.remaining) || 0;
+      serviceHealth.transcription.resetAt = String(data.rateLimit.resetAt || '');
+      renderServiceHealth();
+    }
     return {
       ...media,
       transcript: String(data.transcript).slice(0, 12000),
@@ -551,6 +556,11 @@ async function transcribeExistingMedia(pack) {
     }
   });
   if (error) throw error;
+  if (data?.rateLimit) {
+    serviceHealth.transcription.remaining = Number(data.rateLimit.remaining) || 0;
+    serviceHealth.transcription.resetAt = String(data.rateLimit.resetAt || '');
+    renderServiceHealth();
+  }
   return persistTranscriptionResult(pack, data?.transcript, data?.segments || []);
 }
 
@@ -1181,6 +1191,11 @@ async function generateAiContent(pack) {
 
   if (error) throw error;
   if (!data?.generation?.platforms) throw new Error('Resposta de IA inválida.');
+  if (data.rateLimit) {
+    serviceHealth.ai.remaining = Number(data.rateLimit.remaining) || 0;
+    serviceHealth.ai.resetAt = String(data.rateLimit.resetAt || '');
+    renderServiceHealth();
+  }
   return data.generation;
 }
 
@@ -1950,14 +1965,24 @@ function renderServiceHealth() {
   if (!serviceHealthHost) return;
   if (aiServiceStatus) aiServiceStatus.textContent = serviceStatusLabel(serviceHealth.ai.configured);
   if (transcriptionServiceStatus) transcriptionServiceStatus.textContent = serviceStatusLabel(serviceHealth.transcription.configured);
-  if (aiServiceLimit) aiServiceLimit.textContent = serviceHealth.ai.hourlyLimit
-    ? serviceHealth.ai.hourlyLimit + ' ' + uiText('por hora')
-    : '';
+  if (aiServiceLimit) {
+    const reset = serviceHealth.ai.resetAt
+      ? new Date(serviceHealth.ai.resetAt).toLocaleTimeString(currentLocale(), { hour: '2-digit', minute: '2-digit' })
+      : '';
+    aiServiceLimit.textContent = [
+      serviceHealth.ai.hourlyLimit ? serviceHealth.ai.remaining + '/' + serviceHealth.ai.hourlyLimit + ' ' + uiText('disponíveis nesta hora') : '',
+      reset ? uiText('renova às') + ' ' + reset : ''
+    ].filter(Boolean).join(' · ');
+  }
   if (transcriptionServiceLimit) {
     const max = formatFileSize(serviceHealth.transcription.maxBytes || 0);
+    const reset = serviceHealth.transcription.resetAt
+      ? new Date(serviceHealth.transcription.resetAt).toLocaleTimeString(currentLocale(), { hour: '2-digit', minute: '2-digit' })
+      : '';
     transcriptionServiceLimit.textContent = [
-      serviceHealth.transcription.hourlyLimit ? serviceHealth.transcription.hourlyLimit + ' ' + uiText('por hora') : '',
-      max ? uiText('até') + ' ' + max : ''
+      serviceHealth.transcription.hourlyLimit ? serviceHealth.transcription.remaining + '/' + serviceHealth.transcription.hourlyLimit + ' ' + uiText('disponíveis nesta hora') : '',
+      max ? uiText('até') + ' ' + max : '',
+      reset ? uiText('renova às') + ' ' + reset : ''
     ].filter(Boolean).join(' · ');
   }
   if (aiGenerationToggle) {
@@ -1970,8 +1995,8 @@ function renderServiceHealth() {
 async function refreshServiceHealth() {
   if (!supabaseClient || !currentUser) {
     serviceHealth = {
-      ai: { configured: null, hourlyLimit: 20 },
-      transcription: { configured: null, hourlyLimit: 10, maxBytes: 6 * 1024 * 1024 }
+      ai: { configured: null, hourlyLimit: 20, remaining: 20, resetAt: '' },
+      transcription: { configured: null, hourlyLimit: 10, remaining: 10, resetAt: '', maxBytes: 6 * 1024 * 1024 }
     };
     renderServiceHealth();
     return serviceHealth;
@@ -1987,20 +2012,24 @@ async function refreshServiceHealth() {
     if (aiResult.status === 'fulfilled' && !aiResult.value.error && aiResult.value.data) {
       serviceHealth.ai = {
         configured: Boolean(aiResult.value.data.configured),
-        hourlyLimit: Number(aiResult.value.data.hourlyLimit) || 20
+        hourlyLimit: Number(aiResult.value.data.hourlyLimit) || 20,
+        remaining: Number.isFinite(Number(aiResult.value.data.remaining)) ? Number(aiResult.value.data.remaining) : 20,
+        resetAt: String(aiResult.value.data.resetAt || '')
       };
     } else {
-      serviceHealth.ai = { configured: null, hourlyLimit: 20 };
+      serviceHealth.ai = { configured: null, hourlyLimit: 20, remaining: 20, resetAt: '' };
     }
 
     if (transcriptionResult.status === 'fulfilled' && !transcriptionResult.value.error && transcriptionResult.value.data) {
       serviceHealth.transcription = {
         configured: Boolean(transcriptionResult.value.data.configured),
         hourlyLimit: Number(transcriptionResult.value.data.hourlyLimit) || 10,
+        remaining: Number.isFinite(Number(transcriptionResult.value.data.remaining)) ? Number(transcriptionResult.value.data.remaining) : 10,
+        resetAt: String(transcriptionResult.value.data.resetAt || ''),
         maxBytes: Number(transcriptionResult.value.data.maxBytes) || 6 * 1024 * 1024
       };
     } else {
-      serviceHealth.transcription = { configured: null, hourlyLimit: 10, maxBytes: 6 * 1024 * 1024 };
+      serviceHealth.transcription = { configured: null, hourlyLimit: 10, remaining: 10, resetAt: '', maxBytes: 6 * 1024 * 1024 };
     }
   } catch (error) {
     console.warn('PostPilot service health:', error);

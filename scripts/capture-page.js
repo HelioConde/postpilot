@@ -57,6 +57,30 @@ async function capture(browser, name, viewport) {
   await context.close();
 }
 
+function validatePng(name, expectedWidth, minimumHeight) {
+  const filePath = path.join(outputDir, name);
+  if (!fs.existsSync(filePath)) throw new Error(`Missing visual snapshot: ${name}`);
+
+  const buffer = fs.readFileSync(filePath);
+  if (buffer.length < 24 || buffer.toString('hex', 0, 8) !== '89504e470d0a1a0a') {
+    throw new Error(`Invalid PNG snapshot: ${name}`);
+  }
+
+  const width = buffer.readUInt32BE(16);
+  const height = buffer.readUInt32BE(20);
+  if (width !== expectedWidth) {
+    throw new Error(`Unexpected width for ${name}: ${width}px (expected ${expectedWidth}px)`);
+  }
+  if (height < minimumHeight) {
+    throw new Error(`Snapshot looks truncated: ${name} is only ${height}px high`);
+  }
+  if (buffer.length < 20000) {
+    throw new Error(`Snapshot looks empty: ${name} is only ${buffer.length} bytes`);
+  }
+
+  return { width, height, bytes: buffer.length };
+}
+
 async function capturePopulated(browser, name, viewport) {
   const context = await createContext(browser, viewport);
   const page = await context.newPage();
@@ -98,20 +122,24 @@ async function capturePopulated(browser, name, viewport) {
     await capturePopulated(browser, 'postpilot-tablet-populated.png', { width: 768, height: 1024 });
     await capturePopulated(browser, 'postpilot-mobile-populated.png', { width: 390, height: 844 });
 
+    const validated = {
+      desktop: validatePng('postpilot-desktop.png', 1440, 1000),
+      mobile: validatePng('postpilot-mobile.png', 390, 844),
+      tablet: validatePng('postpilot-tablet.png', 768, 1024),
+      mobileEnglish: validatePng('postpilot-mobile-en.png', 390, 844),
+      desktopPopulated: validatePng('postpilot-desktop-populated.png', 1440, 1000),
+      tabletPopulated: validatePng('postpilot-tablet-populated.png', 768, 1024),
+      mobilePopulated: validatePng('postpilot-mobile-populated.png', 390, 844)
+    };
+
     fs.writeFileSync(
       path.join(outputDir, 'visual-state.json'),
       JSON.stringify({
         generatedAt: new Date().toISOString(),
         source: BASE_URL,
-        captures: {
-          desktop: { width: 1440, height: 1000, fullPage: true },
-          mobile: { width: 390, height: 844, fullPage: true },
-          tablet: { width: 768, height: 1024, fullPage: true },
-          mobileEnglish: { width: 390, height: 844, fullPage: true },
-          desktopPopulated: { width: 1440, height: 1000, fullPage: true },
-          tabletPopulated: { width: 768, height: 1024, fullPage: true },
-          mobilePopulated: { width: 390, height: 844, fullPage: true }
-        }
+        captures: Object.fromEntries(
+          Object.entries(validated).map(([key, meta]) => [key, { ...meta, fullPage: true }])
+        )
       }, null, 2) + '\n'
     );
 

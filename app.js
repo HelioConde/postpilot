@@ -30,6 +30,18 @@ function uiText(value) {
   return window.AppI18n?.t?.(value) || value;
 }
 
+function normalizeTone(value) {
+  const raw = String(value || '').trim().toLocaleLowerCase('pt-BR');
+  if (['didatico', 'didático', 'educational'].includes(raw)) return 'didatico';
+  if (['humor', 'bem-humorado', 'humorous'].includes(raw)) return 'humor';
+  return 'natural';
+}
+
+function toneLabel(value) {
+  const code = normalizeTone(value);
+  return uiText(({ natural: 'Natural e direto', didatico: 'Didático', humor: 'Bem-humorado' })[code]);
+}
+
 function escapeHtml(value = '') {
   return String(value).replace(/[&<>"']/g, char => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -163,7 +175,7 @@ function platformText(pack, platform) {
   return [
     `${english ? 'PLATFORM' : 'PLATAFORMA'}: ${deliverable.title}`,
     `${english ? 'TOPIC' : 'TEMA'}: ${pack.topic}`,
-    `${english ? 'TONE' : 'TOM'}: ${pack.tone}`,
+    `${english ? 'TONE' : 'TOM'}: ${toneLabel(pack.tone)}`,
     ...(pack.audience ? [`${english ? 'AUDIENCE' : 'PÚBLICO'}: ${pack.audience}`] : []),
     ...deliverable.lines.map(([label, value]) => `${label.toUpperCase()}: ${value}`)
   ].join('\n\n');
@@ -174,7 +186,7 @@ function packageText(pack) {
   return [
     `${english ? 'TOPIC' : 'TEMA'}: ${pack.topic}`,
     `${english ? 'GOAL' : 'OBJETIVO'}: ${pack.goal}`,
-    `${english ? 'TONE' : 'TOM'}: ${pack.tone}`,
+    `${english ? 'TONE' : 'TOM'}: ${toneLabel(pack.tone)}`,
     ...(pack.audience ? [`${english ? 'AUDIENCE' : 'PÚBLICO'}: ${pack.audience}`] : []),
     ...(pack.publishAt ? [`${english ? 'PLANNED DATE' : 'DATA PLANEJADA'}: ${pack.publishAt}`] : []),
     ...packPlatforms(pack).map(platform => platformText(pack, platform))
@@ -219,7 +231,7 @@ function mapCloudPack(row) {
     transcript: row.source_text,
     platforms,
     channel: platforms[0],
-    tone: row.tone || 'Natural e direto',
+    tone: normalizeTone(row.tone),
     goal: row.goal || 'conversa',
     audience: row.audience || '',
     publishAt: row.publish_at || '',
@@ -238,7 +250,7 @@ async function saveCloudPack(pack) {
     source_type: 'transcript',
     source_text: pack.transcript,
     platforms: packPlatforms(pack),
-    tone: pack.tone,
+    tone: normalizeTone(pack.tone),
     goal: pack.goal,
     audience: String(pack.audience || '').slice(0, 120),
     publish_at: pack.publishAt || null,
@@ -261,7 +273,7 @@ async function saveCloudPack(pack) {
     kind: 'platform-package',
     title: 'Pacote para ' + platform,
     body: platformText(pack, platform),
-    metadata: { platform, tone: pack.tone, goal: pack.goal, audience: pack.audience || '', publishAt: pack.publishAt || '' }
+    metadata: { platform, tone: normalizeTone(pack.tone), goal: pack.goal, audience: pack.audience || '', publishAt: pack.publishAt || '' }
   }));
   const { error: outputError } = await supabaseClient.from('postpilot_outputs').insert(outputRows);
   if (outputError) console.warn('PostPilot outputs não foram salvos:', outputError.message);
@@ -371,7 +383,7 @@ function renderPack(pack) {
 
   result.innerHTML = `
     <div class="result-heading">
-      <div><h3>${escapeHtml(pack.topic)}</h3><p>${packPlatforms(pack).length} ${packPlatforms(pack).length > 1 ? uiText('plataformas') : uiText('plataforma')} · ${escapeHtml(pack.tone)}${pack.audience ? ' · ' + escapeHtml(uiText('Público')) + ': ' + escapeHtml(pack.audience) : ''}${pack.publishAt ? ' · ' + escapeHtml(uiText('Planejado para')) + ' ' + escapeHtml(formatPlannedDate(pack.publishAt)) : ''}</p></div>
+      <div><h3>${escapeHtml(pack.topic)}</h3><p>${packPlatforms(pack).length} ${packPlatforms(pack).length > 1 ? uiText('plataformas') : uiText('plataforma')} · ${escapeHtml(toneLabel(pack.tone))}${pack.audience ? ' · ' + escapeHtml(uiText('Público')) + ': ' + escapeHtml(pack.audience) : ''}${pack.publishAt ? ' · ' + escapeHtml(uiText('Planejado para')) + ' ' + escapeHtml(formatPlannedDate(pack.publishAt)) : ''}</p></div>
       <span class="project-status status-${escapeHtml(pack.status || 'draft')}">${statusLabel(pack.status || 'draft')}</span>
     </div>
     <div class="platform-grid">${cards}</div>
@@ -569,7 +581,7 @@ form.addEventListener('submit', async event => {
     transcript: values.f1.trim(),
     platforms,
     channel: platforms[0],
-    tone: values.f3,
+    tone: normalizeTone(values.f3),
     goal: values.goal,
     audience: String(values.audience || '').trim(),
     publishAt: String(values.publishAt || ''),

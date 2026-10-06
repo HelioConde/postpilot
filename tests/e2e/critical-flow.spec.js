@@ -81,6 +81,70 @@ test('exportação oferece TXT, Markdown, JSON e CSV', async ({ page }) => {
   }
 });
 
+test('exportações estruturadas incluem mídia, timestamps e cortes', async ({ page }) => {
+  await localMode(page);
+  await page.evaluate(() => {
+    localStorage.setItem('postpilot-packs', JSON.stringify([{
+      id: '44444444-4444-4444-8444-444444444444',
+      topic: 'Pacote com mídia',
+      transcript: 'Primeiro trecho completo para exportação. Segundo trecho completo para exportação.',
+      platforms: ['Instagram'],
+      channel: 'Instagram',
+      tone: 'natural',
+      goal: 'alcance',
+      audience: 'criadores',
+      publishAt: '2026-10-22',
+      publishChecklist: {},
+      generationMode: 'local',
+      generationData: {},
+      mediaPath: 'user/project/video.mp4',
+      mediaName: 'video.mp4',
+      mediaType: 'video/mp4',
+      mediaSizeBytes: 1048576,
+      transcriptionSegments: [
+        { start: 5, end: 20, text: 'Primeiro trecho completo para exportação com contexto suficiente.' },
+        { start: 20, end: 38, text: 'Segundo trecho completo para exportação com contexto suficiente.' }
+      ],
+      cutOverrides: [
+        { key: '5.00-20.00', start: 6, end: 19, favorite: true, rejected: false }
+      ],
+      contentOverrides: {},
+      versions: [],
+      status: 'draft',
+      createdAt: Date.now(),
+      time: Date.now()
+    }]));
+  });
+  await page.reload();
+  await page.locator('[data-pack="44444444-4444-4444-8444-444444444444"]').click();
+
+  await page.locator('#export-format').selectOption('json');
+  let downloadPromise = page.waitForEvent('download');
+  await page.locator('#export').click();
+  let download = await downloadPromise;
+  let stream = await download.createReadStream();
+  let jsonContent = '';
+  for await (const chunk of stream) jsonContent += chunk.toString();
+  const parsed = JSON.parse(jsonContent);
+  expect(parsed.version).toBe(2);
+  expect(parsed.package.media.name).toBe('video.mp4');
+  expect(parsed.package.transcriptionSegments).toHaveLength(2);
+  expect(parsed.package.clips[0].favorite).toBe(true);
+  expect(parsed.package.clips[0].start).toBe(6);
+
+  await page.locator('#export-format').selectOption('csv');
+  downloadPromise = page.waitForEvent('download');
+  await page.locator('#export').click();
+  download = await downloadPromise;
+  stream = await download.createReadStream();
+  let csvContent = '';
+  for await (const chunk of stream) csvContent += chunk.toString();
+  expect(csvContent).toContain('"META","media_name","video.mp4"');
+  expect(csvContent).toContain('"TRANSCRIPT"');
+  expect(csvContent).toContain('"CLIP"');
+  expect(csvContent).toContain('favorite');
+});
+
 test('inglês traduz interface e geração sem alterar valores estruturais', async ({ page }) => {
   await localMode(page);
   await page.locator('[data-language="en"]').click();

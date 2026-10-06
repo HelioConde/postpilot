@@ -92,7 +92,7 @@ A IA exige sessão autenticada, valida origem, briefing e plataformas, e devolve
 
 ## Exportações
 
-Cada pacote pode ser baixado em TXT para leitura rápida, Markdown para documentos e publicação, JSON para integrações/backup estruturado e CSV para planilhas. As exportações respeitam o idioma ativo e mantêm os entregáveis separados por plataforma.
+Cada pacote pode ser baixado em TXT para leitura rápida, Markdown para documentos e publicação, JSON para integrações/backup estruturado e CSV para planilhas. As exportações respeitam o idioma ativo, mantêm os entregáveis separados por plataforma e, quando existirem, incluem metadados de mídia, segmentos com timestamps e sugestões de cortes com estado de favorito/descarte.
 
 ## Integração com calendários externos
 
@@ -143,7 +143,7 @@ Os analytics locais mostram plataforma mais usada, objetivo dominante, percentua
 
 ## QA visual
 
-A workflow `Visual Snapshot` usa Playwright/Chromium para gerar `screenshots/postpilot-desktop.png` e `screenshots/postpilot-mobile.png`. As capturas também são salvas como artifact por 30 dias, permitindo revisar visualmente cada evolução.
+A workflow `Visual Snapshot` usa Playwright/Chromium para gerar `screenshots/postpilot-desktop.png`, `screenshots/postpilot-tablet.png` e `screenshots/postpilot-mobile.png`. As capturas também são salvas como artifact por 30 dias, permitindo revisar visualmente cada evolução.
 
 
 ## Health checks e proteção de uso

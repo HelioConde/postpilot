@@ -38,7 +38,7 @@ O objetivo é validar o menor estúdio de conteúdo realmente útil para criador
 - [ ] Upload de vídeo/áudio e transcrição automática.
 - [ ] Sugestões de cortes com timestamps.
 - [x] Exportações adicionais (Markdown/CSV/JSON).
-- [ ] Integração opcional com calendário externo.
+- [x] Integração opcional com calendário externo via exportação iCalendar (.ics), compatível com Google Calendar, Outlook e Apple Calendar.
 - [ ] Publicação assistida por plataforma quando APIs e políticas permitirem.
 
 ## Regra de priorização

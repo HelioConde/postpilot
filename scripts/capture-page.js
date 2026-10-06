@@ -90,7 +90,7 @@ async function captureAccount(browser, name, viewport) {
   await page.waitForTimeout(100);
   await page.screenshot({
     path: path.join(outputDir, name),
-    fullPage: true,
+    fullPage: false,
     animations: 'disabled'
   });
   await context.close();

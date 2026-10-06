@@ -401,17 +401,86 @@ function packageText(pack) {
   ].join('\n\n---\n\n');
 }
 
-function exportPackage(pack) {
-  const blob = new Blob([packageText(pack)], { type: 'text/plain;charset=utf-8' });
+function packageSlug(pack) {
+  return pack.topic.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/\p{M}/gu, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'pacote';
+}
+
+function packageMarkdown(pack) {
+  const english = currentLocale() === 'en';
+  const sections = packPlatforms(pack).map(platform => {
+    const deliverable = platformDeliverable(pack, platform);
+    return [
+      `## ${deliverable.title}`,
+      ...deliverable.lines.map(([label, value]) => `### ${label}\n\n${value}`)
+    ].join('\n\n');
+  });
+
+  return [
+    `# ${pack.topic}`,
+    `**${english ? 'Goal' : 'Objetivo'}:** ${pack.goal}`,
+    `**${english ? 'Tone' : 'Tom'}:** ${toneLabel(pack.tone)}`,
+    ...(pack.audience ? [`**${english ? 'Audience' : 'Público'}:** ${pack.audience}`] : []),
+    ...(pack.publishAt ? [`**${english ? 'Planned date' : 'Data planejada'}:** ${pack.publishAt}`] : []),
+    '',
+    ...sections
+  ].join('\n\n');
+}
+
+function packageJson(pack) {
+  return JSON.stringify({
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    package: {
+      id: pack.id,
+      topic: pack.topic,
+      goal: pack.goal,
+      tone: normalizeTone(pack.tone),
+      audience: pack.audience || '',
+      publishAt: pack.publishAt || '',
+      status: pack.status || 'draft',
+      platforms: packPlatforms(pack),
+      deliverables: packPlatforms(pack).map(platform => {
+        const deliverable = platformDeliverable(pack, platform);
+        return {
+          platform: deliverable.title,
+          fields: Object.fromEntries(deliverable.lines.map(([label, value]) => [label, value]))
+        };
+      })
+    }
+  }, null, 2);
+}
+
+function csvCell(value) {
+  return '"' + String(value ?? '').replace(/"/g, '""') + '"';
+}
+
+function packageCsv(pack) {
+  const rows = [['platform', 'field', 'value']];
+  packPlatforms(pack).forEach(platform => {
+    const deliverable = platformDeliverable(pack, platform);
+    deliverable.lines.forEach(([label, value]) => rows.push([deliverable.title, label, value]));
+  });
+  return rows.map(row => row.map(csvCell).join(',')).join('\r\n');
+}
+
+function downloadPackage(pack, format) {
+  const exporters = {
+    txt: { content: packageText(pack), type: 'text/plain;charset=utf-8' },
+    md: { content: packageMarkdown(pack), type: 'text/markdown;charset=utf-8' },
+    json: { content: packageJson(pack), type: 'application/json;charset=utf-8' },
+    csv: { content: packageCsv(pack), type: 'text/csv;charset=utf-8' }
+  };
+  const selected = exporters[format] || exporters.txt;
+  const blob = new Blob([selected.content], { type: selected.type });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `postpilot-${pack.topic.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/\p{M}/gu, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'pacote'}.txt`;
+  link.download = `postpilot-${packageSlug(pack)}.${format}`;
   document.body.append(link);
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
-  showToast('Pacote exportado em .txt.');
+  showToast(`Pacote exportado em .${format}.`);
 }
 
 async function copyText(text) {
@@ -704,12 +773,12 @@ function renderPack(pack) {
     </div>
     <div class="platform-grid">${cards}</div>
     <p class="generator-note"><small>${currentUser ? 'Projeto sincronizado na sua conta.' : 'Projeto salvo neste dispositivo.'} O gerador atual usa regras locais, sem IA externa.</small></p>
-    <div class="result-actions"><button class="secondary" id="edit-pack" type="button">${uiText('Editar')}</button><button class="secondary" id="template-pack" type="button">${uiText('Usar como modelo')}</button><button class="secondary" id="copy" type="button">${uiText('Copiar pacote completo')}</button><button class="secondary" id="export" type="button">${uiText('Exportar .txt')}</button></div>`;
+    <div class="result-actions"><button class="secondary" id="edit-pack" type="button">${uiText('Editar')}</button><button class="secondary" id="template-pack" type="button">${uiText('Usar como modelo')}</button><button class="secondary" id="copy" type="button">${uiText('Copiar pacote completo')}</button><label class="export-format"><span>${uiText('Exportar')}</span><select id="export-format" aria-label="${uiText('Formato de exportação')}"><option value="txt">TXT</option><option value="md">Markdown</option><option value="json">JSON</option><option value="csv">CSV</option></select></label><button class="secondary" id="export" type="button">${uiText('Baixar')}</button></div>`;
   result.classList.add('show');
   document.querySelector('#edit-pack').addEventListener('click', () => fillComposerFromPack(pack));
   document.querySelector('#template-pack').addEventListener('click', () => fillComposerFromPack(pack, { asTemplate: true }));
   document.querySelector('#copy').addEventListener('click', () => copyText(packageText(pack)));
-  document.querySelector('#export').addEventListener('click', () => exportPackage(pack));
+  document.querySelector('#export').addEventListener('click', () => downloadPackage(pack, document.querySelector('#export-format')?.value || 'txt'));
   result.querySelectorAll('[data-copy-platform]').forEach(button => {
     button.addEventListener('click', () => copyText(platformText(pack, button.dataset.copyPlatform)));
   });

@@ -1125,3 +1125,45 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .password-toggle{position:absolute;right:7px;top:50%;transform:translateY(-50%);min-height:32px;padding:5px 9px;border:0;border-radius:7px;background:var(--soft);color:var(--accent);font:800 9px Manrope;cursor:pointer}
 .password-toggle:hover{background:#e6e0f4}
 @media(max-width:500px){.password-toggle{min-height:36px;padding-inline:11px}}
+
+.publish-checklist-details{
+  margin:12px 0 0;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#fafaf8;
+}
+.publish-checklist-details>summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  min-height:38px;
+  padding:8px 10px;
+  color:var(--ink);
+  font-size:9px;
+  font-weight:800;
+  cursor:pointer;
+  list-style:none;
+}
+.publish-checklist-details>summary::-webkit-details-marker{display:none}
+.publish-checklist-details>summary::after{
+  content:'+';
+  color:var(--accent);
+  font-size:14px;
+}
+.publish-checklist-details[open]>summary::after{content:'−'}
+.publish-checklist-details>summary small{
+  margin-left:auto;
+  color:var(--muted);
+  font-size:8px;
+}
+.publish-checklist-details .publish-checklist{
+  margin:0 8px 8px;
+  border-radius:8px;
+  background:#fff;
+}
+@media(min-width:621px){
+  .publish-checklist-details>summary{display:none}
+  .publish-checklist-details{margin-top:12px;border:0;background:transparent}
+  .publish-checklist-details .publish-checklist{margin:0}
+}

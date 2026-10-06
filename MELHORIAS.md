@@ -61,6 +61,10 @@ Não adicionar processamento de vídeo pesado, cobrança ou automação de publi
 - [x] Upload TUS resumível com progresso, retomada e cancelamento; limite continua 6 MB até validar o provedor de transcrição.
 - [x] Páginas bilíngues Sobre, Privacidade, Termos e Contato + sitemap.
 - [x] Visual Snapshot automático desktop/mobile salvo no GitHub.
+- [x] Health check autenticado para IA/transcrição no painel da conta.
+- [x] Quota por usuário: 20 gerações de IA/h e 10 transcrições/h, com contador atômico em schema privado.
+- [x] Timeout de fornecedor: 30 s IA e 120 s transcrição.
+- [x] Upload preservado quando a transcrição falha ou está indisponível; evita apagar/repetir envio.
 - [x] QA visual inicial aplicado: correção do progresso 0%, card do hero e newline literal.
 - [ ] Aumentar limite real de mídia acima de 6 MB após confirmar limite global do Storage + limite do fornecedor de transcrição.
 - [x] Limpeza automática de mídia órfã: ao sincronizar a conta, arquivos privados sem projeto correspondente são removidos após retenção conservadora de 30 dias.

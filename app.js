@@ -575,11 +575,24 @@ async function saveCloudPack(pack) {
     updated_at: now
   };
 
-  const { data, error } = await supabaseClient
+  let { data, error } = await supabaseClient
     .from('postpilot_projects')
     .upsert(row, { onConflict: 'id' })
     .select('*')
     .single();
+
+  if (error && /generation_(mode|data)|schema cache|column/i.test(String(error.message || ''))) {
+    const compatibleRow = { ...row };
+    delete compatibleRow.generation_mode;
+    delete compatibleRow.generation_data;
+    const retry = await supabaseClient
+      .from('postpilot_projects')
+      .upsert(compatibleRow, { onConflict: 'id' })
+      .select('*')
+      .single();
+    data = retry.data;
+    error = retry.error;
+  }
 
   if (error) throw error;
 
@@ -703,6 +716,7 @@ function fillComposerFromPack(pack, { asTemplate = false } = {}) {
   form.elements.publishAt.value = asTemplate ? '' : (pack.publishAt || '');
   form.elements.f3.value = normalizeTone(pack.tone);
   form.elements.goal.value = pack.goal || 'conversa';
+  if (aiGenerationToggle) aiGenerationToggle.checked = !asTemplate && pack.generationMode === 'ai' && Boolean(currentUser);
 
   const selected = new Set(packPlatforms(pack));
   form.querySelectorAll('[name="platforms"]').forEach(input => {
@@ -1060,7 +1074,7 @@ form.addEventListener('submit', async event => {
           pack.generationMode = 'local';
           showToast('IA indisponível. Usando o gerador local.');
         }
-      } else if (!existing || existing.generationMode !== 'ai') {
+      } else {
         pack.generationData = {};
         pack.generationMode = 'local';
       }

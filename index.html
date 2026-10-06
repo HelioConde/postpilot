@@ -1,2 +1,104 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f8f8f5"><title>PostPilot — Conteúdo em movimento</title><link rel="stylesheet" href="style.css"></head><body><div class="wrap"><header class="nav"><a class="brand" href="./">PostPilot<i>.</i></a><span class="navnote">Protótipo interativo · dados salvos no navegador</span></header><section class="hero"><div><div class="eyebrow">ESTÚDIO DE CONTEÚDO PARA CRIADORES</div><h1>Um vídeo longo.
-Uma semana de ideias.</h1><p>Organize trechos, legendas e publicações a partir da transcrição do seu vídeo. Prepare seu pacote de conteúdo para revisar e publicar.</p></div><aside class="hero-card"><span class="hero-icon">✦</span><div><strong>Conteúdo em movimento</strong><small>Transforme uma gravação em conteúdo reaproveitável.</small></div></aside></section><main class="grid"><section class="panel"><h2>Seu próximo vídeo</h2><p class="sub">Quanto mais contexto você incluir, melhores serão os rascunhos para revisar.</p><form id="form"><label class="field"><span>Tema do vídeo</span><input name="f0" type="text" placeholder="Ex.: como comecei meu negócio" required></label><label class="field"><span>Transcrição ou resumo</span><textarea name="f1" placeholder="Cole aqui uma transcrição ou descreva os pontos principais..." required></textarea></label><label class="field"><span>Canal principal</span><select name="f2"><option>Instagram</option><option>TikTok</option><option>YouTube Shorts</option></select></label><label class="field"><span>Tom de voz</span><select name="f3"><option>Natural e direto</option><option>Didático</option><option>Bem-humorado</option></select></label><button class="primary">Montar pacote demonstrativo</button></form></section><section class="panel"><h2>Pacote de conteúdo</h2><p class="sub">Cole uma transcrição para montar um rascunho com ganchos, cortes e legendas demonstrativas.</p><div id="list" class="items"></div><div id="result" class="result"></div></section></main><section class="plans"><div class="plans-top"><h2>Um modelo simples para começar</h2><p>Exemplos de planos; nenhuma cobrança está ativa.</p></div><div class="plan-grid"><article class="plan"><strong>Criador</strong><div class="price">R$ 29/mês</div><small>Pacotes de posts e calendário</small></article><article class="plan"><strong>Studio</strong><div class="price">R$ 59/mês</div><small>Mais créditos e exportação</small></article></div></section><footer class="foot">Protótipo para validação. Este fluxo é demonstrativo e não usa IA real nem processa arquivos de vídeo. Os dados ficam neste navegador. Integrações, contas e pagamentos ainda não estão conectados.</footer></div><div class="toast" id="toast">Salvo neste navegador</div><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f8f8f5">
+  <meta name="description" content="Transforme transcrições de vídeos longos em ideias de cortes, legendas e publicações para redes sociais.">
+  <meta property="og:title" content="PostPilot — Conteúdo em movimento">
+  <meta property="og:description" content="Organize um vídeo longo em cortes, legendas e ideias para publicar.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://helioconde.github.io/postpilot/">
+  <link rel="canonical" href="https://helioconde.github.io/postpilot/">
+  <title>PostPilot — Conteúdo em movimento</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="nav">
+      <a class="brand" href="./" aria-label="PostPilot, início">PostPilot<i>.</i></a>
+      <div class="nav-actions">
+        <span id="sync-status" class="navnote" role="status">Salvo neste dispositivo</span>
+        <button id="account-open" class="secondary compact" type="button">Entrar / sincronizar</button>
+      </div>
+    </header>
+
+    <dialog id="account-dialog" class="account-dialog" aria-labelledby="account-title">
+      <div class="dialog-head">
+        <div>
+          <span class="eyebrow">SUA CONTA POSTPILOT</span>
+          <h2 id="account-title">Leve seus pacotes com você</h2>
+        </div>
+        <button id="account-close" class="dialog-close" type="button" aria-label="Fechar">×</button>
+      </div>
+      <p class="sub">Entre para sincronizar seus projetos. Sem conta, o PostPilot continua funcionando neste dispositivo.</p>
+      <form id="auth-form">
+        <label class="field"><span>E-mail</span><input name="email" type="email" autocomplete="email" required></label>
+        <label class="field"><span>Senha</span><input name="password" type="password" autocomplete="current-password" minlength="8" required></label>
+        <button class="primary" type="submit">Entrar</button>
+        <div class="account-links">
+          <button id="sign-up" class="secondary" type="button">Criar conta</button>
+          <button id="reset-password" class="secondary" type="button">Esqueci a senha</button>
+        </div>
+      </form>
+      <div id="account-profile" hidden>
+        <p>Conectado como <strong id="account-email"></strong></p>
+        <button id="sign-out" class="secondary" type="button">Sair da conta</button>
+      </div>
+      <div id="local-import-banner" class="import-banner" hidden>
+        <span><strong id="local-import-count">0</strong> pacotes locais encontrados.</span>
+        <button id="local-import" class="secondary" type="button">Importar para a conta</button>
+      </div>
+      <p id="account-message" class="account-message" role="status" aria-live="polite"></p>
+    </dialog>
+
+    <section class="hero">
+      <div>
+        <div class="eyebrow">ESTÚDIO DE CONTEÚDO PARA CRIADORES</div>
+        <h1>Um vídeo longo.
+Uma semana de ideias.</h1>
+        <p>Organize trechos, legendas e publicações a partir da transcrição do seu vídeo. Prepare seu pacote de conteúdo para revisar e publicar.</p>
+      </div>
+      <aside class="hero-card">
+        <span class="hero-icon" aria-hidden="true">✦</span>
+        <div><strong>Conteúdo em movimento</strong><small>Transforme uma gravação em conteúdo reaproveitável.</small></div>
+      </aside>
+    </section>
+
+    <main class="grid">
+      <section class="panel">
+        <h2>Seu próximo vídeo</h2>
+        <p class="sub">Quanto mais contexto você incluir, melhores serão os rascunhos para revisar.</p>
+        <form id="form">
+          <label class="field"><span>Tema do vídeo</span><input name="f0" type="text" maxlength="140" placeholder="Ex.: como comecei meu negócio" required></label>
+          <label class="field"><span>Transcrição ou resumo</span><textarea name="f1" maxlength="12000" placeholder="Cole aqui uma transcrição ou descreva os pontos principais..." required></textarea></label>
+          <label class="field"><span>Canal principal</span><select name="f2"><option>Instagram</option><option>TikTok</option><option>YouTube Shorts</option></select></label>
+          <label class="field"><span>Tom de voz</span><select name="f3"><option>Natural e direto</option><option>Didático</option><option>Bem-humorado</option></select></label>
+          <button class="primary" type="submit">Montar pacote</button>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Pacote de conteúdo</h2>
+        <p class="sub">Os últimos projetos aparecem aqui. Entre na sua conta para sincronizar entre dispositivos.</p>
+        <div id="list" class="items"></div>
+        <div id="result" class="result"></div>
+      </section>
+    </main>
+
+    <section class="plans">
+      <div class="plans-top"><h2>Um modelo simples para começar</h2><p>Exemplos de planos; nenhuma cobrança está ativa.</p></div>
+      <div class="plan-grid">
+        <article class="plan"><strong>Criador</strong><div class="price">R$ 29/mês</div><small>Pacotes de posts e calendário</small></article>
+        <article class="plan"><strong>Studio</strong><div class="price">R$ 59/mês</div><small>Mais créditos e exportação</small></article>
+      </div>
+    </section>
+
+    <footer class="foot">O gerador atual cria rascunhos locais por regras, sem IA externa nem processamento de vídeo. Ao entrar, seus projetos são sincronizados no backend. Pagamentos ainda não estão ativos.</footer>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

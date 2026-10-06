@@ -6,6 +6,7 @@ const APP_SHELL = [
   './app.js',
   './i18n.js',
   './pwa.js',
+  './beta-feedback.js',
   './ads.js',
   './ads-config.js',
   './supabase-config.js',

@@ -15,6 +15,7 @@
     "Sair da conta":"Sign out",
     "Ativo":"Active",
     "Aguardando configuração":"Awaiting configuration",
+    "Limite da hora atingido":"Hourly limit reached",
     "Verificando…":"Checking…",
     "Atualizar serviços":"Refresh services",
     "por hora":"per hour",

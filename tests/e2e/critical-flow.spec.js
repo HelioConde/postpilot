@@ -106,3 +106,52 @@ for (const width of [360, 768, 1440]) {
     expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1);
   });
 }
+
+
+test('calendário semanal mostra pacote agendado e abre a prévia', async ({ page }) => {
+  await localMode(page);
+  const today = await page.evaluate(() => {
+    const date = new Date();
+    const y = String(date.getFullYear());
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + d;
+  });
+
+  await page.locator('[name="f0"]').fill('Conteúdo do calendário');
+  await page.locator('[name="f1"]').fill('Uma ideia longa o suficiente para virar um pacote editorial e aparecer no planejamento semanal.');
+  await page.locator('[name="publishAt"]').fill(today);
+  await page.getByRole('button', { name: /Montar pacote|Build content pack/i }).click();
+
+  const calendar = page.locator('#calendar-grid');
+  await expect(calendar).toContainText('Conteúdo do calendário');
+  await calendar.getByRole('button', { name: /Conteúdo do calendário/i }).click();
+  await expect(page.locator('#result')).toContainText('Conteúdo do calendário');
+});
+
+test('editar atualiza o pacote e usar como modelo cria outro rascunho', async ({ page }) => {
+  await localMode(page);
+  await createPack(page, ' Editável');
+
+  let item = page.locator('#list .item').filter({ hasText: 'Marketing para pequenos negócios Editável' }).first();
+  await item.locator('[data-edit-pack]').click();
+  await expect(page.locator('#composer-mode')).toBeVisible();
+  await expect(page.locator('#composer-submit')).toHaveText(/Salvar alterações|Save changes/);
+
+  await page.locator('[name="f0"]').fill('Marketing editado');
+  await page.locator('#composer-submit').click();
+  await expect(page.locator('#list')).toContainText('Marketing editado');
+  await expect(page.locator('#list .item')).toHaveCount(1);
+
+  item = page.locator('#list .item').filter({ hasText: 'Marketing editado' }).first();
+  await item.locator('[data-template-pack]').click();
+  await expect(page.locator('[name="publishAt"]')).toHaveValue('');
+  await expect(page.locator('#composer-submit')).toHaveText(/Montar pacote|Build content pack/);
+
+  await page.locator('[name="f0"]').fill('Marketing derivado do modelo');
+  await page.locator('#composer-submit').click();
+
+  await expect(page.locator('#list')).toContainText('Marketing editado');
+  await expect(page.locator('#list')).toContainText('Marketing derivado do modelo');
+  await expect(page.locator('#list .item')).toHaveCount(2);
+});

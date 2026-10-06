@@ -24,6 +24,7 @@ jobs:
           test -f style.css
           test -f README.md
           test -f FULLSTACK.md
+          test -f supabase/migrations/20261006061000_multiplatform_workflow.sql
       - name: Check SEO and backend boot
         run: |
           grep -qi '<title' index.html
@@ -31,3 +32,8 @@ jobs:
           grep -qi 'meta name="description"' index.html
           grep -qi 'rel="canonical"' index.html
           grep -qi 'supabase-config.js' index.html
+          grep -qi 'name="platforms"' index.html
+          grep -qi 'project-status-filter' index.html
+          grep -qi 'platformDeliverable' app.js
+          grep -qi 'data-status-id' app.js
+          grep -qi 'Exportar .txt' app.js

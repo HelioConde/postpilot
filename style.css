@@ -885,3 +885,40 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     grid-column:1/-1;
   }
 }
+
+/* Hero conversion path — direct but lighter than the composer submit */
+.hero-actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-top:20px;
+}
+.hero-cta{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:42px;
+  padding:10px 16px;
+  border-radius:10px;
+  background:var(--accent);
+  color:#fff;
+  font:800 11px Manrope;
+  box-shadow:0 8px 22px rgba(101,82,161,.16);
+}
+.hero-cta:hover{background:#59468f;color:#fff}
+.hero-actions small{
+  max-width:220px;
+  color:var(--muted);
+  font-size:9px;
+  line-height:1.45;
+}
+@media(max-width:500px){
+  .hero-actions{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:7px;
+    margin-top:16px;
+  }
+  .hero-cta{width:100%;min-height:44px}
+  .hero-actions small{max-width:none;text-align:center}
+}

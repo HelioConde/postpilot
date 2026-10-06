@@ -87,6 +87,17 @@ test('estado vazio esconde controles de projeto e traduz o rodapé', async ({ pa
   await expect(footer).toContainText('Contact');
 });
 
+test('hero oferece caminho direto ao briefing em PT e EN', async ({ page }) => {
+  await localMode(page);
+  const cta = page.locator('.hero-cta');
+  await expect(cta).toBeVisible();
+  await expect(cta).toHaveAttribute('href', '#form');
+  await expect(cta).toHaveText('Começar meu pacote');
+
+  await page.locator('[data-language="en"]').click();
+  await expect(cta).toHaveText('Start my content pack');
+});
+
 test('navegação por teclado oferece skip link e foco principal', async ({ page }) => {
   await localMode(page);
 

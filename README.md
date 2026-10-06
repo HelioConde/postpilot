@@ -170,3 +170,13 @@ O repositório possui camadas complementares de QA:
 - **Visual Snapshot:** capturas full-page em desktop, tablet e mobile.
 
 Os relatórios do Lighthouse são mantidos como artifact por 30 dias.
+
+
+## Chaves Supabase
+
+As Edge Functions preferem o modelo atual de chaves do Supabase:
+
+- `SUPABASE_PUBLISHABLE_KEYS["default"]` para criar clientes que validam a sessão do usuário;
+- `SUPABASE_SECRET_KEYS["default"]` para operações internas privilegiadas, como quota e feedback.
+
+`SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` permanecem apenas como fallback de compatibilidade temporário enquanto o projeto migra completamente para o novo modelo de API keys. Nenhuma secret key é exposta no frontend.

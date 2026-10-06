@@ -63,7 +63,7 @@ jobs:
         run: node scripts/capture-page.js
 
       - name: Upload visual artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: postpilot-visual-snapshot
           path: |

@@ -1167,3 +1167,32 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .publish-checklist-details{margin-top:12px;border:0;background:transparent}
   .publish-checklist-details .publish-checklist{margin:0}
 }
+
+/* Account action hierarchy */
+.account-links{
+  align-items:center;
+}
+#sign-up{
+  min-height:40px;
+}
+#reset-password{
+  min-height:40px;
+  background:transparent;
+  border:1px solid var(--line);
+  color:var(--muted);
+}
+#reset-password:hover{
+  border-color:#cfc8e5;
+  background:#faf9fd;
+  color:var(--accent);
+}
+@media(max-width:500px){
+  .account-links{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .account-links .secondary{
+    width:100%;
+  }
+}

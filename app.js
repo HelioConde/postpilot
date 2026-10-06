@@ -492,6 +492,68 @@ function cleanTranscriptionSegments(segments) {
   })).filter(segment => segment.text && segment.end >= segment.start);
 }
 
+async function persistTranscriptionResult(pack, transcript, segments) {
+  const cleanedSegments = cleanTranscriptionSegments(segments);
+  const cleanTranscript = String(transcript || '').replace(/\s+/g, ' ').trim().slice(0, 12000);
+  if (!cleanTranscript) throw new Error('Transcrição vazia.');
+
+  const updated = {
+    ...pack,
+    transcript: cleanTranscript,
+    transcriptionSegments: cleanedSegments,
+    generationMode: 'local',
+    generationData: {},
+    contentOverrides: {},
+    cutOverrides: [],
+    time: Date.now()
+  };
+
+  if (currentUser) {
+    const { data, error } = await supabaseClient
+      .from('postpilot_projects')
+      .update({
+        source_text: cleanTranscript,
+        transcription_segments: cleanedSegments,
+        generation_mode: 'local',
+        generation_data: {},
+        content_overrides: {},
+        cut_overrides: [],
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', pack.id)
+      .select('*')
+      .single();
+    if (error) throw error;
+    const saved = mapCloudPack(data);
+    cloudPacks = cloudPacks.map(item => item.id === saved.id ? saved : item);
+    await recordCloudVersion(saved);
+    return saved;
+  }
+
+  const versionEntry = { createdAt: Date.now(), snapshot: packSnapshot(pack) };
+  updated.versions = [...localVersions(pack), versionEntry].slice(-10);
+  localStorage.setItem(storageKey, JSON.stringify(readPacks().map(item => item.id === updated.id ? updated : item)));
+  return updated;
+}
+
+async function transcribeExistingMedia(pack) {
+  if (!supabaseClient || !currentUser || !pack.mediaPath) throw new Error('Mídia indisponível.');
+  if (serviceHealth.transcription.configured !== true) {
+    await refreshServiceHealth();
+    if (serviceHealth.transcription.configured !== true) throw new Error('Transcrição não configurada.');
+  }
+
+  const { data, error } = await supabaseClient.functions.invoke('postpilot-transcribe', {
+    body: {
+      path: pack.mediaPath,
+      name: pack.mediaName || 'media',
+      locale: currentLocale()
+    }
+  });
+  if (error) throw error;
+  return persistTranscriptionResult(pack, data?.transcript, data?.segments || []);
+}
+
 async function persistTranscriptionSegments(pack, segments) {
   const cleaned = cleanTranscriptionSegments(segments);
   const transcript = cleaned.map(segment => segment.text).join(' ').slice(0, 12000);
@@ -1695,7 +1757,7 @@ function renderPack(pack) {
       <div><h3>${escapeHtml(pack.topic)}</h3><p>${packPlatforms(pack).length} ${packPlatforms(pack).length > 1 ? uiText('plataformas') : uiText('plataforma')} · ${escapeHtml(toneLabel(pack.tone))}${pack.audience ? ' · ' + escapeHtml(uiText('Público')) + ': ' + escapeHtml(pack.audience) : ''}${pack.publishAt ? ' · ' + escapeHtml(uiText('Planejado para')) + ' ' + escapeHtml(formatPlannedDate(pack.publishAt)) : ''}</p><small class="pack-checklist-progress">${uiText('Checklist')}: ${checklistStats.done}/${checklistStats.total}</small></div>
       <span class="project-status status-${escapeHtml(pack.status || 'draft')}">${statusLabel(pack.status || 'draft')}</span>
     </div>
-    ${pack.mediaName ? '<div class="media-linked"><strong>' + escapeHtml(uiText('Mídia vinculada')) + ':</strong> <span>' + escapeHtml(pack.mediaName) + '</span>' + (pack.mediaSizeBytes ? '<small>' + escapeHtml(formatFileSize(pack.mediaSizeBytes)) + '</small>' : '') + '<small data-media-duration></small></div><div id="media-preview-host" class="media-preview-host"></div>' : ''}
+    ${pack.mediaName ? '<div class="media-linked"><strong>' + escapeHtml(uiText('Mídia vinculada')) + ':</strong> <span>' + escapeHtml(pack.mediaName) + '</span>' + (pack.mediaSizeBytes ? '<small>' + escapeHtml(formatFileSize(pack.mediaSizeBytes)) + '</small>' : '') + '<small data-media-duration></small>' + (currentUser ? '<button class="secondary compact media-retranscribe" type="button" data-transcribe-existing' + (serviceHealth.transcription.configured === true ? '' : ' disabled') + '>' + escapeHtml(serviceHealth.transcription.configured === true ? uiText('Transcrever agora') : uiText('Transcrição indisponível')) + '</button>' : '') + '</div><div id="media-preview-host" class="media-preview-host"></div>' : ''}
     ${transcriptEditorHtml}
     ${cutsHtml}
     <div class="platform-grid">${cards}</div>
@@ -1711,6 +1773,24 @@ function renderPack(pack) {
   document.querySelector('#export').addEventListener('click', () => downloadPackage(pack, document.querySelector('#export-format')?.value || 'txt'));
   result.querySelectorAll('[data-copy-platform]').forEach(button => {
     button.addEventListener('click', () => copyText(platformText(pack, button.dataset.copyPlatform)));
+  });
+  result.querySelector('[data-transcribe-existing]')?.addEventListener('click', async event => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    button.textContent = uiText('Transcrevendo mídia…');
+    try {
+      const saved = await transcribeExistingMedia(pack);
+      renderPack(saved);
+      renderList();
+      showToast('Transcrição atualizada a partir da mídia.');
+    } catch (error) {
+      console.error(error);
+      button.disabled = serviceHealth.transcription.configured !== true;
+      button.textContent = serviceHealth.transcription.configured === true
+        ? uiText('Transcrever agora')
+        : uiText('Transcrição indisponível');
+      showToast('Não foi possível transcrever a mídia agora.');
+    }
   });
   result.querySelectorAll('[data-publish-platform]').forEach(button => {
     button.addEventListener('click', () => assistPublish(pack, button.dataset.publishPlatform));

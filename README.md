@@ -1,5 +1,25 @@
 # PostPilot
 
-Protótipo de estúdio de conteúdo para criadores. A partir de tema e transcrição, monta localmente ganchos, ideias de trechos, legenda, chamada para ação e hashtags. O criador escolhe canal, tom e objetivo; pode copiar o pacote e reabrir os últimos rascunhos.
+Estúdio de conteúdo para criadores. A partir de tema e transcrição, organiza ganchos, ideias de cortes, legenda, CTA e hashtags.
 
-Não processa arquivos de vídeo nem usa IA real neste protótipo. Transcrição automática, geração por IA, contas, créditos e pagamentos precisam de integração.
+## Estado atual
+
+- modo local sem conta;
+- Supabase Auth por e-mail/senha;
+- sincronização de projetos no `pizzaria-db`;
+- importação de rascunhos locais para a conta;
+- histórico e exclusão protegidos por RLS;
+- snapshot dos pacotes em `postpilot_outputs`;
+- GitHub Pages + CI;
+- SEO básico com canonical e Open Graph.
+
+O gerador atual usa regras locais. Processamento de vídeo, transcrição automática e geração por IA externa ainda não estão ligados; quando forem adicionados, chaves privadas devem ficar em backend/Edge Function.
+
+## Backend
+
+Tabelas:
+- `postpilot_projects`
+- `postpilot_outputs`
+- `product_subscriptions`
+
+Veja `FULLSTACK.md` para arquitetura e próximos passos.

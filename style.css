@@ -205,3 +205,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .deliverable-head>span{margin:0}
 .regenerate-field{border:0;background:transparent;padding:3px 0;color:var(--muted);font:800 8px Manrope;cursor:pointer;text-transform:uppercase;letter-spacing:.35px}
 .regenerate-field:hover{color:var(--ink)}.regenerate-field:disabled{opacity:.45;cursor:wait}
+
+.media-progress-wrap{grid-column:1/-1;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.media-progress-wrap progress{width:100%;height:7px;border:0;border-radius:99px;overflow:hidden}.media-progress-wrap span{font-size:8px;font-weight:800;color:var(--muted)}

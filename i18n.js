@@ -178,6 +178,8 @@
     "O gerador atual cria rascunhos locais por regras, sem IA externa nem processamento de vídeo. Ao entrar, seus projetos são sincronizados no backend.":"The current generator creates rule-based local drafts without external AI or video processing. When signed in, projects sync to the backend.",
     "O PostPilot funciona com gerador local por regras. Ao entrar, você também pode sincronizar projetos, enviar mídia privada e usar recursos de IA quando os serviços estiverem configurados.":"PostPilot works with a local rule-based generator. When signed in, you can also sync projects, upload private media, and use AI features when services are configured.",
     "Copiar":"Copy",
+    "Expandir":"Expand",
+    "Recolher":"Collapse",
     "Copiar e abrir":"Copy & open",
     "Conteúdo copiado. Finalize a publicação na plataforma.":"Content copied. Finish publishing on the platform.",
 

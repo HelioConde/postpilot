@@ -114,13 +114,18 @@ async function capturePopulated(browser, name, viewport) {
 (async () => {
   const browser = await chromium.launch({ headless: true });
   try {
-    await capture(browser, 'postpilot-desktop.png', { width: 1440, height: 1000 });
-    await capture(browser, 'postpilot-mobile.png', { width: 390, height: 844 });
-    await capture(browser, 'postpilot-tablet.png', { width: 768, height: 1024 });
-    await captureLocale(browser, 'postpilot-mobile-en.png', { width: 390, height: 844 }, 'en');
-    await capturePopulated(browser, 'postpilot-desktop-populated.png', { width: 1440, height: 1000 });
-    await capturePopulated(browser, 'postpilot-tablet-populated.png', { width: 768, height: 1024 });
-    await capturePopulated(browser, 'postpilot-mobile-populated.png', { width: 390, height: 844 });
+    await Promise.all([
+      capture(browser, 'postpilot-desktop.png', { width: 1440, height: 1000 }),
+      capture(browser, 'postpilot-mobile.png', { width: 390, height: 844 }),
+      capture(browser, 'postpilot-tablet.png', { width: 768, height: 1024 }),
+      captureLocale(browser, 'postpilot-mobile-en.png', { width: 390, height: 844 }, 'en')
+    ]);
+
+    await Promise.all([
+      capturePopulated(browser, 'postpilot-desktop-populated.png', { width: 1440, height: 1000 }),
+      capturePopulated(browser, 'postpilot-tablet-populated.png', { width: 768, height: 1024 }),
+      capturePopulated(browser, 'postpilot-mobile-populated.png', { width: 390, height: 844 })
+    ]);
 
     const validated = {
       desktop: validatePng('postpilot-desktop.png', 1440, 1000),

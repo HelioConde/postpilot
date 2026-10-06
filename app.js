@@ -1924,20 +1924,28 @@ function renderList() {
 function renderPack(pack) {
   openedPackId = pack.id;
   const checklist = normalizePublishChecklist(pack);
-  const cards = packPlatforms(pack).map(platform => {
+  const cards = packPlatforms(pack).map((platform, platformIndex) => {
     const deliverable = platformDeliverable(pack, platform);
     const state = checklist[platform];
     const platformProgress = Number(state.reviewed) + Number(state.mediaReady) + Number(state.published);
+    const bodyId = 'platform-body-' + platformIndex;
+    const expanded = platformIndex === 0;
     return `
-      <article class="platform-card">
-        <div class="platform-card-head"><div><h4>${escapeHtml(deliverable.title)}</h4><small class="platform-progress">${platformProgress}/3 ${uiText('concluídos')}</small></div><div class="platform-card-actions"><button class="copy-platform" type="button" data-copy-platform="${escapeHtml(platform)}">${uiText('Copiar')}</button><button class="publish-assist" type="button" data-publish-platform="${escapeHtml(platform)}">${uiText('Copiar e abrir')}</button></div></div>
-        ${deliverable.lines.map(([label, value]) => `<div class="deliverable" data-deliverable-platform="${escapeHtml(platform)}" data-deliverable-label="${escapeHtml(label)}"><div class="deliverable-head"><span>${escapeHtml(label)}</span><button class="regenerate-field" type="button" data-regenerate-field>${uiText('Nova versão')}</button></div><p>${escapeHtml(value).replace(/\n/g, '<br>')}</p></div>`).join('')}
-        <fieldset class="publish-checklist">
-          <legend>${uiText('Checklist de publicação')}</legend>
-          <label><input type="checkbox" data-check-platform="${escapeHtml(platform)}" data-check-step="reviewed"${state.reviewed ? ' checked' : ''}><span>${uiText('Texto revisado')}</span></label>
-          <label><input type="checkbox" data-check-platform="${escapeHtml(platform)}" data-check-step="mediaReady"${state.mediaReady ? ' checked' : ''}><span>${uiText('Mídia pronta')}</span></label>
-          <label><input type="checkbox" data-check-platform="${escapeHtml(platform)}" data-check-step="published"${state.published ? ' checked' : ''}><span>${uiText('Publicado na plataforma')}</span></label>
-        </fieldset>
+      <article class="platform-card${expanded ? '' : ' is-collapsed'}">
+        <div class="platform-card-head">
+          <div><h4>${escapeHtml(deliverable.title)}</h4><small class="platform-progress">${platformProgress}/3 ${uiText('concluídos')}</small></div>
+          <button class="platform-card-toggle" type="button" data-platform-toggle aria-expanded="${expanded}" aria-controls="${bodyId}">${expanded ? uiText('Recolher') : uiText('Expandir')}</button>
+        </div>
+        <div class="platform-card-body" id="${bodyId}"${expanded ? '' : ' hidden'}>
+          <div class="platform-card-actions"><button class="copy-platform" type="button" data-copy-platform="${escapeHtml(platform)}">${uiText('Copiar')}</button><button class="publish-assist" type="button" data-publish-platform="${escapeHtml(platform)}">${uiText('Copiar e abrir')}</button></div>
+          ${deliverable.lines.map(([label, value]) => `<div class="deliverable" data-deliverable-platform="${escapeHtml(platform)}" data-deliverable-label="${escapeHtml(label)}"><div class="deliverable-head"><span>${escapeHtml(label)}</span><button class="regenerate-field" type="button" data-regenerate-field>${uiText('Nova versão')}</button></div><p>${escapeHtml(value).replace(/\n/g, '<br>')}</p></div>`).join('')}
+          <fieldset class="publish-checklist">
+            <legend>${uiText('Checklist de publicação')}</legend>
+            <label><input type="checkbox" data-check-platform="${escapeHtml(platform)}" data-check-step="reviewed"${state.reviewed ? ' checked' : ''}><span>${uiText('Texto revisado')}</span></label>
+            <label><input type="checkbox" data-check-platform="${escapeHtml(platform)}" data-check-step="mediaReady"${state.mediaReady ? ' checked' : ''}><span>${uiText('Mídia pronta')}</span></label>
+            <label><input type="checkbox" data-check-platform="${escapeHtml(platform)}" data-check-step="published"${state.published ? ' checked' : ''}><span>${uiText('Publicado na plataforma')}</span></label>
+          </fieldset>
+        </div>
       </article>`;
   }).join('');
 
@@ -2005,6 +2013,18 @@ function renderPack(pack) {
   document.querySelector('#template-pack').addEventListener('click', () => fillComposerFromPack(pack, { asTemplate: true }));
   document.querySelector('#copy').addEventListener('click', () => copyText(packageText(pack)));
   document.querySelector('#export').addEventListener('click', () => downloadPackage(pack, document.querySelector('#export-format')?.value || 'txt'));
+  result.querySelectorAll('[data-platform-toggle]').forEach(button => {
+    button.addEventListener('click', () => {
+      const card = button.closest('.platform-card');
+      const body = card?.querySelector('.platform-card-body');
+      if (!card || !body) return;
+      const expanded = button.getAttribute('aria-expanded') === 'true';
+      button.setAttribute('aria-expanded', String(!expanded));
+      button.textContent = expanded ? uiText('Expandir') : uiText('Recolher');
+      body.hidden = expanded;
+      card.classList.toggle('is-collapsed', expanded);
+    });
+  });
   result.querySelectorAll('[data-copy-platform]').forEach(button => {
     button.addEventListener('click', () => copyText(platformText(pack, button.dataset.copyPlatform)));
   });

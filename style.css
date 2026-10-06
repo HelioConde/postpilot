@@ -323,3 +323,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .desktop-workflow-guide ol{display:grid;gap:7px;margin:0;padding:0;list-style:none}.desktop-workflow-guide li{display:grid;grid-template-columns:92px 1fr;gap:9px;align-items:start;padding:9px;border:1px solid var(--line);border-radius:9px;background:#fff}
 .desktop-workflow-guide strong{font:800 9px Manrope;color:var(--accent)}.desktop-workflow-guide span{color:var(--muted);font-size:9px;line-height:1.45}
 @media(max-width:900px){.desktop-workflow-guide{display:none}}
+
+.empty-pack-state{display:grid;justify-items:start;gap:7px;padding:16px;border-style:solid;background:linear-gradient(145deg,#fff,#faf9fd)}
+.empty-pack-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:var(--soft);color:var(--accent);font-size:16px}
+.empty-pack-state strong{font:700 11px Manrope;color:var(--ink)}.empty-pack-state p{margin:0;color:var(--muted);font-size:9px;line-height:1.5;max-width:34ch}
+.empty-pack-action{display:inline-flex;align-items:center;margin-top:2px;text-decoration:none}

@@ -15,6 +15,8 @@
   <meta property="og:locale:alternate" content="en_US">
   <meta property="og:url" content="https://helioconde.github.io/postpilot/">
   <link rel="canonical" href="https://helioconde.github.io/postpilot/">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <script type="application/ld+json">
   {
     "@context":"https://schema.org",
@@ -40,6 +42,7 @@
           <button type="button" data-language="pt-BR" class="active" aria-pressed="true">PT</button>
           <button type="button" data-language="en" aria-pressed="false">EN</button>
         </div>
+        <button id="install-app" class="secondary compact install-app" type="button" hidden>Instalar app</button>
         <span id="sync-status" class="navnote" role="status">Salvo neste dispositivo</span>
         <button id="account-open" class="secondary compact" type="button">Entrar / sincronizar</button>
       </div>
@@ -125,6 +128,14 @@ Uma semana de ideias.</h1>
           <label class="history-search"><span>Buscar</span><input id="project-search" type="search" placeholder="Tema ou público" autocomplete="off"></label>
           <label class="status-filter"><span>Status</span><select id="project-status-filter"><option value="all">Todos</option><option value="draft">Rascunhos</option><option value="ready">Prontos</option><option value="published">Publicados</option></select></label>
         </div>
+        <div id="local-backup-controls" class="local-backup-controls">
+          <div><strong>Backup local</strong><small>Proteja os pacotes salvos neste dispositivo.</small></div>
+          <div class="local-backup-actions">
+            <button id="export-backup" class="secondary compact" type="button">Exportar backup</button>
+            <input id="import-backup-file" type="file" accept="application/json,.json" hidden>
+            <button id="import-backup" class="secondary compact" type="button">Restaurar backup</button>
+          </div>
+        </div>
         <div id="list" class="items"></div>
         <div id="result" class="result"></div>
       </section>
@@ -167,6 +178,7 @@ Uma semana de ideias.</h1>
   <script src="ads-config.js"></script>
   <script src="ads.js"></script>
   <script src="i18n.js"></script>
+  <script src="pwa.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -1029,3 +1029,55 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     padding:9px 10px;
   }
 }
+
+/* Mobile project history readability */
+@media(max-width:500px){
+  .item{
+    gap:10px;
+    padding:14px 0;
+  }
+  .item-summary{
+    width:100%;
+  }
+  .item-title-line{
+    align-items:flex-start;
+    gap:5px;
+  }
+  .item-title-line strong{
+    margin:0;
+    font-size:11.5px;
+    line-height:1.35;
+  }
+  .item-title-line .project-status{
+    display:none;
+  }
+  .item-summary>small{
+    display:block;
+    margin-top:4px;
+    font-size:8.5px;
+    line-height:1.45;
+  }
+  .item-summary .planning-meta{
+    margin-top:2px;
+  }
+  .item-actions{
+    width:100%;
+    gap:6px;
+  }
+  .item-actions-primary{
+    grid-template-columns:minmax(0,1fr) minmax(78px,.45fr);
+    gap:6px;
+  }
+  .item-actions-primary .project-status-select,
+  .project-open-action{
+    min-height:42px;
+  }
+  .project-open-action{
+    width:100%;
+    padding-inline:10px;
+  }
+  .project-more-actions summary{
+    min-height:40px;
+    font-size:9.5px;
+  }
+}

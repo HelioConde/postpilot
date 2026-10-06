@@ -157,6 +157,9 @@ jobs:
           grep -qi '48 hours' supabase/migrations/20261006152000_usage_retention.sql
           grep -qi 'postpilot-tablet.png' .github/workflows/visual-snapshot.yml
 
+      - name: Validate dependency lock
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
       - name: Check local asset budgets
         run: |
           APP_BYTES=$(wc -c < app.js)

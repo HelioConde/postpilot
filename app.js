@@ -1929,7 +1929,8 @@ function renderPack(pack) {
     const state = checklist[platform];
     const platformProgress = Number(state.reviewed) + Number(state.mediaReady) + Number(state.published);
     const bodyId = 'platform-body-' + platformIndex;
-    const expanded = platformIndex === 0;
+    const compactViewport = window.matchMedia?.('(max-width: 620px)').matches;
+    const expanded = platformIndex === 0 && !compactViewport;
     return `
       <article class="platform-card${expanded ? '' : ' is-collapsed'}">
         <div class="platform-card-head">

@@ -135,3 +135,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .export-format{display:inline-flex;align-items:center;gap:6px;padding:5px 7px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--muted);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.45px}
 .export-format select{min-height:30px;border:0;background:transparent;color:var(--ink);font-size:10px;font-weight:700;outline:none;text-transform:none;letter-spacing:0}
 @media(max-width:620px){.result-actions{display:grid;grid-template-columns:1fr 1fr}.result-actions .secondary,.export-format{width:100%}.export-format{justify-content:space-between}.export-format select{flex:1}}
+
+.ai-generation-option{display:flex;align-items:flex-start;gap:10px;margin:14px 0 2px;padding:12px 13px;border:1px solid var(--line);border-radius:11px;background:#fafaf8;cursor:pointer}
+.ai-generation-option input{width:17px;height:17px;margin:1px 0 0;accent-color:var(--accent);flex:0 0 auto}
+.ai-generation-option span{display:grid;gap:3px}
+.ai-generation-option strong{font:700 11px Manrope}
+.ai-generation-option small{color:var(--muted);font-size:9px;line-height:1.45}
+.ai-generation-option:has(input:disabled){opacity:.62;cursor:not-allowed}
+.ai-generation-option:has(input:checked){border-color:#c9bee9;background:var(--soft)}

@@ -63,6 +63,11 @@
     "Enviando mídia privada…":"Uploading private media…",
     "Transcrevendo mídia…":"Transcribing media…",
     "Transcrição concluída.":"Transcription completed.",
+    "Transcrever agora":"Transcribe now",
+    "Transcrição indisponível":"Transcription unavailable",
+    "Transcrição atualizada a partir da mídia.":"Transcription updated from media.",
+    "Não foi possível transcrever a mídia agora.":"Could not transcribe the media right now.",
+
     "A transcrição ainda não está ativa. Adicione um resumo para continuar com a mídia.":"Transcription is not active yet. Add a summary to continue with the media.",
     "Transcrição indisponível. A mídia será preservada quando houver um resumo manual.":"Transcription is unavailable. The media will be preserved once a manual summary is provided.",
     "Mídia enviada. Usando o resumo manual.":"Media uploaded. Using the manual summary.",

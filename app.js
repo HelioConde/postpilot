@@ -16,6 +16,7 @@ const localImportButton = document.querySelector('#local-import');
 const projectStatusFilter = document.querySelector('#project-status-filter');
 const projectSearch = document.querySelector('#project-search');
 const productionSummary = document.querySelector('#production-summary');
+const productionInsights = document.querySelector('#production-insights');
 const focusDashboard = document.querySelector('#focus-dashboard');
 const projectPlatformFilter = document.querySelector('#project-platform-filter');
 const projectGoalFilter = document.querySelector('#project-goal-filter');
@@ -1460,6 +1461,40 @@ function matchesAdvancedFilters(pack) {
   return true;
 }
 
+function renderProductionInsights(source) {
+  if (!productionInsights) return;
+  if (!source.length) {
+    productionInsights.innerHTML = '<p>' + uiText('Crie alguns pacotes para ver seus padrões de produção.') + '</p>';
+    return;
+  }
+
+  const platformCounts = {};
+  const goalCounts = {};
+  source.forEach(pack => {
+    packPlatforms(pack).forEach(platform => { platformCounts[platform] = (platformCounts[platform] || 0) + 1; });
+    const goal = pack.goal || 'conversa';
+    goalCounts[goal] = (goalCounts[goal] || 0) + 1;
+  });
+  const topPlatform = Object.entries(platformCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
+  const topGoalCode = Object.entries(goalCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'conversa';
+  const topGoal = uiText(({ conversa: 'Gerar conversa', alcance: 'Alcançar novas pessoas', oferta: 'Apresentar um serviço' })[topGoalCode] || 'Gerar conversa');
+  const withMedia = source.filter(pack => pack.mediaPath).length;
+  const withAi = source.filter(pack => pack.generationMode === 'ai').length;
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const recent = source.filter(pack => Number(pack.createdAt || pack.time || 0) >= sevenDaysAgo).length;
+
+  const percent = count => Math.round((count / source.length) * 100);
+  productionInsights.innerHTML = `
+    <div class="insight-head"><span class="eyebrow">${uiText('INSIGHTS')}</span><strong>${uiText('Seu ritmo editorial')}</strong></div>
+    <div class="insight-grid">
+      <article><span>${uiText('Plataforma mais usada')}</span><strong>${escapeHtml(topPlatform)}</strong></article>
+      <article><span>${uiText('Objetivo dominante')}</span><strong>${escapeHtml(topGoal)}</strong></article>
+      <article><span>${uiText('Com mídia')}</span><strong>${percent(withMedia)}%</strong></article>
+      <article><span>${uiText('Gerados com IA')}</span><strong>${percent(withAi)}%</strong></article>
+      <article><span>${uiText('Criados nos últimos 7 dias')}</span><strong>${recent}</strong></article>
+    </div>`;
+}
+
 function renderProductionSummary(source) {
   if (!productionSummary) return;
   const total = source.length;
@@ -1481,6 +1516,7 @@ function renderList() {
   const source = currentUser ? visiblePacks() : visiblePacks().slice().reverse();
   renderFocusDashboard(source);
   renderProductionSummary(source);
+  renderProductionInsights(source);
   renderEditorialCalendar(source);
   const normalized = source
     .filter(pack => filter === 'all' || (pack.status || 'draft') === filter)

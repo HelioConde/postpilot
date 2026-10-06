@@ -69,3 +69,13 @@ Provider calls are guarded by:
 Initial quotas are 20 AI generations/hour and 10 transcriptions/hour per user. The quota RPC is executable only by `service_role`; the account health panel reads remaining quota without consuming it. Old per-user quota windows are pruned after 48 hours during normal usage.
 
 Media upload is decoupled from provider success. Once uploaded, media metadata can be retained and reused when transcription is temporarily unavailable, avoiding duplicate uploads and accidental deletion.
+
+
+## Supabase API key transition
+
+Edge Functions prefer the current Supabase API-key model:
+
+- `SUPABASE_PUBLISHABLE_KEYS.default` for user-session validation clients;
+- `SUPABASE_SECRET_KEYS.default` for privileged server-side clients.
+
+Legacy `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` are kept only as temporary compatibility fallbacks. The browser only receives the project publishable key.

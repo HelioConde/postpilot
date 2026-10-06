@@ -27,9 +27,9 @@ O objetivo é validar o menor estúdio de conteúdo realmente útil para criador
 - [x] Reaproveitar um pacote como modelo sem alterar o original e sem herdar a data de publicação.
 - [x] Editar pacote existente no mesmo formulário, preservando ID e status no modo local e na nuvem.
 - [x] Checklist de publicação por plataforma com texto revisado, mídia pronta e publicação, persistido localmente e no Supabase.
-- [ ] Backup/restauração no modo local.
+- [x] Backup/restauração JSON validado no modo local, com sanitização e limite de 20 pacotes.
 - [ ] Feedback beta dentro do produto.
-- [ ] PWA e modo offline.
+- [x] PWA instalável com app shell em cache e criação local disponível offline após a primeira abertura.
 
 ## P2 — após validação com usuários
 

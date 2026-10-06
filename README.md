@@ -69,3 +69,10 @@ Cada plataforma do pacote possui um checklist próprio com três etapas: texto r
 O PostPilot pode ser instalado como PWA. Depois da primeira abertura, o shell principal fica em cache e o modo local continua disponível sem internet; autenticação e sincronização continuam exigindo conexão.
 
 Quem trabalha sem conta também pode exportar e restaurar um backup JSON dos pacotes locais. O arquivo pode conter transcrições e conteúdo do usuário e deve ser armazenado com cuidado.
+
+
+## Templates e feedback beta
+
+Os modelos rápidos configuram público-alvo, objetivo, tom e plataformas para cenários educacional, negócio local, autoridade e comunidade, sem substituir o tema nem a transcrição do criador.
+
+O feedback beta coleta somente nota, categoria e comentário. Não envia e-mail, transcrição nem conteúdo dos pacotes. Se o backend estiver indisponível, os registros ficam em uma fila local de até 20 itens e são reenviados quando a conexão volta.

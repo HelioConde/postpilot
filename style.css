@@ -230,3 +230,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 @media(max-width:680px){.transcript-segment{grid-template-columns:1fr}.segment-time{width:max-content}.segment-actions{grid-template-columns:1fr 1fr}.segment-actions .secondary{width:100%}}
 
 .media-linked{display:flex;align-items:center;flex-wrap:wrap;gap:6px}.media-linked small{color:var(--muted);font-size:8px}
+
+.platform-card-actions{display:flex;align-items:center;gap:6px}.publish-assist{border:1px solid var(--line);border-radius:8px;background:#fff;padding:7px 9px;font:800 8px Manrope;color:var(--ink);cursor:pointer}.publish-assist:hover{background:var(--soft)}
+@media(max-width:520px){.platform-card-head{align-items:flex-start}.platform-card-actions{flex-direction:column;align-items:stretch}.platform-card-actions button{width:100%}}

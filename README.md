@@ -68,7 +68,7 @@ O PostPilot permanece gratuito e está preparado para anúncios responsivos fora
 
 O PostPilot possui Browser E2E em Chromium cobrindo o fluxo local crítico e as evoluções de produto: briefing, geração, busca/filtros, dashboard, analytics, status, exportações, calendário, versionamento, regeneração parcial, editor de transcrição/cortes, publicação assistida, PT/EN e smoke responsivo.
 
-A workflow Visual Snapshot também captura a página inteira em desktop e mobile e mantém as imagens atuais versionadas no GitHub.
+A workflow Visual Snapshot captura a página inteira em desktop, tablet e mobile e mantém as imagens atuais versionadas no GitHub.
 
 
 ## Upload de mídia e transcrição
@@ -157,3 +157,16 @@ Limites iniciais:
 A contagem é atômica via `postpilot_consume_usage` e armazenada em `postpilot_private.postpilot_usage_limits`, fora do schema público. Apenas `service_role` executa a RPC privilegiada. As Edge Functions também usam timeout de fornecedor (30 s para IA e 120 s para transcrição).
 
 Se a transcrição não estiver configurada, a mídia privada pode continuar vinculada ao projeto quando houver um resumo manual. Se o fornecedor falhar depois do upload, o arquivo fica preservado para nova tentativa em vez de ser apagado ou reenviado.
+
+
+## Gates de qualidade
+
+O repositório possui camadas complementares de QA:
+
+- **Static QA:** sintaxe, contratos importantes, migrations obrigatórias e budgets de tamanho dos assets locais;
+- **Browser E2E:** fluxos reais em Chromium;
+- **axe-core:** varredura WCAG 2 A/AA e 2.1 A/AA, bloqueando violações sérias/críticas;
+- **Lighthouse QA:** acessibilidade e SEO com score mínimo 0,90, além de alertas de performance, best practices, FCP, LCP e CLS;
+- **Visual Snapshot:** capturas full-page em desktop, tablet e mobile.
+
+Os relatórios do Lighthouse são mantidos como artifact por 30 dias.

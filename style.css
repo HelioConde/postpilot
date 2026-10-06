@@ -279,3 +279,24 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 @media(max-width:500px){.hero{padding-top:34px}.hero h1{font-size:38px;line-height:1.01;letter-spacing:-2.3px}.hero p{font-size:14px;line-height:1.6}.hero-card{padding:19px;min-height:118px;border-radius:16px}.hero-icon{font-size:27px}.editorial-calendar{padding:18px}.calendar-head h2{font-size:20px}.calendar-range{margin-top:12px}.beta-feedback-card,.monetization-note{margin-bottom:14px}}
 
 @media(max-width:360px){.focus-dashboard{grid-template-columns:1fr}.focus-dashboard article{min-height:0}}
+
+/* Mobile readability pass */
+@media(max-width:500px){
+  .nav{height:auto;min-height:64px;padding:12px 0}
+  .brand{font-size:18px}
+  .nav-actions{gap:5px}
+  .nav-actions .compact{padding:8px 9px;font-size:10px}
+  .language-switcher button{padding:5px 6px;font-size:8px}
+  .content-template-picker small,
+  .media-ingest small,
+  .ai-generation-option small,
+  .local-backup-controls small,
+  .focus-dashboard small,
+  .beta-feedback-card p{font-size:9px;line-height:1.5}
+  .content-template-picker strong,
+  .local-backup-controls strong{font-size:10px}
+  .field-help{font-size:10px}
+  .calendar-control span{font-size:8px}
+  .foot{font-size:10px}
+  .foot-links a{font-size:9px}
+}

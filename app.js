@@ -1960,12 +1960,15 @@ function renderPack(pack, { expandFirst = false } = {}) {
         <div class="platform-card-body" id="${bodyId}"${expanded ? '' : ' hidden'}>
           <div class="platform-card-actions"><button class="copy-platform" type="button" data-copy-platform="${escapeHtml(platform)}">${uiText('Copiar')}</button><button class="publish-assist" type="button" data-publish-platform="${escapeHtml(platform)}">${uiText('Copiar e abrir')}</button></div>
           ${deliverable.lines.map(([label, value]) => `<div class="deliverable" data-deliverable-platform="${escapeHtml(platform)}" data-deliverable-label="${escapeHtml(label)}"><div class="deliverable-head"><span>${escapeHtml(label)}</span><button class="regenerate-field" type="button" data-regenerate-field>${uiText('Nova versão')}</button></div><p>${escapeHtml(value).replace(/\n/g, '<br>')}</p></div>`).join('')}
-          <fieldset class="publish-checklist">
-            <legend>${uiText('Checklist de publicação')}</legend>
-            <label><input type="checkbox" data-check-platform="${escapeHtml(platform)}" data-check-step="reviewed"${state.reviewed ? ' checked' : ''}><span>${uiText('Texto revisado')}</span></label>
-            <label><input type="checkbox" data-check-platform="${escapeHtml(platform)}" data-check-step="mediaReady"${state.mediaReady ? ' checked' : ''}><span>${uiText('Mídia pronta')}</span></label>
-            <label><input type="checkbox" data-check-platform="${escapeHtml(platform)}" data-check-step="published"${state.published ? ' checked' : ''}><span>${uiText('Publicado na plataforma')}</span></label>
-          </fieldset>
+          <details class="publish-checklist-details"${compactViewport ? '' : ' open'}>
+            <summary>${uiText('Checklist de publicação')} <small>${platformProgress}/3</small></summary>
+            <fieldset class="publish-checklist">
+              <legend class="sr-only">${uiText('Checklist de publicação')}</legend>
+              <label><input type="checkbox" data-check-platform="${escapeHtml(platform)}" data-check-step="reviewed"${state.reviewed ? ' checked' : ''}><span>${uiText('Texto revisado')}</span></label>
+              <label><input type="checkbox" data-check-platform="${escapeHtml(platform)}" data-check-step="mediaReady"${state.mediaReady ? ' checked' : ''}><span>${uiText('Mídia pronta')}</span></label>
+              <label><input type="checkbox" data-check-platform="${escapeHtml(platform)}" data-check-step="published"${state.published ? ' checked' : ''}><span>${uiText('Publicado na plataforma')}</span></label>
+            </fieldset>
+          </details>
         </div>
       </article>`;
   }).join('');

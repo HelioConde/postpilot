@@ -26,6 +26,7 @@ jobs:
           node --check ads-config.js
           node --check ads.js
           node --check pwa.js
+          node --check beta-feedback.js
       - name: Check required files
         run: |
           test -f index.html
@@ -43,6 +44,9 @@ jobs:
           test -f icon.svg
           test -f sw.js
           test -f pwa.js
+          test -f beta-feedback.js
+          test -f supabase/migrations/20261006103000_beta_feedback.sql
+          test -f supabase/functions/postpilot-beta-feedback/index.ts
           test -f package.json
           test -f playwright.config.js
           test -f tests/e2e/critical-flow.spec.js
@@ -84,3 +88,8 @@ jobs:
           grep -qi 'local-backup-controls' index.html
           grep -qi 'exportLocalBackup' app.js
           grep -qi 'restoreLocalBackup' app.js
+          grep -qi 'content-template' index.html
+          grep -qi 'applyContentTemplate' app.js
+          grep -qi 'beta-feedback-open' index.html
+          grep -qi 'postpilot-beta-feedback-queue-v1' beta-feedback.js
+          grep -qi 'postpilot_beta_feedback' supabase/functions/postpilot-beta-feedback/index.ts

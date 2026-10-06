@@ -456,3 +456,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     grid-column:1/-1;
   }
 }
+
+/* Mobile language switcher — comfortable touch targets without visual bulk */
+@media(max-width:500px){
+  .language-switcher{
+    padding:2px;
+  }
+  .language-switcher button{
+    min-width:36px;
+    min-height:36px;
+    padding:0 8px;
+    font-size:9px;
+  }
+  #account-open{
+    min-height:40px;
+  }
+}

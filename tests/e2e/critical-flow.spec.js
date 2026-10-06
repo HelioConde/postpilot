@@ -137,6 +137,29 @@ test('calendário semanal mostra pacote agendado e abre a prévia', async ({ pag
   await expect(page.locator('#result')).toContainText('Conteúdo do calendário');
 });
 
+test('exporta planejamento editorial em iCalendar', async ({ page }) => {
+  await localMode(page);
+  await createPack(page, ' Calendário');
+
+  const downloadPromise = page.waitForEvent('download');
+  await page.locator('#calendar-export').click();
+  const download = await downloadPromise;
+
+  expect(download.suggestedFilename()).toBe('postpilot-calendario-editorial.ics');
+  const stream = await download.createReadStream();
+  let content = '';
+  for await (const chunk of stream) content += chunk.toString();
+
+  expect(content).toContain('BEGIN:VCALENDAR');
+  expect(content).toContain('VERSION:2.0');
+  expect(content).toContain('DTSTART;VALUE=DATE:20261020');
+  expect(content).toContain('SUMMARY:PostPilot · Marketing para pequenos negócios Calendário');
+  expect(content).toContain('Instagram');
+  expect(content).toContain('TikTok');
+  expect(content).toContain('YouTube Shorts');
+  expect(content).toContain('END:VCALENDAR');
+});
+
 test('editar atualiza o pacote e usar como modelo cria outro rascunho', async ({ page }) => {
   await localMode(page);
   await createPack(page, ' Editável');

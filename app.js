@@ -2253,10 +2253,26 @@ async function refreshServiceHealth() {
   return serviceHealth;
 }
 
+function updateAccountButtonLabel() {
+  if (!accountOpenButton) return;
+  let full = accountOpenButton.querySelector('.account-open-full');
+  let short = accountOpenButton.querySelector('.account-open-short');
+  if (!full || !short) {
+    accountOpenButton.innerHTML = '<span class="account-open-full"></span><span class="account-open-short"></span>';
+    full = accountOpenButton.querySelector('.account-open-full');
+    short = accountOpenButton.querySelector('.account-open-short');
+  }
+  const fullLabel = currentUser ? uiText('Minha conta') : uiText('Entrar / sincronizar');
+  const shortLabel = currentUser ? uiText('Conta') : uiText('Entrar');
+  full.textContent = fullLabel;
+  short.textContent = shortLabel;
+  accountOpenButton.setAttribute('aria-label', fullLabel);
+}
+
 function updateAccountUi() {
   const localCount = readPacks().length;
   accountOpenButton.disabled = !supabaseClient;
-  accountOpenButton.textContent = currentUser ? 'Minha conta' : 'Entrar / sincronizar';
+  updateAccountButtonLabel();
   syncStatus.textContent = currentUser
     ? (cloudLoading ? 'Sincronizando…' : 'Nuvem · ' + (currentUser.email || 'conta conectada'))
     : (supabaseClient ? 'Salvo neste dispositivo' : 'Modo local');

@@ -1868,6 +1868,7 @@ function renderList() {
   const searchTerm = String(projectSearch?.value || '').trim().toLocaleLowerCase(currentLocale());
   const source = currentUser ? visiblePacks() : visiblePacks().slice().reverse();
   const hasProjects = source.length > 0;
+  const compactProjectActions = Boolean(window.matchMedia?.('(max-width: 620px)').matches);
   [
     focusDashboard,
     productionMetrics,
@@ -1910,15 +1911,22 @@ function renderList() {
           ${pack.publishAt ? '<small class="planning-meta">' + escapeHtml(uiText('Planejado para')) + ' ' + escapeHtml(formatPlannedDate(pack.publishAt)) + '</small>' : ''}
         </div>
         <div class="item-actions">
-          <select class="project-status-select" data-status-id="${escapeHtml(pack.id)}" aria-label="Status do projeto">
-            <option value="draft"${status === 'draft' ? ' selected' : ''}>Rascunho</option>
-            <option value="ready"${status === 'ready' ? ' selected' : ''}>Pronto</option>
-            <option value="published"${status === 'published' ? ' selected' : ''}>Publicado</option>
-          </select>
-          <button class="secondary" type="button" data-pack="${escapeHtml(pack.id)}">Abrir</button>
-          <button class="secondary" type="button" data-edit-pack="${escapeHtml(pack.id)}">${uiText('Editar')}</button>
-          <button class="secondary" type="button" data-template-pack="${escapeHtml(pack.id)}">${uiText('Usar como modelo')}</button>
-          <button class="secondary" type="button" data-delete="${escapeHtml(pack.id)}" aria-label="${uiText('Excluir pacote')}">${uiText('Excluir')}</button>
+          <div class="item-actions-primary">
+            <select class="project-status-select" data-status-id="${escapeHtml(pack.id)}" aria-label="Status do projeto">
+              <option value="draft"${status === 'draft' ? ' selected' : ''}>Rascunho</option>
+              <option value="ready"${status === 'ready' ? ' selected' : ''}>Pronto</option>
+              <option value="published"${status === 'published' ? ' selected' : ''}>Publicado</option>
+            </select>
+            <button class="secondary project-open-action" type="button" data-pack="${escapeHtml(pack.id)}">Abrir</button>
+          </div>
+          <details class="project-more-actions"${compactProjectActions ? '' : ' open'}>
+            <summary>${uiText('Mais opções')}</summary>
+            <div class="project-more-actions-body">
+              <button class="secondary" type="button" data-edit-pack="${escapeHtml(pack.id)}">${uiText('Editar')}</button>
+              <button class="secondary" type="button" data-template-pack="${escapeHtml(pack.id)}">${uiText('Usar como modelo')}</button>
+              <button class="secondary project-delete-action" type="button" data-delete="${escapeHtml(pack.id)}" aria-label="${uiText('Excluir pacote')}">${uiText('Excluir')}</button>
+            </div>
+          </details>
         </div>
       </div>`;
     }).join('')

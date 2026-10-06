@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: postpilot-static-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   qa:
     runs-on: ubuntu-latest
@@ -18,6 +22,9 @@ jobs:
         run: |
           node --check app.js
           node --check supabase-config.js
+          node --check i18n.js
+          node --check ads-config.js
+          node --check ads.js
       - name: Check required files
         run: |
           test -f index.html
@@ -25,6 +32,11 @@ jobs:
           test -f README.md
           test -f FULLSTACK.md
           test -f supabase/migrations/20261006061000_multiplatform_workflow.sql
+          test -f supabase/migrations/20261006093000_editorial_planning.sql
+          test -f i18n.js
+          test -f ads-config.js
+          test -f ads.js
+          test -f MELHORIAS.md
       - name: Check SEO and backend boot
         run: |
           grep -qi '<title' index.html
@@ -37,3 +49,14 @@ jobs:
           grep -qi 'platformDeliverable' app.js
           grep -qi 'data-status-id' app.js
           grep -qi 'Exportar .txt' app.js
+          grep -qi 'data-language="pt-BR"' index.html
+          grep -qi 'data-language="en"' index.html
+          grep -qi 'project-search' index.html
+          grep -qi 'production-summary' index.html
+          grep -qi 'name="audience"' index.html
+          grep -qi 'name="publishAt"' index.html
+          grep -qi 'POSTPILOT_ADS' ads-config.js
+          grep -qi 'data-ad-placement="app-footer"' index.html
+          grep -qi '"@type":"WebApplication"' index.html
+          grep -qi 'renderProductionSummary' app.js
+          grep -qi 'publish_at' app.js

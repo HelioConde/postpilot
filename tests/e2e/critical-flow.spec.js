@@ -19,6 +19,8 @@ async function createPack(page, suffix = '') {
 
 test('fluxo local cria pacote editorial e atualiza painel de produção', async ({ page }) => {
   await localMode(page);
+  await expect(page.locator('#ai-generation')).toBeDisabled();
+  await expect(page.locator('.ai-generation-option')).toContainText(/Disponível ao entrar|Available after signing in/i);
   await createPack(page);
 
   await expect(page.locator('#result')).toHaveClass(/show/);

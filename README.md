@@ -12,7 +12,7 @@ Estúdio de conteúdo para criadores. A partir de tema e transcrição, organiza
 - snapshot dos pacotes em `postpilot_outputs`;
 - geração simultânea para Instagram, TikTok e YouTube Shorts;
 - entregáveis específicos por plataforma com cópia individual;
-- exportação do pacote completo em arquivo `.txt`;
+- exportação do pacote completo em `.txt`, `.md`, `.json` e `.csv`;
 - fluxo de produção por status: rascunho, pronto e publicado;
 - GitHub Pages + CI;
 - SEO básico com canonical e Open Graph.
@@ -51,6 +51,10 @@ O PostPilot possui Browser E2E em Chromium cobrindo o fluxo local crítico: brie
 
 O primeiro run dessa suíte passou integralmente no GitHub Actions.
 
+
+## Exportações
+
+Cada pacote pode ser baixado em TXT para leitura rápida, Markdown para documentos e publicação, JSON para integrações/backup estruturado e CSV para planilhas. As exportações respeitam o idioma ativo e mantêm os entregáveis separados por plataforma.
 
 ## Calendário editorial e edição
 

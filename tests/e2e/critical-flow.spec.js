@@ -108,6 +108,27 @@ test('fluxo local cria pacote editorial e atualiza painel de produção', async 
   await expect(page.locator('#production-summary')).toContainText('100%');
 });
 
+test('cards de plataforma usam divulgação progressiva', async ({ page }) => {
+  await localMode(page);
+  await createPack(page, ' Cards recolhíveis');
+
+  const cards = page.locator('.platform-card');
+  await expect(cards).toHaveCount(3);
+
+  await expect(cards.nth(0).locator('.platform-card-body')).toBeVisible();
+  await expect(cards.nth(1).locator('.platform-card-body')).toBeHidden();
+  await expect(cards.nth(2).locator('.platform-card-body')).toBeHidden();
+
+  const secondToggle = cards.nth(1).locator('[data-platform-toggle]');
+  await expect(secondToggle).toHaveAttribute('aria-expanded', 'false');
+  await secondToggle.click();
+  await expect(secondToggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(cards.nth(1).locator('.platform-card-body')).toBeVisible();
+
+  await secondToggle.click();
+  await expect(cards.nth(1).locator('.platform-card-body')).toBeHidden();
+});
+
 test('pacotes oferecem publicação assistida por plataforma', async ({ page }) => {
   await localMode(page);
   await createPack(page, ' Publicação assistida');

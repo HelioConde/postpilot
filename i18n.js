@@ -18,6 +18,8 @@
     "Verificando…":"Checking…",
     "Atualizar serviços":"Refresh services",
     "por hora":"per hour",
+    "disponíveis nesta hora":"available this hour",
+    "renova às":"resets at",
     "até":"up to",
 
     "pacotes locais encontrados.":"local packs found.",

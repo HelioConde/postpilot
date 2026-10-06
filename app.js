@@ -1388,6 +1388,28 @@ function safeAccountVersion(row) {
   };
 }
 
+async function fetchAllAccountRows(table, columns, orderColumn, pageSize = 500) {
+  const rows = [];
+  const maxPages = 100;
+
+  for (let page = 0; page < maxPages; page += 1) {
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+    const { data, error } = await supabaseClient
+      .from(table)
+      .select(columns)
+      .order(orderColumn, { ascending: false })
+      .range(from, to);
+
+    if (error) throw error;
+    const batch = data || [];
+    rows.push(...batch);
+    if (batch.length < pageSize) return rows;
+  }
+
+  throw new Error('Limite de segurança da exportação excedido.');
+}
+
 async function exportAccountData() {
   if (!supabaseClient || !currentUser) return;
   exportAccountDataButton.disabled = true;
@@ -1395,14 +1417,11 @@ async function exportAccountData() {
   exportAccountDataButton.textContent = uiText('Preparando exportação…');
 
   try {
-    const [projectsResult, versionsResult, outputsResult] = await Promise.all([
-      supabaseClient.from('postpilot_projects').select('*').order('updated_at', { ascending: false }).limit(1000),
-      supabaseClient.from('postpilot_project_versions').select('project_id,snapshot,created_at').order('created_at', { ascending: false }).limit(10000),
-      supabaseClient.from('postpilot_outputs').select('project_id,kind,title,body,metadata,created_at').order('created_at', { ascending: false }).limit(5000)
+    const [projectRows, versionRows, outputRows] = await Promise.all([
+      fetchAllAccountRows('postpilot_projects', '*', 'updated_at'),
+      fetchAllAccountRows('postpilot_project_versions', 'project_id,snapshot,created_at', 'created_at'),
+      fetchAllAccountRows('postpilot_outputs', 'project_id,kind,title,body,metadata,created_at', 'created_at')
     ]);
-
-    const firstError = projectsResult.error || versionsResult.error || outputsResult.error;
-    if (firstError) throw firstError;
 
     const payload = {
       format: 'postpilot-account-export',
@@ -1417,9 +1436,14 @@ async function exportAccountData() {
         signedUrlsIncluded: false,
         credentialsIncluded: false
       },
-      projects: (projectsResult.data || []).map(portableProject),
-      versions: (versionsResult.data || []).map(safeAccountVersion),
-      outputs: (outputsResult.data || []).map(safeAccountOutput)
+      counts: {
+        projects: projectRows.length,
+        versions: versionRows.length,
+        outputs: outputRows.length
+      },
+      projects: projectRows.map(portableProject),
+      versions: versionRows.map(safeAccountVersion),
+      outputs: outputRows.map(safeAccountOutput)
     };
 
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });

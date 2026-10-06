@@ -442,3 +442,17 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     font-size:9.5px;
   }
 }
+
+/* Mobile platform choices — preserve readable labels and touch targets */
+@media(max-width:500px){
+  .platform-options{
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+  }
+  .platform-options label{
+    min-height:40px;
+  }
+  .platform-options label:last-child{
+    grid-column:1/-1;
+  }
+}

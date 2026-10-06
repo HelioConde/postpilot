@@ -542,3 +542,36 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .media-ingest:has(#media-file:disabled)>.field-help{
   min-height:0;
 }
+
+/* Platform result cards — progressive disclosure keeps long packages scannable */
+.platform-card-head{margin-bottom:0}
+.platform-card:not(.is-collapsed) .platform-card-head{margin-bottom:8px}
+.platform-card-toggle{
+  min-height:30px;
+  padding:5px 9px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#fff;
+  color:var(--accent);
+  font-size:9px;
+  font-weight:800;
+  cursor:pointer;
+}
+.platform-card-toggle:hover{background:var(--soft);border-color:#d6cfeb}
+.platform-card-body[hidden]{display:none!important}
+.platform-card-body>.platform-card-actions{
+  justify-content:flex-end;
+  margin-bottom:4px;
+}
+.platform-card.is-collapsed{
+  padding-top:11px;
+  padding-bottom:11px;
+  background:#fdfdfc;
+}
+@media(max-width:520px){
+  .platform-card-toggle{min-height:36px;padding:7px 11px}
+  .platform-card-body>.platform-card-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+}

@@ -10,6 +10,10 @@ Estúdio de conteúdo para criadores. A partir de tema e transcrição, organiza
 - importação de rascunhos locais para a conta;
 - histórico e exclusão protegidos por RLS;
 - snapshot dos pacotes em `postpilot_outputs`;
+- geração simultânea para Instagram, TikTok e YouTube Shorts;
+- entregáveis específicos por plataforma com cópia individual;
+- exportação do pacote completo em arquivo `.txt`;
+- fluxo de produção por status: rascunho, pronto e publicado;
 - GitHub Pages + CI;
 - SEO básico com canonical e Open Graph.
 

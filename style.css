@@ -307,3 +307,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .account-open-short{display:inline}
   #account-open{font-size:11px;padding:8px 11px}
 }
+
+@media(max-width:420px){
+  .nav{display:grid;grid-template-columns:1fr;gap:9px;min-height:0;padding:12px 0 10px}
+  .brand{font-size:18px;line-height:1}
+  .nav-actions{width:100%;justify-content:space-between;gap:8px}
+  .language-switcher{order:0}
+  #account-open{margin-left:auto}
+}

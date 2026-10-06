@@ -39,7 +39,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Install dependencies
         run: npm install
@@ -62,6 +61,16 @@ jobs:
 
       - name: Capture full page
         run: node scripts/capture-page.js
+
+      - name: Upload visual artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: postpilot-visual-snapshot
+          path: |
+            screenshots/postpilot-desktop.png
+            screenshots/postpilot-mobile.png
+            screenshots/visual-state.json
+          retention-days: 30
 
       - name: Commit latest screenshots
         run: |

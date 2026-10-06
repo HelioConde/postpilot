@@ -575,3 +575,23 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     grid-template-columns:1fr 1fr;
   }
 }
+
+/* Project history cards — protect metadata from action-button crowding */
+.item{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:9px;
+}
+.item-actions{
+  width:100%;
+  justify-content:flex-start;
+}
+.item-actions .project-status-select{
+  flex:0 1 120px;
+}
+@media(min-width:901px){
+  .item-actions .secondary{
+    padding:8px 10px;
+    font-size:10px;
+  }
+}

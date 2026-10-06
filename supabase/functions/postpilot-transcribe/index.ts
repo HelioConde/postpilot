@@ -68,6 +68,23 @@ async function consumeQuota(url: string, userId: string) {
   };
 }
 
+async function readQuotaStatus(url: string, userId: string) {
+  const key = getSecretKey();
+  if (!key) return null;
+  const service = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data, error } = await service.rpc("postpilot_usage_status", {
+    p_user_id: userId,
+    p_feature: "transcription",
+    p_limit: 10,
+  });
+  if (error || !Array.isArray(data) || !data.length) return null;
+  const row = data[0] as Record<string, unknown>;
+  return {
+    remaining: Math.max(0, Number(row.remaining) || 0),
+    resetAt: typeof row.reset_at === "string" ? row.reset_at : "",
+  };
+}
+
 function cleanText(value: unknown, max: number) {
   return typeof value === "string"
     ? value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max)
@@ -130,11 +147,14 @@ Deno.serve(async (request: Request) => {
   const apiKey = Deno.env.get("POSTPILOT_TRANSCRIBE_API_KEY");
   const model = Deno.env.get("POSTPILOT_TRANSCRIBE_MODEL");
   if (input.action === "health") {
+    const quotaStatus = await readQuotaStatus(url, user.id);
     return json(200, {
       ok: true,
       configured: Boolean(apiUrl && apiKey && model),
       feature: "transcription",
       hourlyLimit: 10,
+      remaining: quotaStatus?.remaining ?? 10,
+      resetAt: quotaStatus?.resetAt || "",
       maxBytes: MAX_BYTES,
     }, origin);
   }

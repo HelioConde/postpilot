@@ -73,6 +73,11 @@ async function capturePopulated(browser, name, viewport) {
   await page.waitForSelector('#result.show');
 
   await page.locator('#result').scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => !document.querySelector('#toast')?.classList.contains('on'));
+  await page.evaluate(() => {
+    document.activeElement?.blur?.();
+    window.scrollTo(0, 0);
+  });
   await page.waitForTimeout(100);
   await page.screenshot({
     path: path.join(outputDir, name),

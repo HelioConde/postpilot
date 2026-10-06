@@ -228,3 +228,5 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .transcript-segment textarea{width:100%;min-height:62px;border:1px solid var(--line);border-radius:8px;padding:8px;font:500 10px/1.5 Manrope;resize:vertical;background:#fdfdfc}
 .segment-actions{display:grid;gap:5px}.segment-actions .secondary{white-space:nowrap}
 @media(max-width:680px){.transcript-segment{grid-template-columns:1fr}.segment-time{width:max-content}.segment-actions{grid-template-columns:1fr 1fr}.segment-actions .secondary{width:100%}}
+
+.media-linked{display:flex;align-items:center;flex-wrap:wrap;gap:6px}.media-linked small{color:var(--muted);font-size:8px}

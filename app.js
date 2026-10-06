@@ -1905,7 +1905,7 @@ function renderList() {
         </div>
       </div>`;
     }).join('')
-    : '<div class="empty">' + uiText('Nenhum pacote encontrado neste filtro.') + '</div>';
+    : '<div class="empty empty-pack-state"><span class="empty-pack-icon" aria-hidden="true">✦</span><strong>' + uiText('Seu primeiro pacote começa no briefing.') + '</strong><p>' + uiText('Preencha o tema e a transcrição à esquerda. O PostPilot organiza o restante para revisão e planejamento.') + '</p><a class="secondary compact empty-pack-action" href="#form">' + uiText('Começar briefing') + '</a></div>';
 }
 
 function renderPack(pack) {

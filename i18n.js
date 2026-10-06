@@ -9,6 +9,8 @@
     "E-mail":"Email",
     "Senha":"Password",
     "Entrar":"Sign in",
+    "Minha conta":"My account",
+    "Conta":"Account",
     "Criar conta":"Create account",
     "Esqueci a senha":"Forgot password",
     "Conectado como":"Signed in as",

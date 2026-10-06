@@ -63,6 +63,7 @@ Não adicionar processamento de vídeo pesado, cobrança ou automação de publi
 - [x] Visual Snapshot automático desktop/mobile salvo no GitHub.
 - [x] Health check autenticado para IA/transcrição no painel da conta.
 - [x] Quota por usuário: 20 gerações de IA/h e 10 transcrições/h, com contador atômico em schema privado.
+- [x] Painel da conta mostra quota restante e horário de renovação sem consumir requisições.
 - [x] Timeout de fornecedor: 30 s IA e 120 s transcrição.
 - [x] Upload preservado quando a transcrição falha ou está indisponível; evita apagar/repetir envio.
 - [x] QA visual inicial aplicado: correção do progresso 0%, card do hero e newline literal.

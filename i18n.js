@@ -44,6 +44,8 @@
     "Organize trechos, legendas e publicações a partir da transcrição do seu vídeo. Prepare seu pacote de conteúdo para revisar e publicar.":"Turn your video transcript into clips, captions, and posts. Prepare a content pack to review and publish.",
     "Conteúdo em movimento":"Content in motion",
     "Transforme uma gravação em conteúdo reaproveitável.":"Turn one recording into reusable content.",
+    "Começar meu pacote":"Start my content pack",
+    "Funciona sem conta. Entre apenas se quiser sincronizar.":"Works without an account. Sign in only if you want to sync.",
     "Seu próximo vídeo":"Your next video",
     "Quanto mais contexto você incluir, melhores serão os rascunhos para revisar.":"The more context you include, the better the drafts will be.",
     "Tema do vídeo":"Video topic",

@@ -833,7 +833,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   color:#8b3d45;
   background:#fbf0f1;
 }
-@media(max-width:620px){
+@media(max-width:900px){
   .item-actions-primary{
     display:grid;
     grid-template-columns:minmax(0,1fr) auto;

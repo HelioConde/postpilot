@@ -76,3 +76,10 @@ Quem trabalha sem conta também pode exportar e restaurar um backup JSON dos pac
 Os modelos rápidos configuram público-alvo, objetivo, tom e plataformas para cenários educacional, negócio local, autoridade e comunidade, sem substituir o tema nem a transcrição do criador.
 
 O feedback beta coleta somente nota, categoria e comentário. Não envia e-mail, transcrição nem conteúdo dos pacotes. Se o backend estiver indisponível, os registros ficam em uma fila local de até 20 itens e são reenviados quando a conexão volta.
+
+
+## Homologação RLS
+
+O isolamento do Supabase foi homologado tecnicamente com duas identidades autenticadas simuladas dentro de uma transação. Cada identidade viu somente 1 projeto/output próprio, 0 registros da outra conta, não conseguiu alterar ou excluir dados alheios e conseguiu modificar os próprios. O teste terminou com `ROLLBACK`, sem deixar usuários ou dados QA no banco.
+
+A etapa restante é humana: cadastro, confirmação de e-mail, login, recuperação de senha e sessão em navegadores reais.

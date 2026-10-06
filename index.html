@@ -99,6 +99,23 @@ Uma semana de ideias.</h1>
           <button id="composer-cancel" class="secondary compact" type="button">Cancelar edição</button>
         </div>
         <form id="form">
+          <div class="content-template-picker">
+            <div>
+              <span class="eyebrow">MODELO RÁPIDO</span>
+              <strong>Comece com um briefing pronto</strong>
+              <small>O modelo ajusta público, objetivo, tom e plataformas. Tema e transcrição continuam seus.</small>
+            </div>
+            <div class="content-template-controls">
+              <select id="content-template" aria-label="Modelo de conteúdo">
+                <option value="">Escolher modelo</option>
+                <option value="education">Educacional</option>
+                <option value="local-business">Negócio local</option>
+                <option value="authority">Autoridade</option>
+                <option value="community">Comunidade</option>
+              </select>
+              <button id="apply-content-template" class="secondary compact" type="button" disabled>Aplicar</button>
+            </div>
+          </div>
           <label class="field"><span>Tema do vídeo</span><input name="f0" type="text" maxlength="140" placeholder="Ex.: como comecei meu negócio" required></label>
           <label class="field"><span>Transcrição ou resumo</span><textarea name="f1" maxlength="12000" placeholder="Cole aqui uma transcrição ou descreva os pontos principais..." required></textarea></label>
           <div class="brief-grid">
@@ -158,6 +175,15 @@ Uma semana de ideias.</h1>
       <div id="calendar-grid" class="calendar-grid"></div>
     </section>
 
+    <section class="beta-feedback-card" id="beta-feedback-card" aria-labelledby="beta-feedback-card-title">
+      <div>
+        <span class="eyebrow">BETA</span>
+        <h2 id="beta-feedback-card-title">Ajude a melhorar o PostPilot.</h2>
+        <p>Leva menos de um minuto. Não envie informações pessoais nem conteúdo privado de clientes.</p>
+      </div>
+      <button id="beta-feedback-open" class="secondary" type="button">Dar feedback <span id="beta-feedback-queue-count" class="feedback-queue-count" hidden></span></button>
+    </section>
+
     <section class="monetization-note" aria-labelledby="monetization-title">
       <div>
         <span class="eyebrow">POSTPILOT GRATUITO</span>
@@ -172,6 +198,54 @@ Uma semana de ideias.</h1>
 
     <footer class="foot">O gerador atual cria rascunhos locais por regras, sem IA externa nem processamento de vídeo. Ao entrar, seus projetos são sincronizados no backend.</footer>
   </div>
+
+  <dialog id="beta-feedback-dialog" class="beta-feedback-dialog" aria-labelledby="beta-feedback-title">
+    <form id="beta-feedback-form" method="dialog">
+      <div class="dialog-head">
+        <div>
+          <span class="eyebrow">FEEDBACK BETA</span>
+          <h2 id="beta-feedback-title">Como está o PostPilot?</h2>
+        </div>
+        <button id="beta-feedback-close" class="dialog-close" type="button" aria-label="Fechar">×</button>
+      </div>
+      <p class="sub">Sua opinião ajuda a decidir o que corrigir e desenvolver primeiro.</p>
+      <fieldset class="feedback-rating">
+        <legend>Nota geral</legend>
+        <div class="feedback-rating-options">
+          <label><input type="radio" name="rating" value="1" required><span>1</span></label>
+          <label><input type="radio" name="rating" value="2"><span>2</span></label>
+          <label><input type="radio" name="rating" value="3"><span>3</span></label>
+          <label><input type="radio" name="rating" value="4"><span>4</span></label>
+          <label><input type="radio" name="rating" value="5"><span>5</span></label>
+        </div>
+      </fieldset>
+      <label class="field">
+        <span>Sobre o quê?</span>
+        <select name="category" required>
+          <option value="usability">Facilidade de uso</option>
+          <option value="quality">Qualidade dos pacotes</option>
+          <option value="bug">Algo não funcionou</option>
+          <option value="idea">Ideia ou recurso</option>
+          <option value="other">Outro</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Comentário</span>
+        <textarea name="comment" maxlength="500" required placeholder="O que funcionou bem ou o que deveríamos melhorar?"></textarea>
+        <small class="field-help"><span id="beta-feedback-count">0</span>/500 · Não envie dados pessoais nem conteúdo privado.</small>
+      </label>
+      <label class="feedback-honeypot" aria-hidden="true">
+        <span>Website</span>
+        <input name="website" type="text" tabindex="-1" autocomplete="off">
+      </label>
+      <p id="beta-feedback-status" class="account-message" role="status" aria-live="polite"></p>
+      <div class="feedback-actions">
+        <button class="primary" type="submit">Enviar feedback</button>
+        <button id="beta-feedback-cancel" class="secondary" type="button">Agora não</button>
+      </div>
+    </form>
+  </dialog>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
   <script src="supabase-config.js"></script>
@@ -180,5 +254,6 @@ Uma semana de ideias.</h1>
   <script src="i18n.js"></script>
   <script src="pwa.js"></script>
   <script src="app.js"></script>
+  <script src="beta-feedback.js"></script>
 </body>
 </html>

@@ -657,7 +657,7 @@ async function saveCloudPack(pack) {
     id: pack.id,
     user_id: currentUser.id,
     title: pack.topic,
-    source_type: 'transcript',
+    source_type: pack.mediaType ? (String(pack.mediaType).startsWith('video/') ? 'video' : 'audio') : 'transcript',
     source_text: pack.transcript,
     platforms: packPlatforms(pack),
     tone: normalizeTone(pack.tone),

@@ -310,24 +310,82 @@ function formatTimestamp(seconds) {
   return minutes + ':' + String(secs).padStart(2, '0');
 }
 
+function normalizeCutOverrides(pack) {
+  return Array.isArray(pack?.cutOverrides)
+    ? pack.cutOverrides.slice(0, 20).filter(item => item && typeof item === 'object')
+    : [];
+}
+
 function cutSuggestions(pack) {
+  const overrides = new Map(normalizeCutOverrides(pack).map(item => [String(item.key || ''), item]));
   const segments = Array.isArray(pack?.transcriptionSegments) ? pack.transcriptionSegments : [];
   return segments
     .filter(segment => Number.isFinite(Number(segment.start)) && Number.isFinite(Number(segment.end)) && String(segment.text || '').trim().length >= 24)
-    .map(segment => ({
-      start: Number(segment.start),
-      end: Number(segment.end),
-      text: String(segment.text || '').trim()
-    }))
+    .map(segment => {
+      const originalStart = Number(segment.start);
+      const originalEnd = Number(segment.end);
+      const text = String(segment.text || '').trim();
+      const key = originalStart.toFixed(2) + '-' + originalEnd.toFixed(2);
+      const override = overrides.get(key) || {};
+      return {
+        key,
+        start: Number.isFinite(Number(override.start)) ? Number(override.start) : originalStart,
+        end: Number.isFinite(Number(override.end)) ? Number(override.end) : originalEnd,
+        text,
+        favorite: Boolean(override.favorite),
+        rejected: Boolean(override.rejected)
+      };
+    })
     .filter(segment => segment.end > segment.start)
     .sort((a, b) => {
+      if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
       const aDuration = a.end - a.start;
       const bDuration = b.end - b.start;
       const aScore = (aDuration >= 8 && aDuration <= 45 ? 2 : 0) + Math.min(a.text.length / 120, 1);
       const bScore = (bDuration >= 8 && bDuration <= 45 ? 2 : 0) + Math.min(b.text.length / 120, 1);
       return bScore - aScore;
     })
-    .slice(0, 3);
+    .slice(0, 6);
+}
+
+async function persistCutOverrides(pack, overrides) {
+  const cleaned = overrides.slice(0, 20).map(item => ({
+    key: String(item.key || '').slice(0, 80),
+    start: Math.max(0, Number(item.start) || 0),
+    end: Math.max(0, Number(item.end) || 0),
+    favorite: Boolean(item.favorite),
+    rejected: Boolean(item.rejected)
+  }));
+
+  if (currentUser) {
+    const { data, error } = await supabaseClient
+      .from('postpilot_projects')
+      .update({ cut_overrides: cleaned, updated_at: new Date().toISOString() })
+      .eq('id', pack.id)
+      .select('*')
+      .single();
+    if (error) throw error;
+    const saved = mapCloudPack(data);
+    cloudPacks = cloudPacks.map(item => item.id === saved.id ? saved : item);
+    return saved;
+  }
+
+  const saved = { ...pack, cutOverrides: cleaned, time: Date.now() };
+  localStorage.setItem(storageKey, JSON.stringify(readPacks().map(item => item.id === saved.id ? saved : item)));
+  return saved;
+}
+
+async function renderMediaPreview(pack) {
+  const host = result.querySelector('#media-preview-host');
+  if (!host || !currentUser || !pack.mediaPath || !supabaseClient) return;
+  host.innerHTML = '<small>' + escapeHtml(uiText('Carregando mídia privada…')) + '</small>';
+  const { data, error } = await supabaseClient.storage.from('postpilot-media').createSignedUrl(pack.mediaPath, 1800);
+  if (error || !data?.signedUrl) {
+    host.innerHTML = '<small>' + escapeHtml(uiText('Não foi possível carregar a prévia da mídia.')) + '</small>';
+    return;
+  }
+  const tag = String(pack.mediaType || '').startsWith('video/') ? 'video' : 'audio';
+  host.innerHTML = '<' + tag + ' id="media-preview-player" controls preload="metadata" src="' + escapeHtml(data.signedUrl) + '"></' + tag + '>';
 }
 
 function showToast(message) {
@@ -633,6 +691,7 @@ function mapCloudPack(row) {
     mediaType: row.media_type || '',
     mediaSizeBytes: Number(row.media_size_bytes || 0),
     transcriptionSegments: Array.isArray(row.transcription_segments) ? row.transcription_segments : [],
+    cutOverrides: Array.isArray(row.cut_overrides) ? row.cut_overrides : [],
     status: row.status || 'draft',
     createdAt: Date.parse(row.created_at),
     time: Date.parse(row.updated_at || row.created_at)
@@ -681,6 +740,7 @@ async function saveCloudPack(pack) {
     media_type: pack.mediaType || null,
     media_size_bytes: pack.mediaSizeBytes || null,
     transcription_segments: Array.isArray(pack.transcriptionSegments) ? pack.transcriptionSegments : [],
+    cut_overrides: normalizeCutOverrides(pack),
     status: pack.status || 'draft',
     created_at: new Date(pack.createdAt || pack.time || Date.now()).toISOString(),
     updated_at: now
@@ -1052,9 +1112,18 @@ function renderPack(pack) {
       <div class="cut-suggestions-head"><div><span class="eyebrow">${uiText('CORTES')}</span><h4>${uiText('Sugestões de cortes')}</h4></div><small>${uiText('Baseadas nos timestamps da transcrição.')}</small></div>
       <div class="cut-suggestion-list">
         ${cuts.map((cut, index) => `
-          <article class="cut-suggestion">
-            <span class="cut-time">${formatTimestamp(cut.start)}–${formatTimestamp(cut.end)}</span>
-            <div><strong>${uiText('Corte')} ${index + 1}</strong><p>${escapeHtml(cut.text)}</p></div>
+          <article class="cut-suggestion${cut.rejected ? ' is-rejected' : ''}${cut.favorite ? ' is-favorite' : ''}" data-cut-key="${escapeHtml(cut.key)}">
+            <button class="cut-time" type="button" data-seek-cut="${cut.start}">${formatTimestamp(cut.start)}–${formatTimestamp(cut.end)}</button>
+            <div class="cut-suggestion-body">
+              <div class="cut-title-row"><strong>${uiText('Corte')} ${index + 1}</strong><span>${cut.favorite ? '★' : ''}</span></div>
+              <p>${escapeHtml(cut.text)}</p>
+              <div class="cut-editor-controls">
+                <label><span>${uiText('Início')}</span><input type="number" min="0" step="0.1" data-cut-start value="${cut.start.toFixed(1)}"></label>
+                <label><span>${uiText('Fim')}</span><input type="number" min="0" step="0.1" data-cut-end value="${cut.end.toFixed(1)}"></label>
+                <button class="secondary compact" type="button" data-cut-favorite>${cut.favorite ? uiText('Desfavoritar') : uiText('Favoritar')}</button>
+                <button class="secondary compact" type="button" data-cut-reject>${cut.rejected ? uiText('Restaurar') : uiText('Descartar')}</button>
+              </div>
+            </div>
           </article>`).join('')}
       </div>
     </section>` : '';
@@ -1064,18 +1133,66 @@ function renderPack(pack) {
       <div><h3>${escapeHtml(pack.topic)}</h3><p>${packPlatforms(pack).length} ${packPlatforms(pack).length > 1 ? uiText('plataformas') : uiText('plataforma')} · ${escapeHtml(toneLabel(pack.tone))}${pack.audience ? ' · ' + escapeHtml(uiText('Público')) + ': ' + escapeHtml(pack.audience) : ''}${pack.publishAt ? ' · ' + escapeHtml(uiText('Planejado para')) + ' ' + escapeHtml(formatPlannedDate(pack.publishAt)) : ''}</p><small class="pack-checklist-progress">${uiText('Checklist')}: ${checklistStats.done}/${checklistStats.total}</small></div>
       <span class="project-status status-${escapeHtml(pack.status || 'draft')}">${statusLabel(pack.status || 'draft')}</span>
     </div>
-    ${pack.mediaName ? '<p class="media-linked"><strong>' + escapeHtml(uiText('Mídia vinculada')) + ':</strong> ' + escapeHtml(pack.mediaName) + '</p>' : ''}
+    ${pack.mediaName ? '<p class="media-linked"><strong>' + escapeHtml(uiText('Mídia vinculada')) + ':</strong> ' + escapeHtml(pack.mediaName) + '</p><div id="media-preview-host" class="media-preview-host"></div>' : ''}
     ${cutsHtml}
     <div class="platform-grid">${cards}</div>
     <p class="generator-note"><small>${currentUser ? 'Projeto sincronizado na sua conta.' : 'Projeto salvo neste dispositivo.'} ${pack.generationMode === 'ai' ? uiText('Conteúdo melhorado com IA no backend.') : uiText('O gerador atual usa regras locais, sem IA externa.')}</small></p>
     <div class="result-actions"><button class="secondary" id="edit-pack" type="button">${uiText('Editar')}</button><button class="secondary" id="template-pack" type="button">${uiText('Usar como modelo')}</button><button class="secondary" id="copy" type="button">${uiText('Copiar pacote completo')}</button><label class="export-format"><span>${uiText('Exportar')}</span><select id="export-format" aria-label="${uiText('Formato de exportação')}"><option value="txt">TXT</option><option value="md">Markdown</option><option value="json">JSON</option><option value="csv">CSV</option></select></label><button class="secondary" id="export" type="button">${uiText('Baixar')}</button></div>`;
   result.classList.add('show');
+  if (pack.mediaName) renderMediaPreview(pack);
   document.querySelector('#edit-pack').addEventListener('click', () => fillComposerFromPack(pack));
   document.querySelector('#template-pack').addEventListener('click', () => fillComposerFromPack(pack, { asTemplate: true }));
   document.querySelector('#copy').addEventListener('click', () => copyText(packageText(pack)));
   document.querySelector('#export').addEventListener('click', () => downloadPackage(pack, document.querySelector('#export-format')?.value || 'txt'));
   result.querySelectorAll('[data-copy-platform]').forEach(button => {
     button.addEventListener('click', () => copyText(platformText(pack, button.dataset.copyPlatform)));
+  });
+  result.querySelectorAll('[data-seek-cut]').forEach(button => {
+    button.addEventListener('click', () => {
+      const player = result.querySelector('#media-preview-player');
+      if (!player) return;
+      player.currentTime = Number(button.dataset.seekCut) || 0;
+      player.play?.().catch(() => {});
+    });
+  });
+  result.querySelectorAll('[data-cut-key]').forEach(card => {
+    const key = card.dataset.cutKey;
+    const saveDecision = async patch => {
+      const current = normalizeCutOverrides(pack);
+      const found = current.find(item => item.key === key) || { key };
+      const next = current.filter(item => item.key !== key);
+      next.push({ ...found, ...patch, key });
+      try {
+        const saved = await persistCutOverrides(pack, next);
+        renderPack(saved);
+        renderList();
+        showToast('Corte atualizado.');
+      } catch (error) {
+        console.error(error);
+        showToast('Não foi possível atualizar o corte.');
+      }
+    };
+    card.querySelector('[data-cut-favorite]')?.addEventListener('click', () => {
+      const cut = cuts.find(item => item.key === key);
+      saveDecision({ start: cut?.start, end: cut?.end, favorite: !cut?.favorite, rejected: Boolean(cut?.rejected) });
+    });
+    card.querySelector('[data-cut-reject]')?.addEventListener('click', () => {
+      const cut = cuts.find(item => item.key === key);
+      saveDecision({ start: cut?.start, end: cut?.end, favorite: Boolean(cut?.favorite), rejected: !cut?.rejected });
+    });
+    const saveTimes = () => {
+      const cut = cuts.find(item => item.key === key);
+      const start = Number(card.querySelector('[data-cut-start]')?.value);
+      const end = Number(card.querySelector('[data-cut-end]')?.value);
+      if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+        showToast('O fim do corte deve ser maior que o início.');
+        renderPack(pack);
+        return;
+      }
+      saveDecision({ start, end, favorite: Boolean(cut?.favorite), rejected: Boolean(cut?.rejected) });
+    };
+    card.querySelector('[data-cut-start]')?.addEventListener('change', saveTimes);
+    card.querySelector('[data-cut-end]')?.addEventListener('change', saveTimes);
   });
   result.querySelectorAll('[data-check-platform]').forEach(input => {
     input.addEventListener('change', async () => {
@@ -1312,6 +1429,7 @@ form.addEventListener('submit', async event => {
     mediaType: existing?.mediaType || '',
     mediaSizeBytes: existing?.mediaSizeBytes || 0,
     transcriptionSegments: existing?.transcriptionSegments || [],
+    cutOverrides: existing?.cutOverrides || [],
     status: existing?.status || 'draft',
     createdAt: existing?.createdAt || existing?.time || Date.now(),
     time: Date.now()

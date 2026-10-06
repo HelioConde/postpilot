@@ -200,3 +200,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .calendar-day.is-drop-target{outline:2px solid var(--ink);outline-offset:-2px}
 .calendar-pack[draggable="true"]{cursor:grab}.calendar-pack[draggable="true"]:active{cursor:grabbing}
 @media(max-width:900px){.calendar-grid.is-month{overflow-x:auto;grid-template-columns:repeat(7,minmax(120px,1fr))}.calendar-control{min-width:0}}
+
+.deliverable-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}
+.deliverable-head>span{margin:0}
+.regenerate-field{border:0;background:transparent;padding:3px 0;color:var(--muted);font:800 8px Manrope;cursor:pointer;text-transform:uppercase;letter-spacing:.35px}
+.regenerate-field:hover{color:var(--ink)}.regenerate-field:disabled{opacity:.45;cursor:wait}

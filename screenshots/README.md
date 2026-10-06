@@ -7,6 +7,7 @@ Estas imagens são geradas automaticamente pela workflow **Visual Snapshot**.
 - `postpilot-tablet.png`: página inteira em 768 px.
 - `postpilot-mobile-en.png`: home mobile em inglês para detectar problemas de tradução/overflow.
 - `postpilot-desktop-populated.png`: estado desktop com um pacote criado pela própria UI.
+- `postpilot-tablet-populated.png`: estado tablet com um pacote criado pela própria UI.
 - `postpilot-mobile-populated.png`: estado mobile com um pacote criado pela própria UI.
 - `visual-state.json`: metadados da última captura.
 

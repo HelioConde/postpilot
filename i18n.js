@@ -44,7 +44,7 @@
     "Transcrição ou resumo":"Transcript or summary",
     "Cole aqui uma transcrição ou descreva os pontos principais...":"Paste a transcript or describe the main points...",
     "Público-alvo":"Target audience",
-    "Ex.: donos de pequenos negócios":"Ex.: small business owners",
+    "Ex.: pequenos negócios":"Ex.: small businesses",
     "Publicar em":"Publish on",
     "Plataformas do pacote":"Pack platforms",
     "Escolha uma ou mais. O PostPilot adapta o material para cada formato.":"Choose one or more. PostPilot adapts the material to each format.",

@@ -543,9 +543,10 @@ async function persistTranscriptionResult(pack, transcript, segments) {
 
 async function transcribeExistingMedia(pack) {
   if (!supabaseClient || !currentUser || !pack.mediaPath) throw new Error('Mídia indisponível.');
-  if (serviceHealth.transcription.configured !== true) {
+  if (serviceHealth.transcription.configured !== true || Number(serviceHealth.transcription.remaining) <= 0) {
     await refreshServiceHealth();
     if (serviceHealth.transcription.configured !== true) throw new Error('Transcrição não configurada.');
+    if (Number(serviceHealth.transcription.remaining) <= 0) throw new Error('Limite de transcrição atingido.');
   }
 
   const { data, error } = await supabaseClient.functions.invoke('postpilot-transcribe', {
@@ -1845,7 +1846,13 @@ function renderPack(pack) {
       <div><h3>${escapeHtml(pack.topic)}</h3><p>${packPlatforms(pack).length} ${packPlatforms(pack).length > 1 ? uiText('plataformas') : uiText('plataforma')} · ${escapeHtml(toneLabel(pack.tone))}${pack.audience ? ' · ' + escapeHtml(uiText('Público')) + ': ' + escapeHtml(pack.audience) : ''}${pack.publishAt ? ' · ' + escapeHtml(uiText('Planejado para')) + ' ' + escapeHtml(formatPlannedDate(pack.publishAt)) : ''}</p><small class="pack-checklist-progress">${uiText('Checklist')}: ${checklistStats.done}/${checklistStats.total}</small></div>
       <span class="project-status status-${escapeHtml(pack.status || 'draft')}">${statusLabel(pack.status || 'draft')}</span>
     </div>
-    ${pack.mediaName ? '<div class="media-linked"><strong>' + escapeHtml(uiText('Mídia vinculada')) + ':</strong> <span>' + escapeHtml(pack.mediaName) + '</span>' + (pack.mediaSizeBytes ? '<small>' + escapeHtml(formatFileSize(pack.mediaSizeBytes)) + '</small>' : '') + '<small data-media-duration></small>' + (currentUser ? '<button class="secondary compact media-retranscribe" type="button" data-transcribe-existing' + (serviceHealth.transcription.configured === true ? '' : ' disabled') + '>' + escapeHtml(serviceHealth.transcription.configured === true ? uiText('Transcrever agora') : uiText('Transcrição indisponível')) + '</button>' : '') + '</div><div id="media-preview-host" class="media-preview-host"></div>' : ''}
+    ${pack.mediaName ? '<div class="media-linked"><strong>' + escapeHtml(uiText('Mídia vinculada')) + ':</strong> <span>' + escapeHtml(pack.mediaName) + '</span>' + (pack.mediaSizeBytes ? '<small>' + escapeHtml(formatFileSize(pack.mediaSizeBytes)) + '</small>' : '') + '<small data-media-duration></small>' + (currentUser ? '<button class="secondary compact media-retranscribe" type="button" data-transcribe-existing' + (serviceHealth.transcription.configured === true && Number(serviceHealth.transcription.remaining) > 0 ? '' : ' disabled') + '>' + escapeHtml(
+      serviceHealth.transcription.configured !== true
+        ? uiText('Transcrição indisponível')
+        : Number(serviceHealth.transcription.remaining) <= 0
+          ? uiText('Limite da hora atingido')
+          : uiText('Transcrever agora')
+    ) + '</button>' : '') + '</div><div id="media-preview-host" class="media-preview-host"></div>' : ''}
     ${transcriptEditorHtml}
     ${cutsHtml}
     <div class="platform-grid">${cards}</div>
@@ -2028,16 +2035,17 @@ function showAccountMessage(message) {
   accountMessage.textContent = message;
 }
 
-function serviceStatusLabel(configured) {
-  if (configured === true) return uiText('Ativo');
-  if (configured === false) return uiText('Aguardando configuração');
+function serviceStatusLabel(service) {
+  if (service?.configured === true && Number(service.remaining) <= 0) return uiText('Limite da hora atingido');
+  if (service?.configured === true) return uiText('Ativo');
+  if (service?.configured === false) return uiText('Aguardando configuração');
   return uiText('Verificando…');
 }
 
 function renderServiceHealth() {
   if (!serviceHealthHost) return;
-  if (aiServiceStatus) aiServiceStatus.textContent = serviceStatusLabel(serviceHealth.ai.configured);
-  if (transcriptionServiceStatus) transcriptionServiceStatus.textContent = serviceStatusLabel(serviceHealth.transcription.configured);
+  if (aiServiceStatus) aiServiceStatus.textContent = serviceStatusLabel(serviceHealth.ai);
+  if (transcriptionServiceStatus) transcriptionServiceStatus.textContent = serviceStatusLabel(serviceHealth.transcription);
   if (aiServiceLimit) {
     const reset = serviceHealth.ai.resetAt
       ? new Date(serviceHealth.ai.resetAt).toLocaleTimeString(currentLocale(), { hour: '2-digit', minute: '2-digit' })
@@ -2059,7 +2067,9 @@ function renderServiceHealth() {
     ].filter(Boolean).join(' · ');
   }
   if (aiGenerationToggle) {
-    const enabled = Boolean(currentUser) && serviceHealth.ai.configured === true;
+    const enabled = Boolean(currentUser)
+      && serviceHealth.ai.configured === true
+      && Number(serviceHealth.ai.remaining) > 0;
     aiGenerationToggle.disabled = !enabled;
     if (!enabled) aiGenerationToggle.checked = false;
   }
@@ -2340,7 +2350,8 @@ form.addEventListener('submit', async event => {
     try {
       if (pendingMediaFile) {
         if (serviceHealth.transcription.configured === null) await refreshServiceHealth();
-        const canTranscribe = serviceHealth.transcription.configured === true;
+        const canTranscribe = serviceHealth.transcription.configured === true
+          && Number(serviceHealth.transcription.remaining) > 0;
         if (!canTranscribe && !manualTranscript) {
           showToast('A transcrição ainda não está ativa. Adicione um resumo para continuar com a mídia.');
           if (mediaStatus) mediaStatus.textContent = uiText('Transcrição indisponível. A mídia será preservada quando houver um resumo manual.');

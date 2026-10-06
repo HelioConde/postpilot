@@ -74,6 +74,7 @@ Não adicionar processamento de vídeo pesado, cobrança ou automação de publi
 - [x] Budgets de tamanho para app.js, style.css, index.html, i18n.js e total crítico.
 - [x] Dependabot semanal para npm e GitHub Actions.
 - [x] `package-lock.json` versionado e atualizado automaticamente; Browser E2E/Visual Snapshot usam `npm ci`.
+- [x] Playwright atualizado e validado na versão 1.63.0 com lockfile consistente.
 - [x] Static QA valida consistência de `package.json` + `package-lock.json`.
 - [x] Portabilidade de dados da conta: export JSON de projetos, versões e outputs sob RLS, sem mídia privada/credenciais.
 - [x] CodeQL para análise de segurança JavaScript.

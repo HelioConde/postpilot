@@ -1081,3 +1081,41 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     font-size:9.5px;
   }
 }
+
+/* Mobile generated package heading readability */
+@media(max-width:500px){
+  .result-standalone.show{
+    padding:16px;
+  }
+  .result-standalone .result-heading{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:8px;
+    padding-bottom:10px;
+  }
+  .result-heading-main{
+    gap:7px;
+  }
+  .result-heading h3{
+    font-size:15px;
+    line-height:1.3;
+    letter-spacing:-.2px;
+  }
+  .pack-meta-chips{
+    gap:5px;
+  }
+  .pack-meta-chips span{
+    min-height:26px;
+    padding:5px 8px;
+    font-size:8.5px;
+    line-height:1.3;
+  }
+  .pack-checklist-progress{
+    font-size:9.5px;
+    line-height:1.4;
+  }
+  .result-heading>.project-status{
+    align-self:start;
+    margin-top:1px;
+  }
+}

@@ -996,11 +996,26 @@ function renderPack(pack) {
   }).join('');
 
   const checklistStats = checklistProgress(pack);
+  const cuts = cutSuggestions(pack);
+  const cutsHtml = cuts.length ? `
+    <section class="cut-suggestions" aria-label="${uiText('Sugestões de cortes')}">
+      <div class="cut-suggestions-head"><div><span class="eyebrow">${uiText('CORTES')}</span><h4>${uiText('Sugestões de cortes')}</h4></div><small>${uiText('Baseadas nos timestamps da transcrição.')}</small></div>
+      <div class="cut-suggestion-list">
+        ${cuts.map((cut, index) => `
+          <article class="cut-suggestion">
+            <span class="cut-time">${formatTimestamp(cut.start)}–${formatTimestamp(cut.end)}</span>
+            <div><strong>${uiText('Corte')} ${index + 1}</strong><p>${escapeHtml(cut.text)}</p></div>
+          </article>`).join('')}
+      </div>
+    </section>` : '';
+
   result.innerHTML = `
     <div class="result-heading">
       <div><h3>${escapeHtml(pack.topic)}</h3><p>${packPlatforms(pack).length} ${packPlatforms(pack).length > 1 ? uiText('plataformas') : uiText('plataforma')} · ${escapeHtml(toneLabel(pack.tone))}${pack.audience ? ' · ' + escapeHtml(uiText('Público')) + ': ' + escapeHtml(pack.audience) : ''}${pack.publishAt ? ' · ' + escapeHtml(uiText('Planejado para')) + ' ' + escapeHtml(formatPlannedDate(pack.publishAt)) : ''}</p><small class="pack-checklist-progress">${uiText('Checklist')}: ${checklistStats.done}/${checklistStats.total}</small></div>
       <span class="project-status status-${escapeHtml(pack.status || 'draft')}">${statusLabel(pack.status || 'draft')}</span>
     </div>
+    ${pack.mediaName ? '<p class="media-linked"><strong>' + escapeHtml(uiText('Mídia vinculada')) + ':</strong> ' + escapeHtml(pack.mediaName) + '</p>' : ''}
+    ${cutsHtml}
     <div class="platform-grid">${cards}</div>
     <p class="generator-note"><small>${currentUser ? 'Projeto sincronizado na sua conta.' : 'Projeto salvo neste dispositivo.'} ${pack.generationMode === 'ai' ? uiText('Conteúdo melhorado com IA no backend.') : uiText('O gerador atual usa regras locais, sem IA externa.')}</small></p>
     <div class="result-actions"><button class="secondary" id="edit-pack" type="button">${uiText('Editar')}</button><button class="secondary" id="template-pack" type="button">${uiText('Usar como modelo')}</button><button class="secondary" id="copy" type="button">${uiText('Copiar pacote completo')}</button><label class="export-format"><span>${uiText('Exportar')}</span><select id="export-format" aria-label="${uiText('Formato de exportação')}"><option value="txt">TXT</option><option value="md">Markdown</option><option value="json">JSON</option><option value="csv">CSV</option></select></label><button class="secondary" id="export" type="button">${uiText('Baixar')}</button></div>`;
@@ -1295,6 +1310,9 @@ form.addEventListener('submit', async event => {
       }
 
       const saved = await saveCloudPack(pack);
+      if (existing?.mediaPath && saved.mediaPath && existing.mediaPath !== saved.mediaPath) {
+        supabaseClient.storage.from('postpilot-media').remove([existing.mediaPath]).catch(() => {});
+      }
       cloudPacks = [saved, ...cloudPacks.filter(item => item.id !== saved.id)].slice(0, 20);
       renderPack(saved);
       renderList();
@@ -1328,6 +1346,28 @@ contentTemplateSelect?.addEventListener('change', () => {
 applyContentTemplateButton?.addEventListener('click', () => {
   if (contentTemplateSelect?.value) applyContentTemplate(contentTemplateSelect.value);
 });
+mediaFileInput?.addEventListener('change', () => {
+  const file = mediaFileInput.files?.[0] || null;
+  if (!file) {
+    resetMediaSelection();
+    return;
+  }
+  if (!allowedMediaType(file.type)) {
+    resetMediaSelection();
+    showToast('Formato de mídia não suportado.');
+    return;
+  }
+  if (file.size > 6 * 1024 * 1024) {
+    resetMediaSelection();
+    showToast('O arquivo deve ter no máximo 6 MB.');
+    return;
+  }
+  pendingMediaFile = file;
+  if (mediaFileLabel) mediaFileLabel.textContent = uiText('Trocar mídia');
+  if (mediaClearButton) mediaClearButton.hidden = false;
+  if (mediaStatus) mediaStatus.textContent = mediaFileText(file);
+});
+mediaClearButton?.addEventListener('click', resetMediaSelection);
 exportBackupButton?.addEventListener('click', exportLocalBackup);
 importBackupButton?.addEventListener('click', () => importBackupFile?.click());
 importBackupFile?.addEventListener('change', async () => {
@@ -1423,11 +1463,13 @@ list.addEventListener('click', async event => {
     const id = removeButton.dataset.delete;
 
     if (currentUser) {
+      const pack = cloudPacks.find(item => item.id === id);
       const { error } = await supabaseClient.from('postpilot_projects').delete().eq('id', id);
       if (error) {
         showToast('Não foi possível excluir o pacote.');
         return;
       }
+      if (pack?.mediaPath) supabaseClient.storage.from('postpilot-media').remove([pack.mediaPath]).catch(() => {});
       cloudPacks = cloudPacks.filter(item => item.id !== id);
       showToast('Pacote removido da sua conta.');
     } else {

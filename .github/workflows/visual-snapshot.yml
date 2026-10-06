@@ -69,6 +69,7 @@ jobs:
           path: |
             screenshots/postpilot-desktop.png
             screenshots/postpilot-mobile.png
+            screenshots/postpilot-tablet.png
             screenshots/visual-state.json
           retention-days: 30
 
@@ -80,6 +81,7 @@ jobs:
           mkdir -p /tmp/postpilot-snapshot
           cp screenshots/postpilot-desktop.png /tmp/postpilot-snapshot/
           cp screenshots/postpilot-mobile.png /tmp/postpilot-snapshot/
+          cp screenshots/postpilot-tablet.png /tmp/postpilot-snapshot/
           cp screenshots/visual-state.json /tmp/postpilot-snapshot/
 
           for attempt in 1 2 3; do
@@ -88,9 +90,10 @@ jobs:
             mkdir -p screenshots
             cp /tmp/postpilot-snapshot/postpilot-desktop.png screenshots/
             cp /tmp/postpilot-snapshot/postpilot-mobile.png screenshots/
+            cp /tmp/postpilot-snapshot/postpilot-tablet.png screenshots/
             cp /tmp/postpilot-snapshot/visual-state.json screenshots/
 
-            git add screenshots/postpilot-desktop.png screenshots/postpilot-mobile.png screenshots/visual-state.json
+            git add screenshots/postpilot-desktop.png screenshots/postpilot-mobile.png screenshots/postpilot-tablet.png screenshots/visual-state.json
             if git diff --cached --quiet; then
               echo "No visual changes detected."
               exit 0

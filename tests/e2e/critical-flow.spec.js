@@ -197,6 +197,8 @@ test('dashboard de foco e filtros avançados organizam a produção', async ({ p
   await expect(page.locator('#focus-dashboard')).toBeVisible();
   await expect(page.locator('#focus-dashboard')).toContainText(/Rascunhos|Drafts/i);
 
+  await page.locator('.advanced-filters summary').click();
+  await expect(page.locator('#project-platform-filter')).toBeVisible();
   await page.locator('#project-platform-filter').selectOption('Instagram');
   await expect(page.locator('#list')).toContainText('Marketing para pequenos negócios Filtros');
 

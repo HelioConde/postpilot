@@ -52,6 +52,19 @@ O PostPilot possui Browser E2E em Chromium cobrindo o fluxo local crítico: brie
 O primeiro run dessa suíte passou integralmente no GitHub Actions.
 
 
+## Upload de mídia e transcrição
+
+Usuários autenticados podem selecionar áudio ou vídeo para um pacote. A primeira versão aceita arquivos privados de até 6 MB nos formatos MP3/MP4/WAV/WebM/MOV. O upload vai para o bucket privado `postpilot-media`, isolado por pasta do usuário com RLS.
+
+A Edge Function `postpilot-transcribe` baixa somente arquivos do próprio usuário e envia a mídia a um endpoint de transcrição configurado no backend. A resposta pode incluir segmentos com timestamps; quando disponíveis, o PostPilot cria sugestões de cortes com início, fim e trecho recomendado.
+
+Configuração privada esperada:
+- `POSTPILOT_TRANSCRIBE_API_URL`
+- `POSTPILOT_TRANSCRIBE_API_KEY`
+- `POSTPILOT_TRANSCRIBE_MODEL`
+
+Sem esses segredos, o upload continua protegido e o usuário pode seguir usando transcrição/resumo manual; a transcrição automática não é apresentada como concluída.
+
 ## Geração por IA no backend
 
 O PostPilot possui integração opcional com a Edge Function `postpilot-generate`. A chave do fornecedor nunca fica no navegador: URL, modelo e credencial são lidos apenas dos segredos `POSTPILOT_AI_API_URL`, `POSTPILOT_AI_MODEL` e `POSTPILOT_AI_API_KEY` no backend.

@@ -1,0 +1,54 @@
+name: Browser E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'app.js'
+      - 'i18n.js'
+      - 'ads.js'
+      - 'ads-config.js'
+      - 'style.css'
+      - 'supabase-config.js'
+      - 'tests/**'
+      - 'playwright.config.js'
+      - 'package.json'
+      - '.github/workflows/e2e.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'app.js'
+      - 'i18n.js'
+      - 'ads.js'
+      - 'ads-config.js'
+      - 'style.css'
+      - 'supabase-config.js'
+      - 'tests/**'
+      - 'playwright.config.js'
+      - 'package.json'
+      - '.github/workflows/e2e.yml'
+
+concurrency:
+  group: postpilot-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install test dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run browser E2E
+        run: npm run test:e2e

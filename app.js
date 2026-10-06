@@ -47,6 +47,10 @@ const aiGenerationToggle = document.querySelector('#ai-generation');
 const mediaFileInput = document.querySelector('#media-file');
 const mediaFileLabel = document.querySelector('#media-file-label');
 const mediaClearButton = document.querySelector('#media-clear');
+const mediaCancelUploadButton = document.querySelector('#media-cancel-upload');
+const mediaProgressWrap = document.querySelector('#media-progress-wrap');
+const mediaProgress = document.querySelector('#media-progress');
+const mediaProgressLabel = document.querySelector('#media-progress-label');
 const mediaStatus = document.querySelector('#media-status');
 
 let currentUser = null;
@@ -58,6 +62,7 @@ let calendarWeekOffset = 0;
 let calendarMonthOffset = 0;
 let calendarView = 'week';
 let pendingMediaFile = null;
+let activeMediaUpload = null;
 
 function currentLocale() {
   return window.AppI18n?.locale?.() || 'pt-BR';
@@ -275,12 +280,79 @@ function mediaFileText(file) {
   return file.name + ' · ' + size;
 }
 
+function setMediaProgress(percent = 0, active = false) {
+  const safe = Math.max(0, Math.min(100, Number(percent) || 0));
+  if (mediaProgress) mediaProgress.value = safe;
+  if (mediaProgressLabel) mediaProgressLabel.textContent = Math.round(safe) + '%';
+  if (mediaProgressWrap) mediaProgressWrap.hidden = !active;
+  if (mediaCancelUploadButton) mediaCancelUploadButton.hidden = !active;
+}
+
 function resetMediaSelection() {
   pendingMediaFile = null;
+  activeMediaUpload = null;
   if (mediaFileInput) mediaFileInput.value = '';
   if (mediaFileLabel) mediaFileLabel.textContent = uiText('Escolher mídia');
   if (mediaClearButton) mediaClearButton.hidden = true;
   if (mediaStatus) mediaStatus.textContent = '';
+  setMediaProgress(0, false);
+}
+
+async function uploadMediaResumable(file, path) {
+  if (!window.tus?.Upload || !supabaseClient || !currentUser) {
+    const { error } = await supabaseClient.storage
+      .from('postpilot-media')
+      .upload(path, file, { contentType: file.type, upsert: false, cacheControl: '3600' });
+    if (error) throw error;
+    setMediaProgress(100, false);
+    return;
+  }
+
+  const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+  if (sessionError || !sessionData?.session?.access_token) throw sessionError || new Error('Sessão não encontrada.');
+  const accessToken = sessionData.session.access_token;
+  const endpoint = 'https://bnlvvsjgpywpbfhwdcan.storage.supabase.co/storage/v1/upload/resumable';
+  const publishableKey = 'sb_publishable_8q954VgGB7IUEgwWYA55-Q_MUyDd17c';
+
+  await new Promise((resolve, reject) => {
+    const upload = new window.tus.Upload(file, {
+      endpoint,
+      retryDelays: [0, 3000, 5000, 10000, 20000],
+      headers: {
+        authorization: 'Bearer ' + accessToken,
+        apikey: publishableKey
+      },
+      uploadDataDuringCreation: true,
+      removeFingerprintOnSuccess: true,
+      chunkSize: 6 * 1024 * 1024,
+      metadata: {
+        bucketName: 'postpilot-media',
+        objectName: path,
+        contentType: file.type,
+        cacheControl: '3600'
+      },
+      onError(error) {
+        activeMediaUpload = null;
+        setMediaProgress(0, false);
+        reject(error);
+      },
+      onProgress(bytesUploaded, bytesTotal) {
+        const percent = bytesTotal ? (bytesUploaded / bytesTotal) * 100 : 0;
+        setMediaProgress(percent, true);
+      },
+      onSuccess() {
+        activeMediaUpload = null;
+        setMediaProgress(100, false);
+        resolve();
+      }
+    });
+    activeMediaUpload = upload;
+    setMediaProgress(0, true);
+    upload.findPreviousUploads().then(previous => {
+      if (previous?.length) upload.resumeFromPreviousUpload(previous[0]);
+      upload.start();
+    }).catch(reject);
+  });
 }
 
 async function uploadAndTranscribeMedia(file, packId) {
@@ -296,10 +368,7 @@ async function uploadAndTranscribeMedia(file, packId) {
   const path = currentUser.id + '/' + packId + '/' + Date.now() + '-' + safeName;
 
   if (mediaStatus) mediaStatus.textContent = uiText('Enviando mídia privada…');
-  const { error: uploadError } = await supabaseClient.storage
-    .from('postpilot-media')
-    .upload(path, file, { contentType: file.type, upsert: false, cacheControl: '3600' });
-  if (uploadError) throw uploadError;
+  await uploadMediaResumable(file, path);
 
   try {
     if (mediaStatus) mediaStatus.textContent = uiText('Transcrevendo mídia…');
@@ -1874,6 +1943,19 @@ mediaFileInput?.addEventListener('change', () => {
   if (mediaStatus) mediaStatus.textContent = mediaFileText(file);
 });
 mediaClearButton?.addEventListener('click', resetMediaSelection);
+mediaCancelUploadButton?.addEventListener('click', async () => {
+  if (!activeMediaUpload) return;
+  try {
+    await activeMediaUpload.abort(true);
+    activeMediaUpload = null;
+    setMediaProgress(0, false);
+    if (mediaStatus) mediaStatus.textContent = uiText('Upload cancelado.');
+    showToast('Upload cancelado.');
+  } catch (error) {
+    console.error(error);
+    showToast('Não foi possível cancelar o upload.');
+  }
+});
 exportBackupButton?.addEventListener('click', exportLocalBackup);
 importBackupButton?.addEventListener('click', () => importBackupFile?.click());
 importBackupFile?.addEventListener('change', async () => {

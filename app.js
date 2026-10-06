@@ -33,6 +33,10 @@ const importBackupFile = document.querySelector('#import-backup-file');
 const contentTemplateSelect = document.querySelector('#content-template');
 const applyContentTemplateButton = document.querySelector('#apply-content-template');
 const aiGenerationToggle = document.querySelector('#ai-generation');
+const mediaFileInput = document.querySelector('#media-file');
+const mediaFileLabel = document.querySelector('#media-file-label');
+const mediaClearButton = document.querySelector('#media-clear');
+const mediaStatus = document.querySelector('#media-status');
 
 let currentUser = null;
 let cloudPacks = [];
@@ -40,6 +44,7 @@ let cloudLoading = false;
 let openedPackId = null;
 let editingPackId = null;
 let calendarWeekOffset = 0;
+let pendingMediaFile = null;
 
 function currentLocale() {
   return window.AppI18n?.locale?.() || 'pt-BR';
@@ -228,6 +233,92 @@ async function restoreLocalBackup(file) {
   cancelComposerEdit({ reset: true });
   renderList();
   showToast('Backup restaurado.');
+}
+
+function allowedMediaType(type) {
+  return ['audio/mpeg','audio/mp4','audio/wav','audio/webm','video/mp4','video/webm','video/quicktime'].includes(String(type || ''));
+}
+
+function mediaFileText(file) {
+  if (!file) return '';
+  const size = file.size < 1024 * 1024
+    ? Math.max(1, Math.round(file.size / 1024)) + ' KB'
+    : (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+  return file.name + ' · ' + size;
+}
+
+function resetMediaSelection() {
+  pendingMediaFile = null;
+  if (mediaFileInput) mediaFileInput.value = '';
+  if (mediaFileLabel) mediaFileLabel.textContent = uiText('Escolher mídia');
+  if (mediaClearButton) mediaClearButton.hidden = true;
+  if (mediaStatus) mediaStatus.textContent = '';
+}
+
+async function uploadAndTranscribeMedia(file, packId) {
+  if (!supabaseClient || !currentUser) throw new Error('Entre na sua conta para enviar mídia.');
+  if (!file || !allowedMediaType(file.type)) throw new Error('Formato de mídia não suportado.');
+  if (file.size > 6 * 1024 * 1024) throw new Error('O arquivo deve ter no máximo 6 MB.');
+
+  const safeName = String(file.name || 'media')
+    .normalize('NFD').replace(/\p{M}/gu, '')
+    .replace(/[^a-zA-Z0-9._-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 100) || 'media';
+  const path = currentUser.id + '/' + packId + '/' + Date.now() + '-' + safeName;
+
+  if (mediaStatus) mediaStatus.textContent = uiText('Enviando mídia privada…');
+  const { error: uploadError } = await supabaseClient.storage
+    .from('postpilot-media')
+    .upload(path, file, { contentType: file.type, upsert: false, cacheControl: '3600' });
+  if (uploadError) throw uploadError;
+
+  try {
+    if (mediaStatus) mediaStatus.textContent = uiText('Transcrevendo mídia…');
+    const { data, error } = await supabaseClient.functions.invoke('postpilot-transcribe', {
+      body: { path, name: file.name, locale: currentLocale() }
+    });
+    if (error) throw error;
+    if (!data?.transcript) throw new Error('Transcrição vazia.');
+    return {
+      transcript: String(data.transcript).slice(0, 12000),
+      segments: Array.isArray(data.segments) ? data.segments : [],
+      mediaPath: path,
+      mediaName: file.name,
+      mediaType: file.type,
+      mediaSizeBytes: file.size
+    };
+  } catch (error) {
+    await supabaseClient.storage.from('postpilot-media').remove([path]).catch(() => {});
+    throw error;
+  }
+}
+
+function formatTimestamp(seconds) {
+  const total = Math.max(0, Math.floor(Number(seconds) || 0));
+  const minutes = Math.floor(total / 60);
+  const secs = total % 60;
+  return minutes + ':' + String(secs).padStart(2, '0');
+}
+
+function cutSuggestions(pack) {
+  const segments = Array.isArray(pack?.transcriptionSegments) ? pack.transcriptionSegments : [];
+  return segments
+    .filter(segment => Number.isFinite(Number(segment.start)) && Number.isFinite(Number(segment.end)) && String(segment.text || '').trim().length >= 24)
+    .map(segment => ({
+      start: Number(segment.start),
+      end: Number(segment.end),
+      text: String(segment.text || '').trim()
+    }))
+    .filter(segment => segment.end > segment.start)
+    .sort((a, b) => {
+      const aDuration = a.end - a.start;
+      const bDuration = b.end - b.start;
+      const aScore = (aDuration >= 8 && aDuration <= 45 ? 2 : 0) + Math.min(a.text.length / 120, 1);
+      const bScore = (bDuration >= 8 && bDuration <= 45 ? 2 : 0) + Math.min(b.text.length / 120, 1);
+      return bScore - aScore;
+    })
+    .slice(0, 3);
 }
 
 function showToast(message) {
@@ -528,6 +619,11 @@ function mapCloudPack(row) {
     publishChecklist: row.publish_checklist && typeof row.publish_checklist === 'object' ? row.publish_checklist : {},
     generationMode: row.generation_mode === 'ai' ? 'ai' : 'local',
     generationData: row.generation_data && typeof row.generation_data === 'object' ? row.generation_data : {},
+    mediaPath: row.media_path || '',
+    mediaName: row.media_name || '',
+    mediaType: row.media_type || '',
+    mediaSizeBytes: Number(row.media_size_bytes || 0),
+    transcriptionSegments: Array.isArray(row.transcription_segments) ? row.transcription_segments : [],
     status: row.status || 'draft',
     createdAt: Date.parse(row.created_at),
     time: Date.parse(row.updated_at || row.created_at)
@@ -571,6 +667,11 @@ async function saveCloudPack(pack) {
     publish_checklist: normalizePublishChecklist(pack),
     generation_mode: pack.generationMode === 'ai' ? 'ai' : 'local',
     generation_data: pack.generationData && typeof pack.generationData === 'object' ? pack.generationData : {},
+    media_path: pack.mediaPath || null,
+    media_name: pack.mediaName || null,
+    media_type: pack.mediaType || null,
+    media_size_bytes: pack.mediaSizeBytes || null,
+    transcription_segments: Array.isArray(pack.transcriptionSegments) ? pack.transcriptionSegments : [],
     status: pack.status || 'draft',
     created_at: new Date(pack.createdAt || pack.time || Date.now()).toISOString(),
     updated_at: now
@@ -789,6 +890,10 @@ function fillComposerFromPack(pack, { asTemplate = false } = {}) {
   form.elements.f3.value = normalizeTone(pack.tone);
   form.elements.goal.value = pack.goal || 'conversa';
   if (aiGenerationToggle) aiGenerationToggle.checked = !asTemplate && pack.generationMode === 'ai' && Boolean(currentUser);
+  resetMediaSelection();
+  if (!asTemplate && pack.mediaName && mediaStatus) {
+    mediaStatus.textContent = uiText('Mídia vinculada') + ': ' + pack.mediaName;
+  }
 
   const selected = new Set(packPlatforms(pack));
   form.querySelectorAll('[name="platforms"]').forEach(input => {
@@ -805,7 +910,10 @@ function cancelComposerEdit({ reset = false } = {}) {
   editingPackId = null;
   if (composerMode) composerMode.hidden = true;
   if (composerSubmitButton) composerSubmitButton.textContent = uiText('Montar pacote');
-  if (reset) form.reset();
+  if (reset) {
+    form.reset();
+    resetMediaSelection();
+  }
 }
 
 
@@ -948,6 +1056,8 @@ function updateAccountUi() {
     aiGenerationToggle.disabled = !currentUser;
     if (!currentUser) aiGenerationToggle.checked = false;
   }
+  if (mediaFileInput) mediaFileInput.disabled = !currentUser;
+  if (!currentUser) resetMediaSelection();
   if (currentUser) {
     document.querySelector('#account-email').textContent = currentUser.email || 'Conta conectada';
     localImportBanner.hidden = localCount === 0;
@@ -1107,6 +1217,12 @@ form.addEventListener('submit', async event => {
   event.preventDefault();
   if (!form.reportValidity()) return;
   const values = Object.fromEntries(new FormData(form));
+  const manualTranscript = String(values.f1 || '').trim();
+  if (!manualTranscript && !pendingMediaFile) {
+    showToast('Informe uma transcrição/resumo ou envie uma mídia.');
+    form.elements.f1.focus();
+    return;
+  }
   const platforms = Array.from(form.querySelectorAll('[name="platforms"]:checked')).map(input => input.value);
   if (!platforms.length) {
     showToast('Escolha pelo menos uma plataforma.');
@@ -1116,7 +1232,7 @@ form.addEventListener('submit', async event => {
   const pack = {
     id: existing?.id || makeUuid(),
     topic: values.f0.trim(),
-    transcript: values.f1.trim(),
+    transcript: manualTranscript,
     platforms,
     channel: platforms[0],
     tone: normalizeTone(values.f3),
@@ -1126,6 +1242,11 @@ form.addEventListener('submit', async event => {
     publishChecklist: existing ? normalizePublishChecklist(existing) : {},
     generationMode: existing?.generationMode || 'local',
     generationData: existing?.generationData || {},
+    mediaPath: existing?.mediaPath || '',
+    mediaName: existing?.mediaName || '',
+    mediaType: existing?.mediaType || '',
+    mediaSizeBytes: existing?.mediaSizeBytes || 0,
+    transcriptionSegments: existing?.transcriptionSegments || [],
     status: existing?.status || 'draft',
     createdAt: existing?.createdAt || existing?.time || Date.now(),
     time: Date.now()
@@ -1135,6 +1256,28 @@ form.addEventListener('submit', async event => {
     const submit = form.querySelector('[type="submit"]');
     submit.disabled = true;
     try {
+      if (pendingMediaFile) {
+        try {
+          const media = await uploadAndTranscribeMedia(pendingMediaFile, pack.id);
+          pack.transcript = media.transcript;
+          pack.transcriptionSegments = media.segments;
+          pack.mediaPath = media.mediaPath;
+          pack.mediaName = media.mediaName;
+          pack.mediaType = media.mediaType;
+          pack.mediaSizeBytes = media.mediaSizeBytes;
+          form.elements.f1.value = media.transcript;
+          if (mediaStatus) mediaStatus.textContent = uiText('Transcrição concluída.');
+        } catch (mediaError) {
+          console.warn('PostPilot transcription:', mediaError);
+          if (!manualTranscript) {
+            showToast('Transcrição indisponível. Cole um resumo para continuar.');
+            if (mediaStatus) mediaStatus.textContent = uiText('Não foi possível transcrever. Use o campo de texto para continuar.');
+            return;
+          }
+          showToast('Mídia não transcrita. Usando o texto informado.');
+        }
+      }
+
       if (aiGenerationToggle?.checked) {
         showToast('Gerando conteúdo com IA…');
         try {
@@ -1156,6 +1299,7 @@ form.addEventListener('submit', async event => {
       renderPack(saved);
       renderList();
       cancelComposerEdit();
+      resetMediaSelection();
       showToast(existing ? 'Alterações salvas na sua conta.' : 'Pacote salvo na sua conta.');
     } catch (error) {
       console.error(error);

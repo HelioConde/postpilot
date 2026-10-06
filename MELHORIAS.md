@@ -35,8 +35,8 @@ O objetivo é validar o menor estúdio de conteúdo realmente útil para criador
 ## P2 — após validação com usuários
 
 - [ ] Edge Function para geração por IA com chave privada no backend. Código, integração e fallback prontos; falta aplicar migration, implantar a função e configurar os segredos do fornecedor no Supabase.
-- [ ] Upload de vídeo/áudio e transcrição automática.
-- [ ] Sugestões de cortes com timestamps.
+- [ ] Upload de vídeo/áudio e transcrição automática. Bucket privado, RLS, UI e Edge Function implantados; falta configurar os segredos do fornecedor de transcrição para ativar a transcrição automática.
+- [ ] Sugestões de cortes com timestamps. UI e lógica prontas a partir dos segmentos da transcrição; validação final depende do fornecedor de transcrição ativo.
 - [x] Exportações adicionais (Markdown/CSV/JSON).
 - [x] Integração opcional com calendário externo via exportação iCalendar (.ics), compatível com Google Calendar, Outlook e Apple Calendar.
 - [ ] Publicação assistida por plataforma quando APIs e políticas permitirem.

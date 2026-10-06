@@ -31,6 +31,7 @@ const importBackupButton = document.querySelector('#import-backup');
 const importBackupFile = document.querySelector('#import-backup-file');
 const contentTemplateSelect = document.querySelector('#content-template');
 const applyContentTemplateButton = document.querySelector('#apply-content-template');
+const aiGenerationToggle = document.querySelector('#ai-generation');
 
 let currentUser = null;
 let cloudPacks = [];
@@ -330,6 +331,17 @@ async function persistPublishChecklist(pack, nextChecklist) {
 }
 
 function platformDeliverable(pack, platform) {
+  const generated = pack?.generationData?.platforms?.[platform];
+  if (generated && Array.isArray(generated.lines) && generated.lines.length) {
+    return {
+      title: platform,
+      lines: generated.lines
+        .filter(line => line && typeof line.label === 'string' && typeof line.value === 'string')
+        .slice(0, 6)
+        .map(line => [line.label, line.value])
+    };
+  }
+
   const ideas = splitIntoIdeas(pack.transcript);
   const lead = ideas[0] || pack.topic;
   const english = currentLocale() === 'en';
@@ -513,10 +525,32 @@ function mapCloudPack(row) {
     audience: row.audience || '',
     publishAt: row.publish_at || '',
     publishChecklist: row.publish_checklist && typeof row.publish_checklist === 'object' ? row.publish_checklist : {},
+    generationMode: row.generation_mode === 'ai' ? 'ai' : 'local',
+    generationData: row.generation_data && typeof row.generation_data === 'object' ? row.generation_data : {},
     status: row.status || 'draft',
     createdAt: Date.parse(row.created_at),
     time: Date.parse(row.updated_at || row.created_at)
   };
+}
+
+async function generateAiContent(pack) {
+  if (!supabaseClient || !currentUser) throw new Error('Sessão não encontrada.');
+
+  const { data, error } = await supabaseClient.functions.invoke('postpilot-generate', {
+    body: {
+      topic: pack.topic,
+      transcript: pack.transcript,
+      audience: pack.audience || '',
+      tone: normalizeTone(pack.tone),
+      goal: pack.goal,
+      platforms: packPlatforms(pack),
+      locale: currentLocale()
+    }
+  });
+
+  if (error) throw error;
+  if (!data?.generation?.platforms) throw new Error('Resposta de IA inválida.');
+  return data.generation;
 }
 
 async function saveCloudPack(pack) {
@@ -534,6 +568,8 @@ async function saveCloudPack(pack) {
     audience: String(pack.audience || '').slice(0, 120),
     publish_at: pack.publishAt || null,
     publish_checklist: normalizePublishChecklist(pack),
+    generation_mode: pack.generationMode === 'ai' ? 'ai' : 'local',
+    generation_data: pack.generationData && typeof pack.generationData === 'object' ? pack.generationData : {},
     status: pack.status || 'draft',
     created_at: new Date(pack.createdAt || pack.time || Date.now()).toISOString(),
     updated_at: now
@@ -772,7 +808,7 @@ function renderPack(pack) {
       <span class="project-status status-${escapeHtml(pack.status || 'draft')}">${statusLabel(pack.status || 'draft')}</span>
     </div>
     <div class="platform-grid">${cards}</div>
-    <p class="generator-note"><small>${currentUser ? 'Projeto sincronizado na sua conta.' : 'Projeto salvo neste dispositivo.'} O gerador atual usa regras locais, sem IA externa.</small></p>
+    <p class="generator-note"><small>${currentUser ? 'Projeto sincronizado na sua conta.' : 'Projeto salvo neste dispositivo.'} ${pack.generationMode === 'ai' ? uiText('Conteúdo melhorado com IA no backend.') : uiText('O gerador atual usa regras locais, sem IA externa.')}</small></p>
     <div class="result-actions"><button class="secondary" id="edit-pack" type="button">${uiText('Editar')}</button><button class="secondary" id="template-pack" type="button">${uiText('Usar como modelo')}</button><button class="secondary" id="copy" type="button">${uiText('Copiar pacote completo')}</button><label class="export-format"><span>${uiText('Exportar')}</span><select id="export-format" aria-label="${uiText('Formato de exportação')}"><option value="txt">TXT</option><option value="md">Markdown</option><option value="json">JSON</option><option value="csv">CSV</option></select></label><button class="secondary" id="export" type="button">${uiText('Baixar')}</button></div>`;
   result.classList.add('show');
   document.querySelector('#edit-pack').addEventListener('click', () => fillComposerFromPack(pack));
@@ -822,6 +858,10 @@ function updateAccountUi() {
   accountForm.hidden = !supabaseClient || Boolean(currentUser);
   accountProfile.hidden = !currentUser;
   if (localBackupControls) localBackupControls.hidden = Boolean(currentUser);
+  if (aiGenerationToggle) {
+    aiGenerationToggle.disabled = !currentUser;
+    if (!currentUser) aiGenerationToggle.checked = false;
+  }
   if (currentUser) {
     document.querySelector('#account-email').textContent = currentUser.email || 'Conta conectada';
     localImportBanner.hidden = localCount === 0;
@@ -998,6 +1038,8 @@ form.addEventListener('submit', async event => {
     audience: String(values.audience || '').trim(),
     publishAt: String(values.publishAt || ''),
     publishChecklist: existing ? normalizePublishChecklist(existing) : {},
+    generationMode: existing?.generationMode || 'local',
+    generationData: existing?.generationData || {},
     status: existing?.status || 'draft',
     createdAt: existing?.createdAt || existing?.time || Date.now(),
     time: Date.now()
@@ -1007,6 +1049,22 @@ form.addEventListener('submit', async event => {
     const submit = form.querySelector('[type="submit"]');
     submit.disabled = true;
     try {
+      if (aiGenerationToggle?.checked) {
+        showToast('Gerando conteúdo com IA…');
+        try {
+          pack.generationData = await generateAiContent(pack);
+          pack.generationMode = 'ai';
+        } catch (aiError) {
+          console.warn('PostPilot AI fallback:', aiError);
+          pack.generationData = {};
+          pack.generationMode = 'local';
+          showToast('IA indisponível. Usando o gerador local.');
+        }
+      } else if (!existing || existing.generationMode !== 'ai') {
+        pack.generationData = {};
+        pack.generationMode = 'local';
+      }
+
       const saved = await saveCloudPack(pack);
       cloudPacks = [saved, ...cloudPacks.filter(item => item.id !== saved.id)].slice(0, 20);
       renderPack(saved);

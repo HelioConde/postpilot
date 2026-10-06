@@ -300,3 +300,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .foot{font-size:10px}
   .foot-links a{font-size:9px}
 }
+
+.account-open-short{display:none}
+@media(max-width:500px){
+  .account-open-full{display:none}
+  .account-open-short{display:inline}
+  #account-open{font-size:11px;padding:8px 11px}
+}

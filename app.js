@@ -13,6 +13,7 @@ const accountMessage = document.querySelector('#account-message');
 const syncStatus = document.querySelector('#sync-status');
 const localImportBanner = document.querySelector('#local-import-banner');
 const localImportButton = document.querySelector('#local-import');
+const projectStatusFilter = document.querySelector('#project-status-filter');
 
 let currentUser = null;
 let cloudPacks = [];
@@ -87,18 +88,83 @@ goalField.className = 'field';
 goalField.innerHTML = '<span>Objetivo do conteúdo</span><select name="goal"><option value="conversa">Gerar conversa</option><option value="alcance">Alcançar novas pessoas</option><option value="oferta">Apresentar um serviço</option></select>';
 form.querySelector('button[type="submit"]').before(goalField);
 
-function packageText(pack) {
+function packPlatforms(pack) {
+  if (Array.isArray(pack.platforms) && pack.platforms.length) return pack.platforms;
+  return [pack.channel || 'Instagram'];
+}
+
+function platformDeliverable(pack, platform) {
   const ideas = splitIntoIdeas(pack.transcript);
-  const clips = ideas.map((idea, index) => `IDEIA DE CORTE ${index + 1}\n${idea}`);
+  const lead = ideas[0] || pack.topic;
+  const hook = `${pack.topic} — uma ideia para você aplicar hoje.`;
+  const cta = callToAction(pack.goal);
+  const hashtags = topicHashtags(pack.topic);
+
+  if (platform === 'TikTok') {
+    return {
+      title: 'TikTok',
+      lines: [
+        ['Gancho de 2 segundos', hook],
+        ['Texto na tela', lead.slice(0, 110)],
+        ['Legenda curta', `${lead} ${cta}`],
+        ['Hashtags', hashtags]
+      ]
+    };
+  }
+
+  if (platform === 'YouTube Shorts') {
+    return {
+      title: 'YouTube Shorts',
+      lines: [
+        ['Título', pack.topic.slice(0, 90)],
+        ['Abertura', hook],
+        ['Descrição', `${lead}\n\n${cta}`],
+        ['Hashtags', hashtags]
+      ]
+    };
+  }
+
+  return {
+    title: 'Instagram',
+    lines: [
+      ['Gancho para Reels', hook],
+      ['Legenda', `${lead}\n\n${cta}`],
+      ['Carrossel / apoio', ideas.slice(0, 3).map((idea, index) => `${index + 1}. ${idea}`).join('\n')],
+      ['Hashtags', hashtags]
+    ]
+  };
+}
+
+function platformText(pack, platform) {
+  const deliverable = platformDeliverable(pack, platform);
+  return [
+    `PLATAFORMA: ${deliverable.title}`,
+    `TEMA: ${pack.topic}`,
+    `TOM: ${pack.tone}`,
+    ...deliverable.lines.map(([label, value]) => `${label.toUpperCase()}: ${value}`)
+  ].join('\n\n');
+}
+
+function packageText(pack) {
   return [
     `TEMA: ${pack.topic}`,
-    `CANAL: ${pack.channel}`,
+    `OBJETIVO: ${pack.goal}`,
     `TOM: ${pack.tone}`,
-    `GANCHO: ${pack.topic} — uma ideia para você aplicar hoje.`,
-    ...clips,
-    `LEGENDA: ${ideas[0] || pack.topic}\n\n${callToAction(pack.goal)}`,
-    `HASHTAGS: ${topicHashtags(pack.topic)}`
-  ].join('\n\n');
+    ...packPlatforms(pack).map(platform => platformText(pack, platform))
+  ].join('\n\n---\n\n');
+}
+
+function exportPackage(pack) {
+  const blob = new Blob([packageText(pack)], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `postpilot-${pack.topic.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/\p{M}/gu, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'pacote'}.txt`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  showToast('Pacote exportado em .txt.');
 }
 
 async function copyText(text) {
@@ -119,13 +185,16 @@ async function copyText(text) {
 }
 
 function mapCloudPack(row) {
+  const platforms = Array.isArray(row.platforms) && row.platforms.length ? row.platforms : ['Instagram'];
   return {
     id: row.id,
     topic: row.title,
     transcript: row.source_text,
-    channel: Array.isArray(row.platforms) && row.platforms[0] ? row.platforms[0] : 'Instagram',
+    platforms,
+    channel: platforms[0],
     tone: row.tone || 'Natural e direto',
     goal: row.goal || 'conversa',
+    status: row.status || 'draft',
     time: Date.parse(row.updated_at || row.created_at)
   };
 }
@@ -139,10 +208,10 @@ async function saveCloudPack(pack) {
     title: pack.topic,
     source_type: 'transcript',
     source_text: pack.transcript,
-    platforms: [pack.channel],
+    platforms: packPlatforms(pack),
     tone: pack.tone,
     goal: pack.goal,
-    status: 'draft',
+    status: pack.status || 'draft',
     created_at: new Date(pack.time || Date.now()).toISOString(),
     updated_at: now
   };
@@ -155,15 +224,16 @@ async function saveCloudPack(pack) {
 
   if (error) throw error;
 
-  const { error: outputError } = await supabaseClient.from('postpilot_outputs').insert({
+  const outputRows = packPlatforms(pack).map(platform => ({
     project_id: data.id,
     user_id: currentUser.id,
-    kind: 'package',
-    title: 'Pacote para ' + pack.channel,
-    body: packageText(pack),
-    metadata: { channel: pack.channel, tone: pack.tone, goal: pack.goal }
-  });
-  if (outputError) console.warn('PostPilot output não foi salvo:', outputError.message);
+    kind: 'platform-package',
+    title: 'Pacote para ' + platform,
+    body: platformText(pack, platform),
+    metadata: { platform, tone: pack.tone, goal: pack.goal }
+  }));
+  const { error: outputError } = await supabaseClient.from('postpilot_outputs').insert(outputRows);
+  if (outputError) console.warn('PostPilot outputs não foram salvos:', outputError.message);
 
   return mapCloudPack(data);
 }
@@ -192,37 +262,65 @@ async function loadCloudPacks() {
   updateAccountUi();
 }
 
+function statusLabel(status) {
+  return ({ draft: 'Rascunho', ready: 'Pronto', published: 'Publicado' })[status] || 'Rascunho';
+}
+
 function renderList() {
-  const packs = visiblePacks().slice(0, 5);
-  const normalized = currentUser ? packs : packs.slice().reverse();
+  const filter = projectStatusFilter?.value || 'all';
+  const source = currentUser ? visiblePacks() : visiblePacks().slice().reverse();
+  const normalized = source
+    .filter(pack => filter === 'all' || (pack.status || 'draft') === filter)
+    .slice(0, 10);
+
   list.innerHTML = normalized.length
-    ? normalized.map(pack => `
-      <div class="item"><div><strong>${escapeHtml(pack.topic)}</strong>
-        <small>${new Date(pack.time).toLocaleString('pt-BR')}</small></div>
+    ? normalized.map(pack => {
+      const platforms = packPlatforms(pack);
+      const status = pack.status || 'draft';
+      return `
+      <div class="item">
+        <div class="item-summary">
+          <div class="item-title-line"><strong>${escapeHtml(pack.topic)}</strong><span class="project-status status-${escapeHtml(status)}">${statusLabel(status)}</span></div>
+          <small>${platforms.map(escapeHtml).join(' · ')} · ${new Date(pack.time).toLocaleString('pt-BR')}</small>
+        </div>
         <div class="item-actions">
+          <select class="project-status-select" data-status-id="${escapeHtml(pack.id)}" aria-label="Status do projeto">
+            <option value="draft"${status === 'draft' ? ' selected' : ''}>Rascunho</option>
+            <option value="ready"${status === 'ready' ? ' selected' : ''}>Pronto</option>
+            <option value="published"${status === 'published' ? ' selected' : ''}>Publicado</option>
+          </select>
           <button class="secondary" type="button" data-pack="${escapeHtml(pack.id)}">Abrir</button>
           <button class="secondary" type="button" data-delete="${escapeHtml(pack.id)}" aria-label="Excluir pacote">Excluir</button>
         </div>
-      </div>`).join('')
-    : '<div class="empty">Seus pacotes recentes aparecem aqui.</div>';
+      </div>`;
+    }).join('')
+    : '<div class="empty">Nenhum pacote encontrado neste filtro.</div>';
 }
 
 function renderPack(pack) {
-  const ideas = splitIntoIdeas(pack.transcript);
-  const hook = `${pack.topic} — uma ideia para você aplicar hoje.`;
-  const caption = callToAction(pack.goal);
+  const cards = packPlatforms(pack).map(platform => {
+    const deliverable = platformDeliverable(pack, platform);
+    return `
+      <article class="platform-card">
+        <div class="platform-card-head"><h4>${escapeHtml(deliverable.title)}</h4><button class="copy-platform" type="button" data-copy-platform="${escapeHtml(platform)}">Copiar</button></div>
+        ${deliverable.lines.map(([label, value]) => `<div class="deliverable"><span>${escapeHtml(label)}</span><p>${escapeHtml(value).replace(/\n/g, '<br>')}</p></div>`).join('')}
+      </article>`;
+  }).join('');
+
   result.innerHTML = `
-    <h3>Rascunhos para ${escapeHtml(pack.channel)}</h3>
-    <p><b>Gancho sugerido:</b> ${escapeHtml(hook)}</p>
-    <p><b>Tom:</b> ${escapeHtml(pack.tone)}</p>
-    <h4>Ideias de trechos para revisar</h4>
-    <ol>${ideas.map(idea => `<li>${escapeHtml(idea)}</li>`).join('')}</ol>
-    <p><b>Legenda sugerida:</b> ${escapeHtml(ideas[0] || pack.topic)} ${escapeHtml(caption)}</p>
-    <p><b>Hashtags sugeridas:</b> ${escapeHtml(topicHashtags(pack.topic))}</p>
-    <p><small>${currentUser ? 'Projeto sincronizado na sua conta.' : 'Projeto salvo neste dispositivo.'} O gerador atual usa regras locais, sem IA externa.</small></p>
-    <button class="secondary" id="copy" type="button">Copiar pacote completo</button>`;
+    <div class="result-heading">
+      <div><h3>${escapeHtml(pack.topic)}</h3><p>${packPlatforms(pack).length} plataforma${packPlatforms(pack).length > 1 ? 's' : ''} · ${escapeHtml(pack.tone)}</p></div>
+      <span class="project-status status-${escapeHtml(pack.status || 'draft')}">${statusLabel(pack.status || 'draft')}</span>
+    </div>
+    <div class="platform-grid">${cards}</div>
+    <p class="generator-note"><small>${currentUser ? 'Projeto sincronizado na sua conta.' : 'Projeto salvo neste dispositivo.'} O gerador atual usa regras locais, sem IA externa.</small></p>
+    <div class="result-actions"><button class="secondary" id="copy" type="button">Copiar pacote completo</button><button class="secondary" id="export" type="button">Exportar .txt</button></div>`;
   result.classList.add('show');
   document.querySelector('#copy').addEventListener('click', () => copyText(packageText(pack)));
+  document.querySelector('#export').addEventListener('click', () => exportPackage(pack));
+  result.querySelectorAll('[data-copy-platform]').forEach(button => {
+    button.addEventListener('click', () => copyText(platformText(pack, button.dataset.copyPlatform)));
+  });
 }
 
 function showAccountMessage(message) {
@@ -398,13 +496,20 @@ form.addEventListener('submit', async event => {
   event.preventDefault();
   if (!form.reportValidity()) return;
   const values = Object.fromEntries(new FormData(form));
+  const platforms = Array.from(form.querySelectorAll('[name="platforms"]:checked')).map(input => input.value);
+  if (!platforms.length) {
+    showToast('Escolha pelo menos uma plataforma.');
+    return;
+  }
   const pack = {
     id: makeUuid(),
     topic: values.f0.trim(),
     transcript: values.f1.trim(),
-    channel: values.f2,
+    platforms,
+    channel: platforms[0],
     tone: values.f3,
     goal: values.goal,
+    status: 'draft',
     time: Date.now()
   };
 
@@ -432,6 +537,43 @@ form.addEventListener('submit', async event => {
   renderPack(pack);
   renderList();
   showToast('Pacote salvo neste dispositivo.');
+});
+
+projectStatusFilter?.addEventListener('change', renderList);
+
+list.addEventListener('change', async event => {
+  const select = event.target.closest('[data-status-id]');
+  if (!select) return;
+  const pack = visiblePacks().find(item => item.id === select.dataset.statusId);
+  if (!pack) return;
+  const nextStatus = select.value;
+  if (!['draft', 'ready', 'published'].includes(nextStatus)) return;
+
+  const updated = { ...pack, status: nextStatus, time: Date.now() };
+  select.disabled = true;
+  try {
+    if (currentUser) {
+      const { data, error } = await supabaseClient
+        .from('postpilot_projects')
+        .update({ status: nextStatus, updated_at: new Date().toISOString() })
+        .eq('id', pack.id)
+        .select('*')
+        .single();
+      if (error) throw error;
+      const saved = mapCloudPack(data);
+      cloudPacks = cloudPacks.map(item => item.id === saved.id ? saved : item)
+        .sort((a, b) => b.time - a.time);
+    } else {
+      const local = readPacks().map(item => item.id === updated.id ? updated : item);
+      localStorage.setItem(storageKey, JSON.stringify(local));
+    }
+    renderList();
+    showToast('Projeto marcado como ' + statusLabel(nextStatus).toLowerCase() + '.');
+  } catch (error) {
+    console.error(error);
+    select.disabled = false;
+    showToast('Não foi possível atualizar o status.');
+  }
 });
 
 list.addEventListener('click', async event => {

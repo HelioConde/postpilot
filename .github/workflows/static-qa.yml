@@ -122,3 +122,10 @@ jobs:
           grep -qi 'postpilot_project_versions' supabase/migrations/20261006131500_project_versions.sql
           grep -qi 'content_overrides' supabase/migrations/20261006134500_content_overrides.sql
           grep -qi 'tus-js-client' index.html
+          grep -qi 'service-health' index.html
+          grep -qi 'action: .health.' app.js
+          grep -qi 'postpilot_consume_usage' supabase/functions/postpilot-generate/index.ts
+          grep -qi 'postpilot_consume_usage' supabase/functions/postpilot-transcribe/index.ts
+          grep -qi 'AbortSignal.timeout(30000)' supabase/functions/postpilot-generate/index.ts
+          grep -qi 'AbortSignal.timeout(120000)' supabase/functions/postpilot-transcribe/index.ts
+          grep -qi 'postpilot_private.postpilot_usage_limits' supabase/migrations/20261006151000_private_usage_schema.sql

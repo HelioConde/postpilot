@@ -16,11 +16,22 @@ const localImportButton = document.querySelector('#local-import');
 const projectStatusFilter = document.querySelector('#project-status-filter');
 const projectSearch = document.querySelector('#project-search');
 const productionSummary = document.querySelector('#production-summary');
+const composerMode = document.querySelector('#composer-mode');
+const composerModeTitle = document.querySelector('#composer-mode-title');
+const composerCancelButton = document.querySelector('#composer-cancel');
+const composerSubmitButton = document.querySelector('#composer-submit');
+const calendarGrid = document.querySelector('#calendar-grid');
+const calendarRange = document.querySelector('#calendar-range');
+const calendarPrevButton = document.querySelector('#calendar-prev');
+const calendarTodayButton = document.querySelector('#calendar-today');
+const calendarNextButton = document.querySelector('#calendar-next');
 
 let currentUser = null;
 let cloudPacks = [];
 let cloudLoading = false;
 let openedPackId = null;
+let editingPackId = null;
+let calendarWeekOffset = 0;
 
 function currentLocale() {
   return window.AppI18n?.locale?.() || 'pt-BR';
@@ -236,6 +247,7 @@ function mapCloudPack(row) {
     audience: row.audience || '',
     publishAt: row.publish_at || '',
     status: row.status || 'draft',
+    createdAt: Date.parse(row.created_at),
     time: Date.parse(row.updated_at || row.created_at)
   };
 }
@@ -255,7 +267,7 @@ async function saveCloudPack(pack) {
     audience: String(pack.audience || '').slice(0, 120),
     publish_at: pack.publishAt || null,
     status: pack.status || 'draft',
-    created_at: new Date(pack.time || Date.now()).toISOString(),
+    created_at: new Date(pack.createdAt || pack.time || Date.now()).toISOString(),
     updated_at: now
   };
 
@@ -315,6 +327,98 @@ function formatPlannedDate(value) {
   return new Date(value + 'T12:00:00').toLocaleDateString(currentLocale());
 }
 
+function localDateKey(date) {
+  const year = String(date.getFullYear());
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return year + '-' + month + '-' + day;
+}
+
+function startOfCalendarWeek(offset = calendarWeekOffset) {
+  const date = new Date();
+  date.setHours(12, 0, 0, 0);
+  const weekday = date.getDay();
+  const mondayDelta = weekday === 0 ? -6 : 1 - weekday;
+  date.setDate(date.getDate() + mondayDelta + offset * 7);
+  return date;
+}
+
+function renderEditorialCalendar(source = visiblePacks()) {
+  if (!calendarGrid || !calendarRange) return;
+  const start = startOfCalendarWeek();
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+
+  calendarRange.textContent = start.toLocaleDateString(currentLocale(), { day: '2-digit', month: 'short' })
+    + ' – '
+    + end.toLocaleDateString(currentLocale(), { day: '2-digit', month: 'short', year: 'numeric' });
+
+  const today = localDateKey(new Date());
+  calendarGrid.innerHTML = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+    const key = localDateKey(date);
+    const dayPacks = source
+      .filter(pack => pack.publishAt === key)
+      .sort((a, b) => String(a.topic).localeCompare(String(b.topic), currentLocale()));
+
+    return '<article class="calendar-day' + (key === today ? ' is-today' : '') + '">' +
+      '<header><span>' + escapeHtml(date.toLocaleDateString(currentLocale(), { weekday: 'short' })) + '</span>' +
+      '<strong>' + escapeHtml(String(date.getDate()).padStart(2, '0')) + '</strong></header>' +
+      '<div class="calendar-day-items">' +
+      (dayPacks.length
+        ? dayPacks.map(pack =>
+          '<button type="button" class="calendar-pack status-' + escapeHtml(pack.status || 'draft') + '" data-calendar-pack="' + escapeHtml(pack.id) + '">' +
+            '<strong>' + escapeHtml(pack.topic) + '</strong>' +
+            '<small>' + escapeHtml(statusLabel(pack.status || 'draft')) + ' · ' + escapeHtml(packPlatforms(pack).join(' + ')) + '</small>' +
+          '</button>'
+        ).join('')
+        : '<span class="calendar-empty">' + uiText('Livre') + '</span>') +
+      '</div></article>';
+  }).join('');
+}
+
+function setComposerMode(pack = null, asTemplate = false) {
+  editingPackId = pack && !asTemplate ? pack.id : null;
+  if (composerMode) composerMode.hidden = !pack;
+  if (composerModeTitle) {
+    composerModeTitle.textContent = pack
+      ? (asTemplate ? uiText('Usando pacote como modelo') : uiText('Editando pacote'))
+      : '';
+  }
+  if (composerSubmitButton) {
+    composerSubmitButton.textContent = editingPackId ? uiText('Salvar alterações') : uiText('Montar pacote');
+  }
+}
+
+function fillComposerFromPack(pack, { asTemplate = false } = {}) {
+  if (!pack) return;
+  form.elements.f0.value = pack.topic || '';
+  form.elements.f1.value = pack.transcript || '';
+  form.elements.audience.value = pack.audience || '';
+  form.elements.publishAt.value = asTemplate ? '' : (pack.publishAt || '');
+  form.elements.f3.value = normalizeTone(pack.tone);
+  form.elements.goal.value = pack.goal || 'conversa';
+
+  const selected = new Set(packPlatforms(pack));
+  form.querySelectorAll('[name="platforms"]').forEach(input => {
+    input.checked = selected.has(input.value);
+  });
+
+  setComposerMode(pack, asTemplate);
+  form.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+  form.elements.f0.focus();
+  showToast(asTemplate ? 'Modelo carregado. Ajuste e gere um novo pacote.' : 'Pacote aberto para edição.');
+}
+
+function cancelComposerEdit({ reset = false } = {}) {
+  editingPackId = null;
+  if (composerMode) composerMode.hidden = true;
+  if (composerSubmitButton) composerSubmitButton.textContent = uiText('Montar pacote');
+  if (reset) form.reset();
+}
+
+
 function renderProductionSummary(source) {
   if (!productionSummary) return;
   const total = source.length;
@@ -335,6 +439,7 @@ function renderList() {
   const searchTerm = String(projectSearch?.value || '').trim().toLocaleLowerCase(currentLocale());
   const source = currentUser ? visiblePacks() : visiblePacks().slice().reverse();
   renderProductionSummary(source);
+  renderEditorialCalendar(source);
   const normalized = source
     .filter(pack => filter === 'all' || (pack.status || 'draft') === filter)
     .filter(pack => {
@@ -363,7 +468,9 @@ function renderList() {
             <option value="published"${status === 'published' ? ' selected' : ''}>Publicado</option>
           </select>
           <button class="secondary" type="button" data-pack="${escapeHtml(pack.id)}">Abrir</button>
-          <button class="secondary" type="button" data-delete="${escapeHtml(pack.id)}" aria-label="Excluir pacote">Excluir</button>
+          <button class="secondary" type="button" data-edit-pack="${escapeHtml(pack.id)}">${uiText('Editar')}</button>
+          <button class="secondary" type="button" data-template-pack="${escapeHtml(pack.id)}">${uiText('Usar como modelo')}</button>
+          <button class="secondary" type="button" data-delete="${escapeHtml(pack.id)}" aria-label="${uiText('Excluir pacote')}">${uiText('Excluir')}</button>
         </div>
       </div>`;
     }).join('')
@@ -388,8 +495,10 @@ function renderPack(pack) {
     </div>
     <div class="platform-grid">${cards}</div>
     <p class="generator-note"><small>${currentUser ? 'Projeto sincronizado na sua conta.' : 'Projeto salvo neste dispositivo.'} O gerador atual usa regras locais, sem IA externa.</small></p>
-    <div class="result-actions"><button class="secondary" id="copy" type="button">Copiar pacote completo</button><button class="secondary" id="export" type="button">Exportar .txt</button></div>`;
+    <div class="result-actions"><button class="secondary" id="edit-pack" type="button">${uiText('Editar')}</button><button class="secondary" id="template-pack" type="button">${uiText('Usar como modelo')}</button><button class="secondary" id="copy" type="button">${uiText('Copiar pacote completo')}</button><button class="secondary" id="export" type="button">${uiText('Exportar .txt')}</button></div>`;
   result.classList.add('show');
+  document.querySelector('#edit-pack').addEventListener('click', () => fillComposerFromPack(pack));
+  document.querySelector('#template-pack').addEventListener('click', () => fillComposerFromPack(pack, { asTemplate: true }));
   document.querySelector('#copy').addEventListener('click', () => copyText(packageText(pack)));
   document.querySelector('#export').addEventListener('click', () => exportPackage(pack));
   result.querySelectorAll('[data-copy-platform]').forEach(button => {
@@ -575,8 +684,9 @@ form.addEventListener('submit', async event => {
     showToast('Escolha pelo menos uma plataforma.');
     return;
   }
+  const existing = editingPackId ? visiblePacks().find(item => item.id === editingPackId) : null;
   const pack = {
-    id: makeUuid(),
+    id: existing?.id || makeUuid(),
     topic: values.f0.trim(),
     transcript: values.f1.trim(),
     platforms,
@@ -585,7 +695,8 @@ form.addEventListener('submit', async event => {
     goal: values.goal,
     audience: String(values.audience || '').trim(),
     publishAt: String(values.publishAt || ''),
-    status: 'draft',
+    status: existing?.status || 'draft',
+    createdAt: existing?.createdAt || existing?.time || Date.now(),
     time: Date.now()
   };
 
@@ -594,10 +705,11 @@ form.addEventListener('submit', async event => {
     submit.disabled = true;
     try {
       const saved = await saveCloudPack(pack);
-      cloudPacks = [saved, ...cloudPacks].slice(0, 20);
+      cloudPacks = [saved, ...cloudPacks.filter(item => item.id !== saved.id)].slice(0, 20);
       renderPack(saved);
       renderList();
-      showToast('Pacote salvo na sua conta.');
+      cancelComposerEdit();
+      showToast(existing ? 'Alterações salvas na sua conta.' : 'Pacote salvo na sua conta.');
     } catch (error) {
       console.error(error);
       showToast('Não foi possível sincronizar. Tente novamente.');
@@ -607,16 +719,40 @@ form.addEventListener('submit', async event => {
     return;
   }
 
-  const packs = readPacks();
-  packs.push(pack);
+  const packs = existing
+    ? readPacks().map(item => item.id === pack.id ? pack : item)
+    : [...readPacks(), pack];
   localStorage.setItem(storageKey, JSON.stringify(packs.slice(-20)));
   renderPack(pack);
   renderList();
-  showToast('Pacote salvo neste dispositivo.');
+  cancelComposerEdit();
+  showToast(existing ? 'Alterações salvas neste dispositivo.' : 'Pacote salvo neste dispositivo.');
 });
 
 projectStatusFilter?.addEventListener('change', renderList);
 projectSearch?.addEventListener('input', renderList);
+composerCancelButton?.addEventListener('click', () => {
+  cancelComposerEdit({ reset: true });
+  showToast('Edição cancelada.');
+});
+calendarPrevButton?.addEventListener('click', () => {
+  calendarWeekOffset -= 1;
+  renderEditorialCalendar();
+});
+calendarTodayButton?.addEventListener('click', () => {
+  calendarWeekOffset = 0;
+  renderEditorialCalendar();
+});
+calendarNextButton?.addEventListener('click', () => {
+  calendarWeekOffset += 1;
+  renderEditorialCalendar();
+});
+calendarGrid?.addEventListener('click', event => {
+  const button = event.target.closest('[data-calendar-pack]');
+  if (!button) return;
+  const pack = visiblePacks().find(item => item.id === button.dataset.calendarPack);
+  if (pack) renderPack(pack);
+});
 window.addEventListener('app-language-change', () => {
   renderList();
   const pack = visiblePacks().find(item => item.id === openedPackId);
@@ -659,6 +795,20 @@ list.addEventListener('change', async event => {
 });
 
 list.addEventListener('click', async event => {
+  const editButton = event.target.closest('[data-edit-pack]');
+  if (editButton) {
+    const pack = visiblePacks().find(item => item.id === editButton.dataset.editPack);
+    if (pack) fillComposerFromPack(pack);
+    return;
+  }
+
+  const templateButton = event.target.closest('[data-template-pack]');
+  if (templateButton) {
+    const pack = visiblePacks().find(item => item.id === templateButton.dataset.templatePack);
+    if (pack) fillComposerFromPack(pack, { asTemplate: true });
+    return;
+  }
+
   const removeButton = event.target.closest('[data-delete]');
   if (removeButton) {
     if (!window.confirm(currentUser ? 'Excluir este pacote da sua conta?' : 'Excluir este pacote deste dispositivo?')) return;

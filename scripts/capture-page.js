@@ -39,6 +39,7 @@ async function capture(browser, name, viewport) {
   try {
     await capture(browser, 'postpilot-desktop.png', { width: 1440, height: 1000 });
     await capture(browser, 'postpilot-mobile.png', { width: 390, height: 844 });
+    await capture(browser, 'postpilot-tablet.png', { width: 768, height: 1024 });
 
     fs.writeFileSync(
       path.join(outputDir, 'visual-state.json'),
@@ -47,7 +48,8 @@ async function capture(browser, name, viewport) {
         source: BASE_URL,
         captures: {
           desktop: { width: 1440, height: 1000, fullPage: true },
-          mobile: { width: 390, height: 844, fullPage: true }
+          mobile: { width: 390, height: 844, fullPage: true },
+          tablet: { width: 768, height: 1024, fullPage: true }
         }
       }, null, 2) + '\n'
     );

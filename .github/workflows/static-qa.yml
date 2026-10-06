@@ -25,6 +25,7 @@ jobs:
           node --check i18n.js
           node --check ads-config.js
           node --check ads.js
+          node --check pwa.js
       - name: Check required files
         run: |
           test -f index.html
@@ -38,6 +39,10 @@ jobs:
           test -f ads-config.js
           test -f ads.js
           test -f MELHORIAS.md
+          test -f manifest.webmanifest
+          test -f icon.svg
+          test -f sw.js
+          test -f pwa.js
           test -f package.json
           test -f playwright.config.js
           test -f tests/e2e/critical-flow.spec.js
@@ -73,3 +78,9 @@ jobs:
           grep -qi 'publish_checklist' app.js
           grep -qi 'publish-checklist' style.css
           grep -qi 'data-check-platform' app.js
+          grep -qi 'manifest.webmanifest' index.html
+          grep -qi 'serviceWorker' pwa.js
+          grep -qi 'postpilot-shell-v1' sw.js
+          grep -qi 'local-backup-controls' index.html
+          grep -qi 'exportLocalBackup' app.js
+          grep -qi 'restoreLocalBackup' app.js

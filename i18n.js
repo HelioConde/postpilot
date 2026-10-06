@@ -25,6 +25,7 @@
 
     "pacotes locais encontrados.":"local packs found.",
     "Importar para a conta":"Import to account",
+    "Pular para o conteúdo":"Skip to content",
     "ESTÚDIO DE CONTEÚDO PARA CRIADORES":"CONTENT STUDIO FOR CREATORS",
     "Um vídeo longo.\nUma semana de ideias.":"One long video.\nA week of ideas.",
     "Organize trechos, legendas e publicações a partir da transcrição do seu vídeo. Prepare seu pacote de conteúdo para revisar e publicar.":"Turn your video transcript into clips, captions, and posts. Prepare a content pack to review and publish.",

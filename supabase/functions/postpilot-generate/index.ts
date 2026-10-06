@@ -34,6 +34,38 @@ function json(status: number, body: Record<string, unknown>, origin: string | nu
   });
 }
 
+function getSecretKey() {
+  const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");
+  if (secretKeys) {
+    try {
+      const parsed: unknown = JSON.parse(secretKeys);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const key = (parsed as Record<string, unknown>).default;
+        if (typeof key === "string" && key) return key;
+      }
+    } catch {}
+  }
+  return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+}
+
+async function consumeQuota(url: string, userId: string) {
+  const key = getSecretKey();
+  if (!key) return null;
+  const service = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data, error } = await service.rpc("postpilot_consume_usage", {
+    p_user_id: userId,
+    p_feature: "ai_generation",
+    p_limit: 20,
+  });
+  if (error || !Array.isArray(data) || !data.length) return null;
+  const row = data[0] as Record<string, unknown>;
+  return {
+    allowed: Boolean(row.allowed),
+    remaining: Math.max(0, Number(row.remaining) || 0),
+    resetAt: typeof row.reset_at === "string" ? row.reset_at : "",
+  };
+}
+
 function cleanText(value: unknown, max: number) {
   return typeof value === "string"
     ? value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max)
@@ -110,6 +142,18 @@ Deno.serve(async (request: Request) => {
     return json(400, { error: "Briefing inválido." }, origin);
   }
 
+  const apiKey = Deno.env.get("POSTPILOT_AI_API_KEY");
+  const apiUrl = Deno.env.get("POSTPILOT_AI_API_URL");
+  const model = Deno.env.get("POSTPILOT_AI_MODEL");
+  if (input.action === "health") {
+    return json(200, {
+      ok: true,
+      configured: Boolean(apiKey && apiUrl && model),
+      feature: "ai_generation",
+      hourlyLimit: 20,
+    }, origin);
+  }
+
   const topic = cleanText(input.topic, 140);
   const transcript = cleanText(input.transcript, 12000);
   const audience = cleanText(input.audience, 120);
@@ -124,11 +168,17 @@ Deno.serve(async (request: Request) => {
     return json(400, { error: "Briefing incompleto." }, origin);
   }
 
-  const apiKey = Deno.env.get("POSTPILOT_AI_API_KEY");
-  const apiUrl = Deno.env.get("POSTPILOT_AI_API_URL");
-  const model = Deno.env.get("POSTPILOT_AI_MODEL");
   if (!apiKey || !apiUrl || !model) {
     return json(503, { error: "Geração por IA ainda não configurada." }, origin);
+  }
+
+  const quota = await consumeQuota(supabaseUrl, userData.user.id);
+  if (!quota) return json(503, { error: "Controle de uso indisponível." }, origin);
+  if (!quota.allowed) {
+    return json(429, {
+      error: "Limite horário de IA atingido.",
+      rateLimit: { remaining: 0, resetAt: quota.resetAt },
+    }, origin);
   }
 
   const language = locale === "en" ? "English" : "Brazilian Portuguese";
@@ -151,6 +201,7 @@ Deno.serve(async (request: Request) => {
         "Authorization": "Bearer " + apiKey,
         "Content-Type": "application/json",
       },
+      signal: AbortSignal.timeout(30000),
       body: JSON.stringify({
         model,
         messages: [
@@ -189,5 +240,6 @@ Deno.serve(async (request: Request) => {
     ok: true,
     generation: generated,
     provider: "configured",
+    rateLimit: { remaining: quota.remaining, resetAt: quota.resetAt },
   }, origin);
 });

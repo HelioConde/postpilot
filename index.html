@@ -72,15 +72,25 @@ Uma semana de ideias.</h1>
         <form id="form">
           <label class="field"><span>Tema do vídeo</span><input name="f0" type="text" maxlength="140" placeholder="Ex.: como comecei meu negócio" required></label>
           <label class="field"><span>Transcrição ou resumo</span><textarea name="f1" maxlength="12000" placeholder="Cole aqui uma transcrição ou descreva os pontos principais..." required></textarea></label>
-          <label class="field"><span>Canal principal</span><select name="f2"><option>Instagram</option><option>TikTok</option><option>YouTube Shorts</option></select></label>
+          <fieldset class="platform-field">
+            <legend>Plataformas do pacote</legend>
+            <p class="field-help">Escolha uma ou mais. O PostPilot adapta o material para cada formato.</p>
+            <div class="platform-options">
+              <label><input type="checkbox" name="platforms" value="Instagram" checked><span>Instagram</span></label>
+              <label><input type="checkbox" name="platforms" value="TikTok" checked><span>TikTok</span></label>
+              <label><input type="checkbox" name="platforms" value="YouTube Shorts" checked><span>YouTube Shorts</span></label>
+            </div>
+          </fieldset>
           <label class="field"><span>Tom de voz</span><select name="f3"><option>Natural e direto</option><option>Didático</option><option>Bem-humorado</option></select></label>
           <button class="primary" type="submit">Montar pacote</button>
         </form>
       </section>
 
       <section class="panel">
-        <h2>Pacote de conteúdo</h2>
-        <p class="sub">Os últimos projetos aparecem aqui. Entre na sua conta para sincronizar entre dispositivos.</p>
+        <div class="panel-title-row">
+          <div><h2>Pacote de conteúdo</h2><p class="sub">Os últimos projetos aparecem aqui. Entre na sua conta para sincronizar entre dispositivos.</p></div>
+          <label class="status-filter"><span>Status</span><select id="project-status-filter"><option value="all">Todos</option><option value="draft">Rascunhos</option><option value="ready">Prontos</option><option value="published">Publicados</option></select></label>
+        </div>
         <div id="list" class="items"></div>
         <div id="result" class="result"></div>
       </section>

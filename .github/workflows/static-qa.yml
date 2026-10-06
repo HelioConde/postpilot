@@ -156,6 +156,8 @@ jobs:
           grep -qi 'disponíveis nesta hora' app.js
           grep -qi 'export-account-data' index.html
           grep -qi 'desktop-workflow-guide' index.html
+          grep -qi 'empty-pack-state' app.js
+          grep -qi 'Começar briefing' i18n.js
           grep -qi 'FLUXO RÁPIDO' i18n.js
           grep -qi 'exportAccountData' app.js
           grep -qi 'fetchAllAccountRows' app.js

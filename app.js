@@ -442,6 +442,40 @@ function cutSuggestions(pack) {
     .slice(0, 6);
 }
 
+function cleanTranscriptionSegments(segments) {
+  return (Array.isArray(segments) ? segments : []).slice(0, 500).map(segment => ({
+    start: Math.max(0, Number(segment.start) || 0),
+    end: Math.max(0, Number(segment.end) || 0),
+    text: String(segment.text || '').replace(/\s+/g, ' ').trim().slice(0, 800)
+  })).filter(segment => segment.text && segment.end >= segment.start);
+}
+
+async function persistTranscriptionSegments(pack, segments) {
+  const cleaned = cleanTranscriptionSegments(segments);
+  const transcript = cleaned.map(segment => segment.text).join(' ').slice(0, 12000);
+  const updated = { ...pack, transcriptionSegments: cleaned, transcript, time: Date.now() };
+
+  if (currentUser) {
+    const { data, error } = await supabaseClient
+      .from('postpilot_projects')
+      .update({
+        transcription_segments: cleaned,
+        source_text: transcript,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', pack.id)
+      .select('*')
+      .single();
+    if (error) throw error;
+    const saved = mapCloudPack(data);
+    cloudPacks = cloudPacks.map(item => item.id === saved.id ? saved : item);
+    return saved;
+  }
+
+  localStorage.setItem(storageKey, JSON.stringify(readPacks().map(item => item.id === updated.id ? updated : item)));
+  return updated;
+}
+
 async function persistCutOverrides(pack, overrides) {
   const cleaned = overrides.slice(0, 20).map(item => ({
     key: String(item.key || '').slice(0, 80),
@@ -1480,6 +1514,22 @@ function renderPack(pack) {
   }).join('');
 
   const checklistStats = checklistProgress(pack);
+  const segments = cleanTranscriptionSegments(pack.transcriptionSegments);
+  const transcriptEditorHtml = segments.length ? `
+    <details class="transcript-editor">
+      <summary>${uiText('Transcrição com timestamps')} <small>${segments.length} ${uiText('segmentos')}</small></summary>
+      <div class="transcript-segment-list">
+        ${segments.map((segment, index) => `
+          <article class="transcript-segment" data-segment-index="${index}">
+            <button type="button" class="segment-time" data-seek-segment="${segment.start}">${formatTimestamp(segment.start)}–${formatTimestamp(segment.end)}</button>
+            <textarea data-segment-text maxlength="800">${escapeHtml(segment.text)}</textarea>
+            <div class="segment-actions">
+              <button class="secondary compact" type="button" data-segment-split>${uiText('Dividir')}</button>
+              <button class="secondary compact" type="button" data-segment-merge${index === segments.length - 1 ? ' disabled' : ''}>${uiText('Mesclar próximo')}</button>
+            </div>
+          </article>`).join('')}
+      </div>
+    </details>` : '';
   const cuts = cutSuggestions(pack);
   const cutsHtml = cuts.length ? `
     <section class="cut-suggestions" aria-label="${uiText('Sugestões de cortes')}">
@@ -1508,6 +1558,7 @@ function renderPack(pack) {
       <span class="project-status status-${escapeHtml(pack.status || 'draft')}">${statusLabel(pack.status || 'draft')}</span>
     </div>
     ${pack.mediaName ? '<p class="media-linked"><strong>' + escapeHtml(uiText('Mídia vinculada')) + ':</strong> ' + escapeHtml(pack.mediaName) + '</p><div id="media-preview-host" class="media-preview-host"></div>' : ''}
+    ${transcriptEditorHtml}
     ${cutsHtml}
     <div class="platform-grid">${cards}</div>
     <details class="version-history"><summary>${uiText('Histórico de versões')}</summary><div id="version-list" class="version-list"></div></details>
@@ -1543,12 +1594,61 @@ function renderPack(pack) {
       }
     });
   });
-  result.querySelectorAll('[data-seek-cut]').forEach(button => {
+  result.querySelectorAll('[data-seek-cut],[data-seek-segment]').forEach(button => {
     button.addEventListener('click', () => {
       const player = result.querySelector('#media-preview-player');
       if (!player) return;
-      player.currentTime = Number(button.dataset.seekCut) || 0;
+      const seconds = button.dataset.seekCut ?? button.dataset.seekSegment;
+      player.currentTime = Number(seconds) || 0;
       player.play?.().catch(() => {});
+    });
+  });
+  result.querySelectorAll('[data-segment-index]').forEach(card => {
+    const index = Number(card.dataset.segmentIndex);
+    const saveSegments = async next => {
+      try {
+        const saved = await persistTranscriptionSegments(pack, next);
+        renderPack(saved);
+        renderList();
+        showToast('Transcrição atualizada.');
+      } catch (error) {
+        console.error(error);
+        showToast('Não foi possível atualizar a transcrição.');
+      }
+    };
+    card.querySelector('[data-segment-text]')?.addEventListener('change', event => {
+      const next = cleanTranscriptionSegments(pack.transcriptionSegments);
+      if (!next[index]) return;
+      next[index].text = event.target.value;
+      saveSegments(next);
+    });
+    card.querySelector('[data-segment-split]')?.addEventListener('click', () => {
+      const next = cleanTranscriptionSegments(pack.transcriptionSegments);
+      const segment = next[index];
+      if (!segment || segment.text.length < 20 || segment.end <= segment.start) {
+        showToast('Este segmento é curto demais para dividir.');
+        return;
+      }
+      const midpoint = Math.floor(segment.text.length / 2);
+      let splitAt = segment.text.indexOf(' ', midpoint);
+      if (splitAt < 0) splitAt = midpoint;
+      const middleTime = segment.start + (segment.end - segment.start) / 2;
+      const first = { start: segment.start, end: middleTime, text: segment.text.slice(0, splitAt).trim() };
+      const second = { start: middleTime, end: segment.end, text: segment.text.slice(splitAt).trim() };
+      next.splice(index, 1, first, second);
+      saveSegments(next);
+    });
+    card.querySelector('[data-segment-merge]')?.addEventListener('click', () => {
+      const next = cleanTranscriptionSegments(pack.transcriptionSegments);
+      const first = next[index];
+      const second = next[index + 1];
+      if (!first || !second) return;
+      next.splice(index, 2, {
+        start: first.start,
+        end: second.end,
+        text: (first.text + ' ' + second.text).trim().slice(0, 800)
+      });
+      saveSegments(next);
     });
   });
   result.querySelectorAll('[data-cut-key]').forEach(card => {

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-06T19:48:40.738Z",
+  "generatedAt": "2026-10-06T19:50:47.345Z",
   "source": "http://127.0.0.1:4175",
   "captures": {
     "desktop": {
@@ -29,19 +29,19 @@
     "desktopPopulated": {
       "width": 1440,
       "height": 3262,
-      "bytes": 402515,
+      "bytes": 402390,
       "fullPage": true
     },
     "tabletPopulated": {
       "width": 768,
       "height": 4543,
-      "bytes": 352548,
+      "bytes": 352434,
       "fullPage": true
     },
     "mobilePopulated": {
       "width": 390,
-      "height": 4733,
-      "bytes": 280615,
+      "height": 5385,
+      "bytes": 320450,
       "fullPage": true
     }
   }

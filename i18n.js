@@ -13,6 +13,12 @@
     "Esqueci a senha":"Forgot password",
     "Conectado como":"Signed in as",
     "Sair da conta":"Sign out",
+    "Exportar meus dados":"Export my data",
+    "Baixa projetos, versões e conteúdo sincronizado. Arquivos de mídia privados não são incluídos.":"Downloads synced projects, versions, and content. Private media files are not included.",
+    "Preparando exportação…":"Preparing export…",
+    "Dados da conta exportados.":"Account data exported.",
+    "Não foi possível exportar os dados da conta.":"Could not export account data.",
+
     "Ativo":"Active",
     "Aguardando configuração":"Awaiting configuration",
     "Limite da hora atingido":"Hourly limit reached",

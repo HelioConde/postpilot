@@ -55,6 +55,11 @@ jobs:
           test -f playwright.config.js
           test -f tests/e2e/critical-flow.spec.js
           test -f .github/workflows/e2e.yml
+          test -f static-page.js
+          test -f sobre.html
+          test -f privacidade.html
+          test -f termos.html
+          test -f contato.html
       - name: Check SEO and backend boot
         run: |
           grep -qi '<title' index.html
@@ -110,3 +115,10 @@ jobs:
           grep -qi 'cutSuggestions' app.js
           grep -qi 'calendar-export' index.html
           grep -qi 'buildCalendarIcs' app.js
+          grep -qi 'sobre.html' index.html
+          grep -qi 'privacidade.html' index.html
+          grep -qi 'termos.html' index.html
+          grep -qi 'contato.html' index.html
+          grep -qi 'postpilot_project_versions' supabase/migrations/20261006131500_project_versions.sql
+          grep -qi 'content_overrides' supabase/migrations/20261006134500_content_overrides.sql
+          grep -qi 'tus-js-client' index.html

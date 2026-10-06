@@ -152,7 +152,17 @@
     "Checklist":"Checklist",
     "Checklist atualizado.":"Checklist updated.",
     "Checklist completo. Você pode marcar o pacote como publicado.":"Checklist complete. You can mark the pack as published.",
-    "Não foi possível atualizar o checklist.":"Could not update the checklist."
+    "Não foi possível atualizar o checklist.":"Could not update the checklist.",
+    "Instalar app":"Install app",
+    "Backup local":"Local backup",
+    "Proteja os pacotes salvos neste dispositivo.":"Protect the packs saved on this device.",
+    "Exportar backup":"Export backup",
+    "Restaurar backup":"Restore backup",
+    "Backup exportado.":"Backup exported.",
+    "Backup restaurado.":"Backup restored.",
+    "Arquivo de backup inválido.":"Invalid backup file.",
+    "O arquivo de backup é muito grande.":"The backup file is too large.",
+    "Restaurar este backup substituirá os pacotes locais atuais. Continuar?":"Restoring this backup will replace the current local packs. Continue?"
   };
 
   const reverse = Object.fromEntries(Object.entries(translations).map(([pt,en]) => [en,pt]));

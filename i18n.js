@@ -293,6 +293,7 @@
     "Editar":"Edit",
     "Ações do pacote":"Package actions",
     "Usar como modelo":"Use as template",
+    "Mais opções":"More options",
     "Excluir pacote":"Delete pack",
     "Salvar alterações":"Save changes",
     "Usando pacote como modelo":"Using pack as template",

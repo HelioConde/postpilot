@@ -156,6 +156,8 @@ jobs:
           grep -qi 'disponíveis nesta hora' app.js
           grep -qi 'export-account-data' index.html
           grep -qi 'exportAccountData' app.js
+          grep -qi 'fetchAllAccountRows' app.js
+          grep -qi 'counts:' app.js
           grep -qi 'privateMediaFilesIncluded' app.js
           grep -qi '48 hours' supabase/migrations/20261006152000_usage_retention.sql
           grep -qi 'postpilot-tablet.png' .github/workflows/visual-snapshot.yml

@@ -195,6 +195,9 @@ function sanitizeImportedPack(raw) {
           favorite: Boolean(item.favorite),
           rejected: Boolean(item.rejected)
         }))
+      : [],
+    versions: Array.isArray(raw.versions)
+      ? raw.versions.slice(-10).filter(item => item && typeof item === 'object' && item.snapshot && typeof item.snapshot === 'object')
       : []
   };
   pack.publishChecklist = normalizePublishChecklist(pack);

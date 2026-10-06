@@ -646,3 +646,29 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .result-action-row .secondary{width:100%}
   .result-export-group #export-format{min-height:38px}
 }
+
+/* Package heading — metadata should scan like labels, not read like a sentence */
+.result-heading-main{min-width:0;display:grid;gap:6px}
+.pack-meta-chips{display:flex;flex-wrap:wrap;gap:5px}
+.pack-meta-chips span{
+  display:inline-flex;
+  align-items:center;
+  min-height:24px;
+  padding:4px 7px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:#fafaf8;
+  color:var(--muted);
+  font-size:8px;
+  font-weight:700;
+  line-height:1.25;
+}
+.pack-checklist-progress{
+  color:var(--muted);
+  font-size:9px;
+}
+@media(max-width:520px){
+  .result-heading{align-items:flex-start}
+  .pack-meta-chips{gap:4px}
+  .pack-meta-chips span{max-width:100%;white-space:normal}
+}

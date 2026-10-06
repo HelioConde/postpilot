@@ -34,6 +34,20 @@ function json(status: number, body: Record<string, unknown>, origin: string | nu
   });
 }
 
+function getPublishableKey() {
+  const publishableKeys = Deno.env.get("SUPABASE_PUBLISHABLE_KEYS");
+  if (publishableKeys) {
+    try {
+      const parsed: unknown = JSON.parse(publishableKeys);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const key = (parsed as Record<string, unknown>).default;
+        if (typeof key === "string" && key) return key;
+      }
+    } catch {}
+  }
+  return Deno.env.get("SUPABASE_ANON_KEY");
+}
+
 function getSecretKey() {
   const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");
   if (secretKeys) {
@@ -138,10 +152,10 @@ Deno.serve(async (request: Request) => {
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  if (!supabaseUrl || !anonKey) return json(503, { error: "Serviço indisponível." }, origin);
+  const publishableKey = getPublishableKey();
+  if (!supabaseUrl || !publishableKey) return json(503, { error: "Serviço indisponível." }, origin);
 
-  const authClient = createClient(supabaseUrl, anonKey, {
+  const authClient = createClient(supabaseUrl, publishableKey, {
     global: { headers: { Authorization: authHeader } },
     auth: { persistSession: false, autoRefreshToken: false },
   });

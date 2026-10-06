@@ -192,6 +192,19 @@ test('inglês traduz interface e geração sem alterar valores estruturais', asy
   expect(content).toContain('PLATFORM: Instagram');
 });
 
+test('botão da conta usa rótulo curto no mobile e completo no desktop', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await localMode(page);
+  await expect(page.locator('.account-open-short')).toBeVisible();
+  await expect(page.locator('.account-open-short')).toHaveText(/Entrar|Sign in/i);
+  await expect(page.locator('.account-open-full')).toBeHidden();
+
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await expect(page.locator('.account-open-full')).toBeVisible();
+  await expect(page.locator('.account-open-full')).toHaveText(/Entrar \/ sincronizar|Sign in \/ sync/i);
+  await expect(page.locator('.account-open-short')).toBeHidden();
+});
+
 for (const width of [360, 768, 1440]) {
   test(`layout principal não cria overflow horizontal em ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });

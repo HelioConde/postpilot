@@ -106,6 +106,8 @@
     "Sem data":"No date",
     "Planejado para":"Planned for",
     "Público":"Audience",
+    "plataforma":"platform",
+    "plataformas":"platforms",
     "OBJETIVO":"GOAL",
     "TEMA":"TOPIC",
     "TOM":"TONE",

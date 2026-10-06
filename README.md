@@ -144,3 +144,16 @@ Os analytics locais mostram plataforma mais usada, objetivo dominante, percentua
 ## QA visual
 
 A workflow `Visual Snapshot` usa Playwright/Chromium para gerar `screenshots/postpilot-desktop.png` e `screenshots/postpilot-mobile.png`. As capturas também são salvas como artifact por 30 dias, permitindo revisar visualmente cada evolução.
+
+
+## Health checks e proteção de uso
+
+Usuários autenticados veem no painel da conta se IA e transcrição estão configuradas. Os checks usam as próprias Edge Functions com `action: "health"`, sem revelar URL, modelo ou chaves privadas.
+
+Limites iniciais:
+- geração por IA: 20 requisições por usuário/hora;
+- transcrição: 10 requisições por usuário/hora.
+
+A contagem é atômica via `postpilot_consume_usage` e armazenada em `postpilot_private.postpilot_usage_limits`, fora do schema público. Apenas `service_role` executa a RPC privilegiada. As Edge Functions também usam timeout de fornecedor (30 s para IA e 120 s para transcrição).
+
+Se a transcrição não estiver configurada, a mídia privada pode continuar vinculada ao projeto quando houver um resumo manual. Se o fornecedor falhar depois do upload, o arquivo fica preservado para nova tentativa em vez de ser apagado ou reenviado.

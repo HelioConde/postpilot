@@ -97,7 +97,7 @@ Não adicionar processamento de vídeo pesado, cobrança ou automação de publi
 
 ## Refinos visuais por snapshot
 
-- [x] Header mobile em duas faixas, com rótulo curto `Entrar` preservado por JS + E2E.
+- [x] Header mobile em uma linha, com marca + PT/EN + `Entrar` sem sobreposição, protegido por E2E.
 - [x] Semana editorial completa visível no mobile; removido carrossel horizontal que ocultava dias na captura.
 - [x] Controles do calendário reorganizados para desktop/tablet/mobile.
 - [x] Painel principal sem esticar a coluna de projetos até a altura do formulário.
@@ -109,3 +109,7 @@ Não adicionar processamento de vídeo pesado, cobrança ou automação de publi
 - [x] CTA do estado vazio ampliado no mobile.
 - [x] Prioridades diferenciadas visualmente do resumo de produção.
 - [x] Capturas desktop/tablet/mobile usadas para validar cada rodada.
+- [x] Capturas preenchidas em desktop/tablet/mobile + home mobile em inglês.
+- [x] Pipeline de snapshot valida PNG, largura esperada, altura mínima e tamanho do arquivo antes de publicar.
+
+- [x] Ações secundárias de projetos recolhidas em `Mais opções` no mobile/tablet; desktop mantém ações abertas.

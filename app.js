@@ -29,6 +29,8 @@ const localBackupControls = document.querySelector('#local-backup-controls');
 const exportBackupButton = document.querySelector('#export-backup');
 const importBackupButton = document.querySelector('#import-backup');
 const importBackupFile = document.querySelector('#import-backup-file');
+const contentTemplateSelect = document.querySelector('#content-template');
+const applyContentTemplateButton = document.querySelector('#apply-content-template');
 
 let currentUser = null;
 let cloudPacks = [];
@@ -55,6 +57,51 @@ function normalizeTone(value) {
 function toneLabel(value) {
   const code = normalizeTone(value);
   return uiText(({ natural: 'Natural e direto', didatico: 'Didático', humor: 'Bem-humorado' })[code]);
+}
+
+function contentTemplateDefinition(key) {
+  const english = currentLocale() === 'en';
+  const templates = {
+    education: {
+      audience: english ? 'people who want to learn about the topic' : 'pessoas que querem aprender sobre o tema',
+      tone: 'didatico',
+      goal: 'alcance',
+      platforms: ['Instagram', 'TikTok', 'YouTube Shorts']
+    },
+    'local-business': {
+      audience: english ? 'potential customers in your area' : 'potenciais clientes da sua região',
+      tone: 'natural',
+      goal: 'oferta',
+      platforms: ['Instagram', 'TikTok']
+    },
+    authority: {
+      audience: english ? 'potential clients and professional partners' : 'potenciais clientes e parceiros profissionais',
+      tone: 'didatico',
+      goal: 'alcance',
+      platforms: ['Instagram', 'YouTube Shorts']
+    },
+    community: {
+      audience: english ? 'your current followers and community' : 'seus seguidores atuais e sua comunidade',
+      tone: 'natural',
+      goal: 'conversa',
+      platforms: ['Instagram', 'TikTok', 'YouTube Shorts']
+    }
+  };
+  return templates[key] || null;
+}
+
+function applyContentTemplate(key) {
+  const template = contentTemplateDefinition(key);
+  if (!template) return;
+  form.elements.audience.value = template.audience;
+  form.elements.f3.value = template.tone;
+  form.elements.goal.value = template.goal;
+  const selected = new Set(template.platforms);
+  form.querySelectorAll('[name="platforms"]').forEach(input => {
+    input.checked = selected.has(input.value);
+  });
+  form.elements.f0.focus();
+  showToast('Modelo aplicado ao briefing.');
 }
 
 function escapeHtml(value = '') {
@@ -918,6 +965,12 @@ form.addEventListener('submit', async event => {
 
 projectStatusFilter?.addEventListener('change', renderList);
 projectSearch?.addEventListener('input', renderList);
+contentTemplateSelect?.addEventListener('change', () => {
+  if (applyContentTemplateButton) applyContentTemplateButton.disabled = !contentTemplateSelect.value;
+});
+applyContentTemplateButton?.addEventListener('click', () => {
+  if (contentTemplateSelect?.value) applyContentTemplate(contentTemplateSelect.value);
+});
 exportBackupButton?.addEventListener('click', exportLocalBackup);
 importBackupButton?.addEventListener('click', () => importBackupFile?.click());
 importBackupFile?.addEventListener('change', async () => {

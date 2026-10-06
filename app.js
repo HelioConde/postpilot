@@ -25,6 +25,7 @@ const calendarRange = document.querySelector('#calendar-range');
 const calendarPrevButton = document.querySelector('#calendar-prev');
 const calendarTodayButton = document.querySelector('#calendar-today');
 const calendarNextButton = document.querySelector('#calendar-next');
+const calendarExportButton = document.querySelector('#calendar-export');
 const localBackupControls = document.querySelector('#local-backup-controls');
 const exportBackupButton = document.querySelector('#export-backup');
 const importBackupButton = document.querySelector('#import-backup');
@@ -651,6 +652,77 @@ function localDateKey(date) {
   return year + '-' + month + '-' + day;
 }
 
+function escapeIcsText(value = '') {
+  return String(value)
+    .replace(/\\/g, '\\\\')
+    .replace(/\r?\n/g, '\\n')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;');
+}
+
+function nextCalendarDate(value) {
+  const date = new Date(value + 'T12:00:00');
+  date.setDate(date.getDate() + 1);
+  return localDateKey(date).replace(/-/g, '');
+}
+
+function buildCalendarIcs(source = visiblePacks()) {
+  const scheduled = source
+    .filter(pack => /^\d{4}-\d{2}-\d{2}$/.test(String(pack.publishAt || '')))
+    .sort((a, b) => String(a.publishAt).localeCompare(String(b.publishAt)));
+
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  const events = scheduled.map(pack => {
+    const date = pack.publishAt.replace(/-/g, '');
+    const description = [
+      (currentLocale() === 'en' ? 'Platforms: ' : 'Plataformas: ') + packPlatforms(pack).join(', '),
+      (currentLocale() === 'en' ? 'Status: ' : 'Status: ') + statusLabel(pack.status || 'draft'),
+      ...(pack.audience ? [(currentLocale() === 'en' ? 'Audience: ' : 'Público: ') + pack.audience] : [])
+    ].join('\n');
+
+    return [
+      'BEGIN:VEVENT',
+      'UID:' + escapeIcsText(pack.id + '@postpilot'),
+      'DTSTAMP:' + stamp,
+      'DTSTART;VALUE=DATE:' + date,
+      'DTEND;VALUE=DATE:' + nextCalendarDate(pack.publishAt),
+      'SUMMARY:' + escapeIcsText('PostPilot · ' + pack.topic),
+      'DESCRIPTION:' + escapeIcsText(description),
+      'CATEGORIES:PostPilot',
+      'END:VEVENT'
+    ].join('\r\n');
+  });
+
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//PostPilot//Editorial Calendar//PT-BR',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    ...events,
+    'END:VCALENDAR'
+  ].join('\r\n');
+}
+
+function exportEditorialCalendar() {
+  const scheduled = visiblePacks().filter(pack => /^\d{4}-\d{2}-\d{2}$/.test(String(pack.publishAt || '')));
+  if (!scheduled.length) {
+    showToast('Adicione uma data planejada antes de exportar.');
+    return;
+  }
+
+  const blob = new Blob([buildCalendarIcs(scheduled)], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'postpilot-calendario-editorial.ics';
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  showToast('Calendário exportado em .ics.');
+}
+
 function startOfCalendarWeek(offset = calendarWeekOffset) {
   const date = new Date();
   date.setHours(12, 0, 0, 0);
@@ -1138,6 +1210,7 @@ calendarNextButton?.addEventListener('click', () => {
   calendarWeekOffset += 1;
   renderEditorialCalendar();
 });
+calendarExportButton?.addEventListener('click', exportEditorialCalendar);
 calendarGrid?.addEventListener('click', event => {
   const button = event.target.closest('[data-calendar-pack]');
   if (!button) return;

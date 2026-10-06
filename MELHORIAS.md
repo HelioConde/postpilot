@@ -113,3 +113,6 @@ Não adicionar processamento de vídeo pesado, cobrança ou automação de publi
 - [x] Pipeline de snapshot valida PNG, largura esperada, altura mínima e tamanho do arquivo antes de publicar.
 
 - [x] Ações secundárias de projetos recolhidas em `Mais opções` no mobile/tablet; desktop mantém ações abertas.
+- [x] Briefing com indicador de completude e contador da transcrição.
+- [x] Rascunho automático local com recuperação após recarregar/fechar a página.
+- [x] Atalho Ctrl/Cmd+Enter para montar o pacote pelo teclado.

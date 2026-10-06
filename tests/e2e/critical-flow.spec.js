@@ -191,6 +191,46 @@ test('dashboard de foco e filtros avançados organizam a produção', async ({ p
   await expect(page.locator('#list')).toContainText('Marketing para pequenos negócios Filtros');
 });
 
+test('editor de cortes persiste ajustes no modo local', async ({ page }) => {
+  await localMode(page);
+  await page.evaluate(() => {
+    localStorage.setItem('postpilot-packs', JSON.stringify([{
+      id: '22222222-2222-4222-8222-222222222222',
+      topic: 'Editor de cortes',
+      transcript: 'Conteúdo com timestamps para edição.',
+      platforms: ['Instagram'],
+      channel: 'Instagram',
+      tone: 'natural',
+      goal: 'alcance',
+      audience: '',
+      publishAt: '',
+      publishChecklist: {},
+      generationMode: 'local',
+      generationData: {},
+      transcriptionSegments: [
+        { start: 10, end: 30, text: 'Trecho suficientemente longo para ser usado como sugestão de corte editável.' }
+      ],
+      cutOverrides: [],
+      status: 'draft',
+      createdAt: Date.now(),
+      time: Date.now()
+    }]));
+  });
+  await page.reload();
+  await page.locator('[data-pack="22222222-2222-4222-8222-222222222222"]').click();
+
+  const cut = page.locator('[data-cut-key]').first();
+  await cut.locator('[data-cut-favorite]').click();
+  await expect(page.locator('[data-cut-key]').first()).toHaveClass(/is-favorite/);
+
+  await page.locator('[data-cut-key]').first().locator('[data-cut-start]').fill('12.5');
+  await page.locator('[data-cut-key]').first().locator('[data-cut-start]').dispatchEvent('change');
+
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('postpilot-packs') || '[]')[0]);
+  expect(saved.cutOverrides[0].favorite).toBe(true);
+  expect(saved.cutOverrides[0].start).toBe(12.5);
+});
+
 test('exporta planejamento editorial em iCalendar', async ({ page }) => {
   await localMode(page);
   await createPack(page, ' Calendário');

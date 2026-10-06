@@ -2006,7 +2006,23 @@ function renderPack(pack) {
     <div class="platform-grid">${cards}</div>
     <details class="version-history"><summary>${uiText('Histórico de versões')}</summary><div id="version-list" class="version-list"></div></details>
     <p class="generator-note"><small>${currentUser ? 'Projeto sincronizado na sua conta.' : 'Projeto salvo neste dispositivo.'} ${pack.generationMode === 'ai' ? uiText('Conteúdo melhorado com IA no backend.') : uiText('O gerador atual usa regras locais, sem IA externa.')}</small></p>
-    <div class="result-actions"><button class="secondary" id="edit-pack" type="button">${uiText('Editar')}</button><button class="secondary" id="template-pack" type="button">${uiText('Usar como modelo')}</button><button class="secondary" id="copy" type="button">${uiText('Copiar pacote completo')}</button><label class="export-format"><span>${uiText('Exportar')}</span><select id="export-format" aria-label="${uiText('Formato de exportação')}"><option value="txt">TXT</option><option value="md">Markdown</option><option value="json">JSON</option><option value="csv">CSV</option></select></label><button class="secondary" id="export" type="button">${uiText('Baixar')}</button></div>`;
+    <div class="result-actions">
+      <div class="result-action-group">
+        <span class="result-action-label">${uiText('Ações do pacote')}</span>
+        <div class="result-action-row">
+          <button class="secondary" id="edit-pack" type="button">${uiText('Editar')}</button>
+          <button class="secondary" id="template-pack" type="button">${uiText('Usar como modelo')}</button>
+        </div>
+      </div>
+      <div class="result-action-group result-export-group">
+        <span class="result-action-label">${uiText('Exportar')}</span>
+        <div class="result-action-row">
+          <button class="secondary" id="copy" type="button">${uiText('Copiar pacote completo')}</button>
+          <label class="export-format"><span class="sr-only">${uiText('Exportar')}</span><select id="export-format" aria-label="${uiText('Formato de exportação')}"><option value="txt">TXT</option><option value="md">Markdown</option><option value="json">JSON</option><option value="csv">CSV</option></select></label>
+          <button class="secondary" id="export" type="button">${uiText('Baixar')}</button>
+        </div>
+      </div>
+    </div>`;
   result.classList.add('show');
   if (pack.mediaName) renderMediaPreview(pack);
   renderVersionHistory(pack);

@@ -1,0 +1,67 @@
+name: Dependency Lock
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - '.github/workflows/dependency-lock.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: postpilot-dependency-lock
+  cancel-in-progress: true
+
+jobs:
+  lock:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Generate deterministic lockfile
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Commit lockfile
+        run: |
+          if git diff --quiet -- package-lock.json && git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
+            echo "package-lock.json is already current."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp package-lock.json /tmp/postpilot-package-lock.json
+
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            cp /tmp/postpilot-package-lock.json package-lock.json
+            git add package-lock.json
+
+            if git diff --cached --quiet; then
+              echo "Lockfile already published."
+              exit 0
+            fi
+
+            git commit -m "chore: refresh dependency lock [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+
+            echo "Lockfile push raced with another commit; retrying..."
+            sleep 2
+          done
+
+          echo "Could not publish package-lock.json."
+          exit 1

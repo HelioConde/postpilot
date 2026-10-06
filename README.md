@@ -27,3 +27,19 @@ Tabelas:
 - `product_subscriptions`
 
 Veja `FULLSTACK.md` para arquitetura e próximos passos.
+
+
+## Idiomas
+
+- PT-BR é o idioma principal, padrão e fallback.
+- Inglês está disponível pelo seletor PT/EN no topo.
+- A preferência fica salva no navegador.
+- Os pacotes gerados, CTAs, rótulos e exportações acompanham o idioma ativo.
+
+## Planejamento editorial
+
+Cada pacote pode registrar público-alvo e data planejada de publicação. O histórico possui busca por tema/público, filtro de status e um resumo com total, prontos, agendados e taxa de publicação. Esses campos também são sincronizados no Supabase.
+
+## Monetização
+
+O PostPilot permanece gratuito e está preparado para anúncios responsivos fora do formulário e dos pacotes de conteúdo. A integração fica desativada até existirem Publisher ID e slot reais.

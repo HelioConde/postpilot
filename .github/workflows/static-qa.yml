@@ -58,6 +58,8 @@ jobs:
           test -f supabase/migrations/20261006151500_usage_status_rpc.sql
           test -f supabase/migrations/20261006152000_usage_retention.sql
           test -f package.json
+          test -f package-lock.json
+          test -f .github/workflows/dependency-lock.yml
           test -f playwright.config.js
           test -f tests/e2e/critical-flow.spec.js
           test -f .github/workflows/e2e.yml

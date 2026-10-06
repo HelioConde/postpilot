@@ -231,6 +231,7 @@
     "Total":"Total",
     "Agendados":"Scheduled",
     "Taxa publicada":"Published rate",
+    "Ver métricas":"View metrics",
     "INSIGHTS":"INSIGHTS",
     "Seu ritmo editorial":"Your editorial rhythm",
     "Plataforma mais usada":"Most used platform",

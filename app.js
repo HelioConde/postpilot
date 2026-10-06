@@ -902,6 +902,19 @@ function platformDeliverable(pack, platform) {
   });
 }
 
+function platformPublishUrl(platform) {
+  if (platform === 'TikTok') return 'https://www.tiktok.com/upload';
+  if (platform === 'YouTube Shorts') return 'https://studio.youtube.com/';
+  return 'https://www.instagram.com/';
+}
+
+function assistPublish(pack, platform) {
+  const url = platformPublishUrl(platform);
+  window.open(url, '_blank', 'noopener,noreferrer');
+  copyText(platformText(pack, platform));
+  showToast('Conteúdo copiado. Finalize a publicação na plataforma.');
+}
+
 function platformText(pack, platform) {
   const deliverable = platformDeliverable(pack, platform);
   const english = currentLocale() === 'en';
@@ -1516,7 +1529,7 @@ function renderPack(pack) {
     const platformProgress = Number(state.reviewed) + Number(state.mediaReady) + Number(state.published);
     return `
       <article class="platform-card">
-        <div class="platform-card-head"><div><h4>${escapeHtml(deliverable.title)}</h4><small class="platform-progress">${platformProgress}/3 ${uiText('concluídos')}</small></div><button class="copy-platform" type="button" data-copy-platform="${escapeHtml(platform)}">${uiText('Copiar')}</button></div>
+        <div class="platform-card-head"><div><h4>${escapeHtml(deliverable.title)}</h4><small class="platform-progress">${platformProgress}/3 ${uiText('concluídos')}</small></div><div class="platform-card-actions"><button class="copy-platform" type="button" data-copy-platform="${escapeHtml(platform)}">${uiText('Copiar')}</button><button class="publish-assist" type="button" data-publish-platform="${escapeHtml(platform)}">${uiText('Copiar e abrir')}</button></div></div>
         ${deliverable.lines.map(([label, value]) => `<div class="deliverable" data-deliverable-platform="${escapeHtml(platform)}" data-deliverable-label="${escapeHtml(label)}"><div class="deliverable-head"><span>${escapeHtml(label)}</span><button class="regenerate-field" type="button" data-regenerate-field>${uiText('Nova versão')}</button></div><p>${escapeHtml(value).replace(/\n/g, '<br>')}</p></div>`).join('')}
         <fieldset class="publish-checklist">
           <legend>${uiText('Checklist de publicação')}</legend>
@@ -1587,6 +1600,9 @@ function renderPack(pack) {
   document.querySelector('#export').addEventListener('click', () => downloadPackage(pack, document.querySelector('#export-format')?.value || 'txt'));
   result.querySelectorAll('[data-copy-platform]').forEach(button => {
     button.addEventListener('click', () => copyText(platformText(pack, button.dataset.copyPlatform)));
+  });
+  result.querySelectorAll('[data-publish-platform]').forEach(button => {
+    button.addEventListener('click', () => assistPublish(pack, button.dataset.publishPlatform));
   });
   result.querySelectorAll('[data-regenerate-field]').forEach(button => {
     button.addEventListener('click', async () => {

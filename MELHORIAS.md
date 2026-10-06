@@ -34,14 +34,44 @@ O objetivo é validar o menor estúdio de conteúdo realmente útil para criador
 
 ## P2 — após validação com usuários
 
-- [ ] Edge Function para geração por IA com chave privada no backend. Código, integração e fallback prontos; falta aplicar migration, implantar a função e configurar os segredos do fornecedor no Supabase.
+- [ ] Geração por IA real. Migration, Edge Function, UI, persistência e fallback concluídos; falta somente configurar `POSTPILOT_AI_API_URL`, `POSTPILOT_AI_API_KEY` e `POSTPILOT_AI_MODEL`.
 - [x] Upload privado de vídeo/áudio com limite inicial de 6 MB, formatos validados, bucket privado e RLS por usuário.
 - [ ] Transcrição automática. Edge Function implantada; falta configurar os segredos do fornecedor de transcrição.
-- [ ] Sugestões de cortes com timestamps. UI e lógica prontas a partir dos segmentos da transcrição; validação final depende do fornecedor de transcrição ativo.
+- [x] Sugestões e editor de cortes com timestamps, favorito, descarte, ajuste de início/fim e navegação pelo player. Validação com mídia real depende do fornecedor de transcrição ativo.
 - [x] Exportações adicionais (Markdown/CSV/JSON).
 - [x] Integração opcional com calendário externo via exportação iCalendar (.ics), compatível com Google Calendar, Outlook e Apple Calendar.
-- [ ] Publicação assistida por plataforma quando APIs e políticas permitirem.
+- [x] Publicação assistida: copiar conteúdo preparado e abrir Instagram, TikTok ou YouTube Studio para conclusão manual. Integração direta via APIs fica para uma etapa futura dependente de aprovação das plataformas.
 
 ## Regra de priorização
 
 Não adicionar processamento de vídeo pesado, cobrança ou automação de publicação antes de validar o fluxo: briefing → pacote multiplataforma → revisão → planejamento → publicação.
+
+
+## P3 — produto e operação
+
+- [x] Dashboard de prioridades: publicar hoje, atrasados, próximos 7 dias e rascunhos.
+- [x] Filtros avançados por plataforma, objetivo, tom, origem, mídia e período.
+- [x] Analytics locais de produção sem depender de APIs sociais.
+- [x] Calendário semanal/mensal com filtro por plataforma e drag-and-drop.
+- [x] Histórico de até 10 versões por projeto com restauração.
+- [x] Regeneração parcial de campos sem reconstruir o pacote inteiro.
+- [x] Player privado para mídia sincronizada.
+- [x] Editor de transcrição por timestamp com editar/dividir/mesclar.
+- [x] Editor persistente de cortes.
+- [x] Upload TUS resumível com progresso, retomada e cancelamento; limite continua 6 MB até validar o provedor de transcrição.
+- [x] Páginas bilíngues Sobre, Privacidade, Termos e Contato + sitemap.
+- [x] Visual Snapshot automático desktop/mobile salvo no GitHub.
+- [x] QA visual inicial aplicado: correção do progresso 0%, card do hero e newline literal.
+- [ ] Aumentar limite real de mídia acima de 6 MB após confirmar limite global do Storage + limite do fornecedor de transcrição.
+- [ ] Política automática de retenção/limpeza de mídia antiga.
+- [ ] Homologação humana de Auth em navegadores reais.
+- [ ] Ativar Publisher ID/slot real do AdSense.
+- [ ] Integrações diretas de postagem via APIs oficiais, somente após aprovação/escopos necessários.
+
+## Bloqueios externos atuais
+
+1. **IA:** faltam os 3 segredos do fornecedor.
+2. **Transcrição:** faltam os 3 segredos do fornecedor.
+3. **Auth humano:** exige uma conta/e-mail real para confirmação e recuperação.
+4. **Ads:** exige Publisher ID e slot reais.
+5. **Postagem direta:** depende de credenciais, escopos e aprovação das plataformas.

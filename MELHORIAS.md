@@ -72,6 +72,9 @@ Não adicionar processamento de vídeo pesado, cobrança ou automação de publi
 - [x] Auditoria automática de acessibilidade com axe-core no Browser E2E.
 - [x] Lighthouse CI com metas de acessibilidade/SEO e alertas de performance/Core Web Vitals.
 - [x] Budgets de tamanho para app.js, style.css, index.html, i18n.js e total crítico.
+- [x] Dependabot semanal para npm e GitHub Actions.
+- [x] CodeQL para análise de segurança JavaScript.
+- [x] Contraste secundário ajustado para WCAG AA após auditoria axe.
 - [ ] Aumentar limite real de mídia acima de 6 MB após confirmar limite global do Storage + limite do fornecedor de transcrição.
 - [x] Limpeza automática de mídia órfã: ao sincronizar a conta, arquivos privados sem projeto correspondente são removidos após retenção conservadora de 30 dias.
 - [ ] Homologação humana de Auth em navegadores reais.

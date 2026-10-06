@@ -74,6 +74,7 @@ Não adicionar processamento de vídeo pesado, cobrança ou automação de publi
 - [x] Budgets de tamanho para app.js, style.css, index.html, i18n.js e total crítico.
 - [x] Dependabot semanal para npm e GitHub Actions.
 - [x] CodeQL para análise de segurança JavaScript.
+- [x] Edge Functions migradas para preferir as novas chaves publishable/secret do Supabase, mantendo fallback legado temporário.
 - [x] Contraste secundário ajustado para WCAG AA após auditoria axe.
 - [ ] Aumentar limite real de mídia acima de 6 MB após confirmar limite global do Storage + limite do fornecedor de transcrição.
 - [x] Limpeza automática de mídia órfã: ao sincronizar a conta, arquivos privados sem projeto correspondente são removidos após retenção conservadora de 30 dias.

@@ -17,6 +17,39 @@ async function createPack(page, suffix = '') {
   await page.getByRole('button', { name: /Montar pacote|Build content pack/i }).click();
 }
 
+test('layout responsivo não cria overflow e mantém a semana completa', async ({ page }) => {
+  const widths = [
+    { width: 390, height: 844 },
+    { width: 768, height: 1024 },
+    { width: 1440, height: 1000 }
+  ];
+
+  for (const viewport of widths) {
+    await page.setViewportSize(viewport);
+    await localMode(page);
+
+    const dimensions = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth
+    }));
+    expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1);
+
+    await expect(page.locator('#calendar-grid .calendar-day')).toHaveCount(7);
+    await expect(page.locator('#account-open')).toBeVisible();
+  }
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const navBoxes = await page.evaluate(() => {
+    const brand = document.querySelector('.brand')?.getBoundingClientRect();
+    const actions = document.querySelector('.nav-actions')?.getBoundingClientRect();
+    return brand && actions
+      ? { brandBottom: brand.bottom, actionsTop: actions.top }
+      : null;
+  });
+  expect(navBoxes).not.toBeNull();
+  expect(navBoxes.actionsTop).toBeGreaterThanOrEqual(navBoxes.brandBottom);
+});
+
 test('navegação por teclado oferece skip link e foco principal', async ({ page }) => {
   await localMode(page);
 

@@ -311,8 +311,10 @@ async function uploadMediaResumable(file, path) {
   const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
   if (sessionError || !sessionData?.session?.access_token) throw sessionError || new Error('Sessão não encontrada.');
   const accessToken = sessionData.session.access_token;
-  const endpoint = 'https://bnlvvsjgpywpbfhwdcan.storage.supabase.co/storage/v1/upload/resumable';
-  const publishableKey = 'sb_publishable_8q954VgGB7IUEgwWYA55-Q_MUyDd17c';
+  const projectUrl = String(window.POSTPILOT_SUPABASE?.url || '');
+  const projectHost = new URL(projectUrl).hostname.split('.')[0];
+  const endpoint = 'https://' + projectHost + '.storage.supabase.co/storage/v1/upload/resumable';
+  const publishableKey = window.POSTPILOT_SUPABASE?.publishableKey || '';
 
   await new Promise((resolve, reject) => {
     const upload = new window.tus.Upload(file, {

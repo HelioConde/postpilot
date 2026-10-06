@@ -61,6 +61,9 @@ jobs:
           test -f playwright.config.js
           test -f tests/e2e/critical-flow.spec.js
           test -f .github/workflows/e2e.yml
+          test -f .github/workflows/lighthouse.yml
+          test -f lighthouserc.js
+          test -f tests/e2e/accessibility.spec.js
           test -f static-page.js
           test -f sobre.html
           test -f privacidade.html

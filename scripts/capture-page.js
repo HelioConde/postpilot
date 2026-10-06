@@ -26,6 +26,25 @@ async function createContext(browser, viewport) {
   });
 }
 
+async function captureLocale(browser, name, viewport, locale) {
+  const context = await createContext(browser, viewport);
+  const page = await context.newPage();
+  await page.goto(BASE_URL, { waitUntil: 'networkidle' });
+  await page.evaluate(selectedLocale => {
+    localStorage.removeItem('postpilot-packs');
+    localStorage.setItem('postpilot-language', selectedLocale);
+  }, locale);
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForSelector('body');
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({
+    path: path.join(outputDir, name),
+    fullPage: true,
+    animations: 'disabled'
+  });
+  await context.close();
+}
+
 async function capture(browser, name, viewport) {
   const context = await createContext(browser, viewport);
   const page = await context.newPage();
@@ -69,6 +88,7 @@ async function capturePopulated(browser, name, viewport) {
     await capture(browser, 'postpilot-desktop.png', { width: 1440, height: 1000 });
     await capture(browser, 'postpilot-mobile.png', { width: 390, height: 844 });
     await capture(browser, 'postpilot-tablet.png', { width: 768, height: 1024 });
+    await captureLocale(browser, 'postpilot-mobile-en.png', { width: 390, height: 844 }, 'en');
     await capturePopulated(browser, 'postpilot-desktop-populated.png', { width: 1440, height: 1000 });
     await capturePopulated(browser, 'postpilot-mobile-populated.png', { width: 390, height: 844 });
 
@@ -81,6 +101,7 @@ async function capturePopulated(browser, name, viewport) {
           desktop: { width: 1440, height: 1000, fullPage: true },
           mobile: { width: 390, height: 844, fullPage: true },
           tablet: { width: 768, height: 1024, fullPage: true },
+          mobileEnglish: { width: 390, height: 844, fullPage: true },
           desktopPopulated: { width: 1440, height: 1000, fullPage: true },
           mobilePopulated: { width: 390, height: 844, fullPage: true }
         }

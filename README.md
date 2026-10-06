@@ -62,6 +62,10 @@ A IA exige sessão autenticada, valida origem, briefing e plataformas, e devolve
 
 Cada pacote pode ser baixado em TXT para leitura rápida, Markdown para documentos e publicação, JSON para integrações/backup estruturado e CSV para planilhas. As exportações respeitam o idioma ativo e mantêm os entregáveis separados por plataforma.
 
+## Integração com calendários externos
+
+O planejamento editorial pode ser exportado em `.ics` usando o padrão iCalendar. Cada pacote com data planejada vira um evento de dia inteiro com tema, plataformas, status e público. O arquivo pode ser importado no Google Calendar, Outlook, Apple Calendar e outros aplicativos compatíveis sem conceder acesso à conta do usuário.
+
 ## Calendário editorial e edição
 
 O PostPilot possui uma visão semanal de segunda a domingo baseada na data planejada de publicação. Pacotes agendados podem ser abertos diretamente pelo calendário.

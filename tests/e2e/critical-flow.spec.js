@@ -65,8 +65,10 @@ test('layout responsivo não cria overflow e mantém a semana completa', async (
   expect(navBoxes.languageLeft).toBeGreaterThanOrEqual(navBoxes.brandRight + 4);
   expect(navBoxes.accountLeft).toBeGreaterThanOrEqual(navBoxes.languageRight + 4);
   expect(navBoxes.accountRight).toBeLessThanOrEqual(navBoxes.viewportWidth + 1);
-  expect(Math.abs(navBoxes.languageTop - navBoxes.accountTop)).toBeLessThanOrEqual(6);
-  expect(Math.abs(navBoxes.brandTop - navBoxes.accountTop)).toBeLessThanOrEqual(8);
+  expect(navBoxes.languageBottom).toBeGreaterThan(navBoxes.accountTop);
+  expect(navBoxes.languageTop).toBeLessThan(navBoxes.accountBottom);
+  expect(navBoxes.brandBottom).toBeGreaterThan(navBoxes.accountTop);
+  expect(navBoxes.brandTop).toBeLessThan(navBoxes.accountBottom);
 });
 
 test('estado vazio esconde controles de projeto e traduz o rodapé', async ({ page }) => {

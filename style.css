@@ -1196,3 +1196,92 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     width:100%;
   }
 }
+
+
+/* Composer assistance — draft recovery and briefing readiness */
+.composer-recovery{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 12px;
+  padding:10px 12px;
+  border:1px solid #d8d1ed;
+  border-radius:10px;
+  background:#f7f4ff;
+  color:var(--ink);
+  font-size:9px;
+  line-height:1.4;
+}
+.composer-recovery[hidden]{display:none!important}
+.composer-recovery>div{display:flex;gap:6px;flex:0 0 auto}
+.briefing-progress{
+  display:grid;
+  gap:7px;
+  margin:0 0 14px;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#fafaf8;
+}
+.briefing-progress[hidden]{display:none!important}
+.briefing-progress-head,
+.briefing-progress-meta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.briefing-progress-head strong{font-size:10px}
+.briefing-progress-head span{
+  color:var(--accent);
+  font-size:10px;
+  font-weight:800;
+}
+.briefing-progress progress{
+  width:100%;
+  height:6px;
+  overflow:hidden;
+  border:0;
+  border-radius:999px;
+  accent-color:var(--accent);
+}
+.briefing-progress progress::-webkit-progress-bar{background:#e9e7e1;border-radius:999px}
+.briefing-progress progress::-webkit-progress-value{background:var(--accent);border-radius:999px}
+.briefing-progress-meta small{
+  color:var(--muted);
+  font-size:8px;
+  line-height:1.4;
+}
+.briefing-progress-meta small:last-child{text-align:right}
+.field-help-split{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+}
+#transcript-counter{
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.composer-shortcut{
+  display:block;
+  margin-top:7px;
+  color:var(--muted);
+  font-size:8px;
+  text-align:center;
+}
+@media(max-width:500px){
+  .composer-recovery{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+    padding:11px;
+    font-size:9.5px;
+  }
+  .composer-recovery>div{display:grid;grid-template-columns:1fr 1fr}
+  .composer-recovery .secondary{width:100%;min-height:38px}
+  .briefing-progress-meta{align-items:flex-start;flex-direction:column;gap:3px}
+  .briefing-progress-meta small:last-child{text-align:left}
+  .field-help-split{align-items:flex-start;flex-direction:column;gap:2px}
+  .composer-shortcut{font-size:8.5px;line-height:1.4}
+}

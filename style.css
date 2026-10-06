@@ -754,3 +754,5 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .result-standalone .platform-grid,
   .result-standalone .platform-grid:not(:has(.platform-card:not(.is-collapsed))){grid-template-columns:1fr}
 }
+
+.history-toolbar[hidden],#production-metrics[hidden],#focus-dashboard[hidden]{display:none!important}

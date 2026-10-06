@@ -129,6 +129,22 @@ test('cards de plataforma usam divulgação progressiva', async ({ page }) => {
   await expect(cards.nth(1).locator('.platform-card-body')).toBeHidden();
 });
 
+test('mobile inicia todos os resultados de plataforma recolhidos', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await localMode(page);
+  await createPack(page, ' Mobile compacto');
+
+  const cards = page.locator('.platform-card');
+  await expect(cards).toHaveCount(3);
+  for (let index = 0; index < 3; index += 1) {
+    await expect(cards.nth(index).locator('.platform-card-body')).toBeHidden();
+    await expect(cards.nth(index).locator('[data-platform-toggle]')).toHaveAttribute('aria-expanded', 'false');
+  }
+
+  await cards.first().locator('[data-platform-toggle]').click();
+  await expect(cards.first().locator('.platform-card-body')).toBeVisible();
+});
+
 test('pacotes oferecem publicação assistida por plataforma', async ({ page }) => {
   await localMode(page);
   await createPack(page, ' Publicação assistida');

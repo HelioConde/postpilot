@@ -108,6 +108,24 @@ Uma semana de ideias.</h1>
       <section class="panel">
         <h2>Seu próximo vídeo</h2>
         <p class="sub">Quanto mais contexto você incluir, melhores serão os rascunhos para revisar.</p>
+        <div id="composer-recovery" class="composer-recovery" role="status" hidden>
+          <span id="composer-recovery-text">Há um briefing não finalizado salvo neste dispositivo.</span>
+          <div>
+            <button id="composer-draft-restore" class="secondary compact" type="button">Restaurar</button>
+            <button id="composer-draft-discard" class="secondary compact" type="button">Descartar</button>
+          </div>
+        </div>
+        <div id="briefing-progress" class="briefing-progress" hidden>
+          <div class="briefing-progress-head">
+            <strong id="briefing-progress-label">Briefing</strong>
+            <span id="briefing-progress-value">0%</span>
+          </div>
+          <progress id="briefing-progress-bar" max="100" value="0" aria-label="Completude do briefing"></progress>
+          <div class="briefing-progress-meta">
+            <small id="briefing-progress-hint">Adicione mais contexto para melhorar os rascunhos.</small>
+            <small id="composer-draft-status">Rascunho local protegido automaticamente.</small>
+          </div>
+        </div>
         <div id="composer-mode" class="composer-mode" hidden>
           <div><span class="eyebrow">EDIÇÃO</span><strong id="composer-mode-title">Editando pacote</strong></div>
           <button id="composer-cancel" class="secondary compact" type="button">Cancelar edição</button>
@@ -146,7 +164,7 @@ Uma semana de ideias.</h1>
             <div id="media-progress-wrap" class="media-progress-wrap" hidden><progress id="media-progress" max="100" value="0"></progress><span id="media-progress-label">0%</span></div>
             <p id="media-status" class="field-help" role="status" aria-live="polite"></p>
           </div>
-          <label class="field"><span>Transcrição ou resumo</span><textarea name="f1" maxlength="12000" placeholder="Cole uma transcrição/resumo ou envie uma mídia acima..."></textarea><small class="field-help">É necessário informar texto ou enviar uma mídia para transcrição.</small></label>
+          <label class="field"><span>Transcrição ou resumo</span><textarea name="f1" maxlength="12000" placeholder="Cole uma transcrição/resumo ou envie uma mídia acima..."></textarea><small class="field-help field-help-split"><span>É necessário informar texto ou enviar uma mídia para transcrição.</span><span id="transcript-counter">0 / 12.000 caracteres</span></small></label>
           <div class="brief-grid">
             <label class="field"><span>Público-alvo</span><input name="audience" type="text" maxlength="120" placeholder="Ex.: pequenos negócios"></label>
             <label class="field"><span>Publicar em</span><input name="publishAt" type="date"></label>
@@ -166,6 +184,7 @@ Uma semana de ideias.</h1>
             <span><strong>Melhorar com IA (beta)</strong><small>Disponível ao entrar na conta. Se a IA falhar, o PostPilot usa o gerador local automaticamente.</small></span>
           </label>
           <button class="primary" id="composer-submit" type="submit">Montar pacote</button>
+          <small id="composer-shortcut" class="composer-shortcut">Atalho: Ctrl/Cmd + Enter para montar o pacote.</small>
         </form>
       </section>
 
@@ -329,6 +348,7 @@ Uma semana de ideias.</h1>
   <script src="i18n.js"></script>
   <script src="pwa.js"></script>
   <script src="app.js"></script>
+  <script src="composer-assist.js"></script>
   <script src="beta-feedback.js"></script>
   <script src="live-update.js" defer></script>
 </body>

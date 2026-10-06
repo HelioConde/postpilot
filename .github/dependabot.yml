@@ -11,6 +11,11 @@ updates:
     labels:
       - dependencies
       - qa
+    groups:
+      test-tooling:
+        patterns:
+          - "@playwright/test"
+          - "@axe-core/playwright"
 
   - package-ecosystem: github-actions
     directory: /
@@ -23,3 +28,7 @@ updates:
     labels:
       - dependencies
       - qa
+    groups:
+      github-actions:
+        patterns:
+          - "*"

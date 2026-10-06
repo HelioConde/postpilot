@@ -79,6 +79,7 @@ test('estado vazio esconde controles de projeto e traduz o rodapé', async ({ pa
   await expect(page.locator('#focus-dashboard')).toBeHidden();
 
   await page.locator('[data-language="en"]').click();
+  await expect(page.locator('#calendar-platform option[value="all"]')).toHaveText('All');
   const footer = page.locator('.foot-links');
   await expect(footer).toContainText('About');
   await expect(footer).toContainText('Privacy');

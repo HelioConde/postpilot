@@ -68,6 +68,11 @@
       </form>
       <div id="account-profile" hidden>
         <p>Conectado como <strong id="account-email"></strong></p>
+        <div id="service-health" class="service-health" aria-live="polite">
+          <div><span>IA</span><strong id="ai-service-status">Verificando…</strong><small id="ai-service-limit"></small></div>
+          <div><span>Transcrição</span><strong id="transcription-service-status">Verificando…</strong><small id="transcription-service-limit"></small></div>
+          <button id="refresh-service-health" class="secondary compact" type="button">Atualizar serviços</button>
+        </div>
         <button id="sign-out" class="secondary" type="button">Sair da conta</button>
       </div>
       <div id="local-import-banner" class="import-banner" hidden>

@@ -64,3 +64,8 @@ jobs:
           grep -qi '"@type":"WebApplication"' index.html
           grep -qi 'renderProductionSummary' app.js
           grep -qi 'publish_at' app.js
+          grep -qi 'editorial-calendar' index.html
+          grep -qi 'renderEditorialCalendar' app.js
+          grep -qi 'data-edit-pack' app.js
+          grep -qi 'data-template-pack' app.js
+          grep -qi 'fillComposerFromPack' app.js

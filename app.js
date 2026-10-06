@@ -1154,6 +1154,46 @@ async function saveCloudPack(pack) {
   return savedPack;
 }
 
+async function cleanupOrphanMedia() {
+  if (!supabaseClient || !currentUser) return;
+  const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+
+  try {
+    const { data: projects, error: projectError } = await supabaseClient
+      .from('postpilot_projects')
+      .select('id')
+      .limit(1000);
+    if (projectError) throw projectError;
+    const activeIds = new Set((projects || []).map(item => String(item.id)));
+
+    const { data: folders, error: folderError } = await supabaseClient.storage
+      .from('postpilot-media')
+      .list(currentUser.id, { limit: 1000, sortBy: { column: 'name', order: 'asc' } });
+    if (folderError) throw folderError;
+
+    for (const folder of folders || []) {
+      const projectId = String(folder.name || '');
+      if (!projectId || activeIds.has(projectId)) continue;
+
+      const { data: files, error: filesError } = await supabaseClient.storage
+        .from('postpilot-media')
+        .list(currentUser.id + '/' + projectId, { limit: 1000 });
+      if (filesError) continue;
+
+      const stalePaths = (files || []).filter(file => {
+        const created = Date.parse(file.created_at || file.updated_at || '');
+        return Number.isFinite(created) && created < cutoff;
+      }).map(file => currentUser.id + '/' + projectId + '/' + file.name);
+
+      if (stalePaths.length) {
+        await supabaseClient.storage.from('postpilot-media').remove(stalePaths);
+      }
+    }
+  } catch (error) {
+    console.warn('PostPilot orphan media cleanup:', error?.message || error);
+  }
+}
+
 async function loadCloudPacks() {
   if (!supabaseClient || !currentUser) return;
   cloudLoading = true;
@@ -1176,6 +1216,7 @@ async function loadCloudPacks() {
   cloudPacks = (data || []).map(mapCloudPack);
   renderList();
   updateAccountUi();
+  window.setTimeout(cleanupOrphanMedia, 0);
 }
 
 function statusLabel(status) {

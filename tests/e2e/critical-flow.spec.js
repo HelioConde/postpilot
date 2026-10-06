@@ -41,13 +41,26 @@ test('layout responsivo não cria overflow e mantém a semana completa', async (
   await page.setViewportSize({ width: 390, height: 844 });
   const navBoxes = await page.evaluate(() => {
     const brand = document.querySelector('.brand')?.getBoundingClientRect();
-    const actions = document.querySelector('.nav-actions')?.getBoundingClientRect();
-    return brand && actions
-      ? { brandBottom: brand.bottom, actionsTop: actions.top }
+    const account = document.querySelector('#account-open')?.getBoundingClientRect();
+    const language = document.querySelector('.language-switcher')?.getBoundingClientRect();
+    const viewportWidth = document.documentElement.clientWidth;
+    return brand && account && language
+      ? {
+          brandRight: brand.right,
+          brandBottom: brand.bottom,
+          accountLeft: account.left,
+          accountRight: account.right,
+          languageTop: language.top,
+          languageRight: language.right,
+          viewportWidth
+        }
       : null;
   });
   expect(navBoxes).not.toBeNull();
-  expect(navBoxes.actionsTop).toBeGreaterThanOrEqual(navBoxes.brandBottom);
+  expect(navBoxes.accountLeft).toBeGreaterThanOrEqual(navBoxes.brandRight + 4);
+  expect(navBoxes.languageTop).toBeGreaterThanOrEqual(navBoxes.brandBottom);
+  expect(navBoxes.accountRight).toBeLessThanOrEqual(navBoxes.viewportWidth + 1);
+  expect(navBoxes.languageRight).toBeLessThanOrEqual(navBoxes.viewportWidth + 1);
 });
 
 test('navegação por teclado oferece skip link e foco principal', async ({ page }) => {

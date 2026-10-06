@@ -22,13 +22,13 @@ O objetivo é validar o menor estúdio de conteúdo realmente útil para criador
 
 ## P1 — diferenciação
 
-- [ ] Templates de conteúdo por objetivo/nicho.
+- [x] Templates rápidos por objetivo/nicho que configuram público, objetivo, tom e plataformas sem substituir tema/transcrição.
 - [x] Calendário editorial visual semanal com navegação e abertura direta dos pacotes agendados.
 - [x] Reaproveitar um pacote como modelo sem alterar o original e sem herdar a data de publicação.
 - [x] Editar pacote existente no mesmo formulário, preservando ID e status no modo local e na nuvem.
 - [x] Checklist de publicação por plataforma com texto revisado, mídia pronta e publicação, persistido localmente e no Supabase.
 - [x] Backup/restauração JSON validado no modo local, com sanitização e limite de 20 pacotes.
-- [ ] Feedback beta dentro do produto.
+- [x] Feedback beta com nota, categoria e comentário, fila offline e Edge Function privada ativa no Supabase.
 - [x] PWA instalável com app shell em cache e criação local disponível offline após a primeira abertura.
 
 ## P2 — após validação com usuários

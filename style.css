@@ -486,3 +486,26 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     min-height:40px;
   }
 }
+
+/* Visual hierarchy — backup is utility, empty-state action is the next step */
+.local-backup-actions .secondary{
+  background:#fff;
+  color:var(--ink);
+  border:1px solid var(--line);
+  box-shadow:none;
+}
+.local-backup-actions .secondary:hover{
+  border-color:#cfc8e5;
+  background:#faf9fd;
+  color:var(--accent);
+}
+.empty-pack-action{
+  background:var(--accent);
+  color:#fff;
+  border:1px solid var(--accent);
+  box-shadow:0 6px 16px rgba(101,82,161,.12);
+}
+.empty-pack-action:hover{
+  background:#59468f;
+  color:#fff;
+}

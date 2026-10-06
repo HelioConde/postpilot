@@ -250,3 +250,5 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 .media-retranscribe{margin-left:auto}
 @media(max-width:620px){.media-retranscribe{margin-left:0;width:100%}}
+
+@media(max-width:900px){.grid{grid-template-columns:1fr}}

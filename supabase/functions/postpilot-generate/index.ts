@@ -66,6 +66,23 @@ async function consumeQuota(url: string, userId: string) {
   };
 }
 
+async function readQuotaStatus(url: string, userId: string) {
+  const key = getSecretKey();
+  if (!key) return null;
+  const service = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data, error } = await service.rpc("postpilot_usage_status", {
+    p_user_id: userId,
+    p_feature: "ai_generation",
+    p_limit: 20,
+  });
+  if (error || !Array.isArray(data) || !data.length) return null;
+  const row = data[0] as Record<string, unknown>;
+  return {
+    remaining: Math.max(0, Number(row.remaining) || 0),
+    resetAt: typeof row.reset_at === "string" ? row.reset_at : "",
+  };
+}
+
 function cleanText(value: unknown, max: number) {
   return typeof value === "string"
     ? value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max)
@@ -146,11 +163,14 @@ Deno.serve(async (request: Request) => {
   const apiUrl = Deno.env.get("POSTPILOT_AI_API_URL");
   const model = Deno.env.get("POSTPILOT_AI_MODEL");
   if (input.action === "health") {
+    const quotaStatus = await readQuotaStatus(supabaseUrl, userData.user.id);
     return json(200, {
       ok: true,
       configured: Boolean(apiKey && apiUrl && model),
       feature: "ai_generation",
       hourlyLimit: 20,
+      remaining: quotaStatus?.remaining ?? 20,
+      resetAt: quotaStatus?.resetAt || "",
     }, origin);
   }
 

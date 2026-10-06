@@ -143,7 +143,16 @@
     "Pacote aberto para edição.":"Pack opened for editing.",
     "Edição cancelada.":"Editing cancelled.",
     "Alterações salvas na sua conta.":"Changes saved to your account.",
-    "Alterações salvas neste dispositivo.":"Changes saved on this device."
+    "Alterações salvas neste dispositivo.":"Changes saved on this device.",
+    "Checklist de publicação":"Publishing checklist",
+    "Texto revisado":"Copy reviewed",
+    "Mídia pronta":"Media ready",
+    "Publicado na plataforma":"Published on platform",
+    "concluídos":"completed",
+    "Checklist":"Checklist",
+    "Checklist atualizado.":"Checklist updated.",
+    "Checklist completo. Você pode marcar o pacote como publicado.":"Checklist complete. You can mark the pack as published.",
+    "Não foi possível atualizar o checklist.":"Could not update the checklist."
   };
 
   const reverse = Object.fromEntries(Object.entries(translations).map(([pt,en]) => [en,pt]));

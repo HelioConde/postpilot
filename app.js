@@ -1880,10 +1880,14 @@ function renderPack(pack) {
       showToast('Transcrição atualizada a partir da mídia.');
     } catch (error) {
       console.error(error);
-      button.disabled = serviceHealth.transcription.configured !== true;
-      button.textContent = serviceHealth.transcription.configured === true
-        ? uiText('Transcrever agora')
-        : uiText('Transcrição indisponível');
+      const canRetry = serviceHealth.transcription.configured === true
+        && Number(serviceHealth.transcription.remaining) > 0;
+      button.disabled = !canRetry;
+      button.textContent = serviceHealth.transcription.configured !== true
+        ? uiText('Transcrição indisponível')
+        : Number(serviceHealth.transcription.remaining) <= 0
+          ? uiText('Limite da hora atingido')
+          : uiText('Transcrever agora');
       showToast('Não foi possível transcrever a mídia agora.');
     }
   });

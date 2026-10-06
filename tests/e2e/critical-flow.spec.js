@@ -366,6 +366,26 @@ test('analytics locais resumem padrões de produção', async ({ page }) => {
   await expect(insights).toContainText(/Gerar conversa|Start conversation|Your editorial rhythm|Seu ritmo editorial/i);
 });
 
+test('métricas secundárias ficam recolhidas no mobile e abertas no desktop', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await localMode(page);
+  await createPack(page, ' Métricas mobile');
+
+  const mobileMetrics = page.locator('#production-metrics');
+  await expect(mobileMetrics).toBeVisible();
+  await expect(mobileMetrics).not.toHaveAttribute('open', '');
+
+  await mobileMetrics.locator('summary').click();
+  await expect(mobileMetrics).toHaveAttribute('open', '');
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.reload();
+  const item = page.locator('#list .item').first();
+  await expect(item).toBeVisible();
+  const desktopMetrics = page.locator('#production-metrics');
+  await expect(desktopMetrics).toHaveAttribute('open', '');
+});
+
 test('dashboard de foco e filtros avançados organizam a produção', async ({ page }) => {
   await localMode(page);
   await createPack(page, ' Filtros');

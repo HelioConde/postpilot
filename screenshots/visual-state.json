@@ -1,53 +1,53 @@
 {
-  "generatedAt": "2026-10-06T20:01:47.844Z",
+  "generatedAt": "2026-10-06T21:26:42.591Z",
   "source": "http://127.0.0.1:4175",
   "captures": {
     "desktop": {
       "width": 1440,
-      "height": 2333,
-      "bytes": 316793,
+      "height": 2438,
+      "bytes": 321864,
       "fullPage": true
     },
     "mobile": {
       "width": 390,
-      "height": 3444,
-      "bytes": 229435,
+      "height": 3605,
+      "bytes": 237648,
       "fullPage": true
     },
     "tablet": {
       "width": 768,
-      "height": 2888,
-      "bytes": 268818,
+      "height": 2993,
+      "bytes": 273500,
       "fullPage": true
     },
     "mobileEnglish": {
       "width": 390,
-      "height": 3376,
-      "bytes": 222841,
+      "height": 3521,
+      "bytes": 230386,
       "fullPage": true
     },
     "mobileAccount": {
       "width": 390,
       "height": 844,
-      "bytes": 68441,
+      "bytes": 69590,
       "fullPage": true
     },
     "desktopPopulated": {
       "width": 1440,
-      "height": 3251,
-      "bytes": 399784,
+      "height": 3292,
+      "bytes": 406834,
       "fullPage": true
     },
     "tabletPopulated": {
       "width": 768,
-      "height": 4532,
-      "bytes": 350604,
+      "height": 4637,
+      "bytes": 358349,
       "fullPage": true
     },
     "mobilePopulated": {
       "width": 390,
-      "height": 5313,
-      "bytes": 316631,
+      "height": 5474,
+      "bytes": 325221,
       "fullPage": true
     }
   }

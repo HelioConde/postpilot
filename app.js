@@ -1034,14 +1034,54 @@ function platformText(pack, platform) {
   ].join('\n\n');
 }
 
+function exportableCuts(pack) {
+  return cutSuggestions(pack).map((cut, index) => ({
+    index: index + 1,
+    start: cut.start,
+    end: cut.end,
+    startLabel: formatTimestamp(cut.start),
+    endLabel: formatTimestamp(cut.end),
+    text: cut.text,
+    favorite: Boolean(cut.favorite),
+    rejected: Boolean(cut.rejected)
+  }));
+}
+
+function exportableSegments(pack) {
+  return cleanTranscriptionSegments(pack.transcriptionSegments).map(segment => ({
+    start: segment.start,
+    end: segment.end,
+    startLabel: formatTimestamp(segment.start),
+    endLabel: formatTimestamp(segment.end),
+    text: segment.text
+  }));
+}
+
 function packageText(pack) {
   const english = currentLocale() === 'en';
+  const cuts = exportableCuts(pack);
+  const segments = exportableSegments(pack);
+  const extras = [
+    ...(pack.mediaName ? [
+      `${english ? 'MEDIA' : 'MÍDIA'}: ${pack.mediaName}${pack.mediaSizeBytes ? ' · ' + formatFileSize(pack.mediaSizeBytes) : ''}`
+    ] : []),
+    ...(segments.length ? [
+      (english ? 'TIMESTAMPED TRANSCRIPT' : 'TRANSCRIÇÃO COM TIMESTAMPS') + ':\n' +
+      segments.map(segment => `[${segment.startLabel}–${segment.endLabel}] ${segment.text}`).join('\n')
+    ] : []),
+    ...(cuts.length ? [
+      (english ? 'CLIPS' : 'CORTES') + ':\n' +
+      cuts.map(cut => `#${cut.index} [${cut.startLabel}–${cut.endLabel}] ${cut.favorite ? '★ ' : ''}${cut.rejected ? (english ? '[discarded] ' : '[descartado] ') : ''}${cut.text}`).join('\n')
+    ] : [])
+  ];
+
   return [
     `${english ? 'TOPIC' : 'TEMA'}: ${pack.topic}`,
     `${english ? 'GOAL' : 'OBJETIVO'}: ${pack.goal}`,
     `${english ? 'TONE' : 'TOM'}: ${toneLabel(pack.tone)}`,
     ...(pack.audience ? [`${english ? 'AUDIENCE' : 'PÚBLICO'}: ${pack.audience}`] : []),
     ...(pack.publishAt ? [`${english ? 'PLANNED DATE' : 'DATA PLANEJADA'}: ${pack.publishAt}`] : []),
+    ...extras,
     ...packPlatforms(pack).map(platform => platformText(pack, platform))
   ].join('\n\n---\n\n');
 }
@@ -1060,12 +1100,23 @@ function packageMarkdown(pack) {
     ].join('\n\n');
   });
 
+  const segments = exportableSegments(pack);
+  const cuts = exportableCuts(pack);
   return [
     `# ${pack.topic}`,
     `**${english ? 'Goal' : 'Objetivo'}:** ${pack.goal}`,
     `**${english ? 'Tone' : 'Tom'}:** ${toneLabel(pack.tone)}`,
     ...(pack.audience ? [`**${english ? 'Audience' : 'Público'}:** ${pack.audience}`] : []),
     ...(pack.publishAt ? [`**${english ? 'Planned date' : 'Data planejada'}:** ${pack.publishAt}`] : []),
+    ...(pack.mediaName ? [`**${english ? 'Media' : 'Mídia'}:** ${pack.mediaName}${pack.mediaSizeBytes ? ' · ' + formatFileSize(pack.mediaSizeBytes) : ''}`] : []),
+    ...(segments.length ? [
+      `## ${english ? 'Timestamped transcript' : 'Transcrição com timestamps'}`,
+      segments.map(segment => `- **${segment.startLabel}–${segment.endLabel}** — ${segment.text}`).join('\n')
+    ] : []),
+    ...(cuts.length ? [
+      `## ${english ? 'Clip suggestions' : 'Sugestões de cortes'}`,
+      cuts.map(cut => `- **#${cut.index} · ${cut.startLabel}–${cut.endLabel}** ${cut.favorite ? '★ ' : ''}${cut.rejected ? (english ? '_(discarded)_ ' : '_(descartado)_ ') : ''}— ${cut.text}`).join('\n')
+    ] : []),
     '',
     ...sections
   ].join('\n\n');
@@ -1073,7 +1124,7 @@ function packageMarkdown(pack) {
 
 function packageJson(pack) {
   return JSON.stringify({
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     package: {
       id: pack.id,
@@ -1083,6 +1134,16 @@ function packageJson(pack) {
       audience: pack.audience || '',
       publishAt: pack.publishAt || '',
       status: pack.status || 'draft',
+      generationMode: pack.generationMode || 'local',
+      media: pack.mediaName ? {
+        name: pack.mediaName,
+        type: pack.mediaType || '',
+        sizeBytes: Number(pack.mediaSizeBytes || 0)
+      } : null,
+      transcriptionSegments: exportableSegments(pack).map(({ start, end, text }) => ({ start, end, text })),
+      clips: exportableCuts(pack).map(({ index, start, end, text, favorite, rejected }) => ({
+        index, start, end, text, favorite, rejected
+      })),
       platforms: packPlatforms(pack),
       deliverables: packPlatforms(pack).map(platform => {
         const deliverable = platformDeliverable(pack, platform);
@@ -1101,6 +1162,18 @@ function csvCell(value) {
 
 function packageCsv(pack) {
   const rows = [['platform', 'field', 'value']];
+  if (pack.mediaName) {
+    rows.push(['META', 'media_name', pack.mediaName]);
+    rows.push(['META', 'media_type', pack.mediaType || '']);
+    rows.push(['META', 'media_size_bytes', Number(pack.mediaSizeBytes || 0)]);
+  }
+  exportableSegments(pack).forEach((segment, index) => {
+    rows.push(['TRANSCRIPT', `segment_${index + 1}_${segment.startLabel}-${segment.endLabel}`, segment.text]);
+  });
+  exportableCuts(pack).forEach(cut => {
+    const flags = [cut.favorite ? 'favorite' : '', cut.rejected ? 'rejected' : ''].filter(Boolean).join('|');
+    rows.push(['CLIP', `clip_${cut.index}_${cut.startLabel}-${cut.endLabel}${flags ? '_' + flags : ''}`, cut.text]);
+  });
   packPlatforms(pack).forEach(platform => {
     const deliverable = platformDeliverable(pack, platform);
     deliverable.lines.forEach(([label, value]) => rows.push([deliverable.title, label, value]));

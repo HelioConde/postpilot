@@ -16,8 +16,8 @@ O objetivo é validar o menor estúdio de conteúdo realmente útil para criador
 - [x] Monetização preparada por anúncios, desativada até existir configuração real.
 - [x] Público-alvo e data planejada de publicação.
 - [x] Busca e resumo de produção.
-- [ ] Browser E2E para o fluxo local crítico.
-- [ ] Smoke responsivo desktop/mobile.
+- [x] Browser E2E para o fluxo local crítico: briefing editorial, geração, busca, status, exportação e PT/EN.
+- [x] Smoke responsivo automatizado em 360 px, 768 px e 1440 px sem overflow horizontal.
 - [ ] Homologar autenticação e isolamento no Supabase real.
 
 ## P1 — diferenciação

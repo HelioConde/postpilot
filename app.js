@@ -1868,7 +1868,7 @@ function renderList() {
   const searchTerm = String(projectSearch?.value || '').trim().toLocaleLowerCase(currentLocale());
   const source = currentUser ? visiblePacks() : visiblePacks().slice().reverse();
   const hasProjects = source.length > 0;
-  const compactProjectActions = Boolean(window.matchMedia?.('(max-width: 620px)').matches);
+  const compactProjectActions = Boolean(window.matchMedia?.('(max-width: 900px)').matches);
   [
     focusDashboard,
     productionMetrics,

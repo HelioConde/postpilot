@@ -81,6 +81,21 @@ function validatePng(name, expectedWidth, minimumHeight) {
   return { width, height, bytes: buffer.length };
 }
 
+async function captureAccount(browser, name, viewport) {
+  const context = await createContext(browser, viewport);
+  const page = await context.newPage();
+  await preparePage(page);
+  await page.locator('#account-open').click();
+  await page.waitForSelector('#account-dialog[open]');
+  await page.waitForTimeout(100);
+  await page.screenshot({
+    path: path.join(outputDir, name),
+    fullPage: true,
+    animations: 'disabled'
+  });
+  await context.close();
+}
+
 async function capturePopulated(browser, name, viewport) {
   const context = await createContext(browser, viewport);
   const page = await context.newPage();
@@ -118,7 +133,8 @@ async function capturePopulated(browser, name, viewport) {
       capture(browser, 'postpilot-desktop.png', { width: 1440, height: 1000 }),
       capture(browser, 'postpilot-mobile.png', { width: 390, height: 844 }),
       capture(browser, 'postpilot-tablet.png', { width: 768, height: 1024 }),
-      captureLocale(browser, 'postpilot-mobile-en.png', { width: 390, height: 844 }, 'en')
+      captureLocale(browser, 'postpilot-mobile-en.png', { width: 390, height: 844 }, 'en'),
+      captureAccount(browser, 'postpilot-mobile-account.png', { width: 390, height: 844 })
     ]);
 
     await Promise.all([
@@ -132,6 +148,7 @@ async function capturePopulated(browser, name, viewport) {
       mobile: validatePng('postpilot-mobile.png', 390, 844),
       tablet: validatePng('postpilot-tablet.png', 768, 1024),
       mobileEnglish: validatePng('postpilot-mobile-en.png', 390, 844),
+      mobileAccount: validatePng('postpilot-mobile-account.png', 390, 844),
       desktopPopulated: validatePng('postpilot-desktop-populated.png', 1440, 1000),
       tabletPopulated: validatePng('postpilot-tablet-populated.png', 768, 1024),
       mobilePopulated: validatePng('postpilot-mobile-populated.png', 390, 844)

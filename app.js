@@ -61,6 +61,7 @@ const transcriptionServiceStatus = document.querySelector('#transcription-servic
 const transcriptionServiceLimit = document.querySelector('#transcription-service-limit');
 const refreshServiceHealthButton = document.querySelector('#refresh-service-health');
 const exportAccountDataButton = document.querySelector('#export-account-data');
+const togglePasswordButton = document.querySelector('#toggle-password');
 
 let currentUser = null;
 let cloudPacks = [];
@@ -2416,6 +2417,16 @@ async function importLocalPacks() {
 }
 
 function initAccount() {
+  togglePasswordButton?.addEventListener('click', () => {
+    const input = accountForm?.elements?.password;
+    if (!input) return;
+    const revealing = input.type === 'password';
+    input.type = revealing ? 'text' : 'password';
+    togglePasswordButton.textContent = uiText(revealing ? 'Ocultar' : 'Mostrar');
+    togglePasswordButton.setAttribute('aria-label', uiText(revealing ? 'Ocultar senha' : 'Mostrar senha'));
+    togglePasswordButton.setAttribute('aria-pressed', String(revealing));
+  });
+
   accountOpenButton.addEventListener('click', () => accountDialog.showModal());
   accountCloseButton.addEventListener('click', () => accountDialog.close());
   accountDialog.addEventListener('click', event => {

@@ -51,3 +51,21 @@ Authenticated media is uploaded to the private `postpilot-media` bucket using re
 ## Product QA
 
 Static QA validates core source contracts. Browser E2E covers local creation, filters, analytics, exports, calendar modes, version restore, transcript editing, clip editing, regeneration and assisted publishing. Visual Snapshot captures full-page desktop/mobile PNGs and commits the latest visual state to the repository.
+
+
+## Provider health and quotas
+
+`postpilot-generate` and `postpilot-transcribe` expose an authenticated health action that only returns readiness/limits, never provider credentials.
+
+Provider calls are guarded by:
+- JWT verification;
+- origin validation;
+- authenticated user lookup;
+- fixed hourly user quota;
+- atomic database consumption via `public.postpilot_consume_usage`;
+- private counter storage in `postpilot_private.postpilot_usage_limits`;
+- provider timeouts (AI 30 s, transcription 120 s).
+
+Initial quotas are 20 AI generations/hour and 10 transcriptions/hour per user. The quota RPC is executable only by `service_role`.
+
+Media upload is decoupled from provider success. Once uploaded, media metadata can be retained and reused when transcription is temporarily unavailable, avoiding duplicate uploads and accidental deletion.

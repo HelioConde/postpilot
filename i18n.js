@@ -284,6 +284,7 @@
     "Calendário exportado em .ics.":"Calendar exported as .ics.",
     "Livre":"Free",
     "Editar":"Edit",
+    "Ações do pacote":"Package actions",
     "Usar como modelo":"Use as template",
     "Excluir pacote":"Delete pack",
     "Salvar alterações":"Save changes",

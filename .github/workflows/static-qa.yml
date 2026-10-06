@@ -62,6 +62,8 @@ jobs:
           test -f tests/e2e/critical-flow.spec.js
           test -f .github/workflows/e2e.yml
           test -f .github/workflows/lighthouse.yml
+          test -f .github/workflows/codeql.yml
+          test -f .github/dependabot.yml
           test -f lighthouserc.js
           test -f tests/e2e/accessibility.spec.js
           test -f static-page.js

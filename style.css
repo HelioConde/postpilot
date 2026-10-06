@@ -756,3 +756,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 }
 
 .history-toolbar[hidden],#production-metrics[hidden],#focus-dashboard[hidden]{display:none!important}
+
+/* Mobile briefing — audience and publish date need full-width inputs */
+@media(max-width:500px){
+  .brief-grid{grid-template-columns:1fr;gap:0}
+  .brief-grid .field{margin:10px 0}
+  .brief-grid input{min-height:42px}
+}

@@ -129,3 +129,6 @@ jobs:
           grep -qi 'AbortSignal.timeout(30000)' supabase/functions/postpilot-generate/index.ts
           grep -qi 'AbortSignal.timeout(120000)' supabase/functions/postpilot-transcribe/index.ts
           grep -qi 'postpilot_private.postpilot_usage_limits' supabase/migrations/20261006151000_private_usage_schema.sql
+          grep -qi 'Transcrever agora' app.js
+          grep -qi 'persistTranscriptionResult' app.js
+          grep -qi 'pendingUploadedMedia' app.js

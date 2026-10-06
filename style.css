@@ -369,3 +369,33 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     justify-self:stretch;
   }
 }
+
+/* Mobile production summary — secondary metrics stay visible without dominating the page */
+@media(min-width:361px) and (max-width:520px){
+  .production-summary{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:5px;
+    margin:10px 0;
+  }
+  .production-summary article{
+    min-width:0;
+    padding:8px 6px;
+    border-radius:9px;
+  }
+  .production-summary span{
+    min-height:16px;
+    font-size:6px;
+    line-height:1.25;
+    letter-spacing:.35px;
+  }
+  .production-summary strong{
+    margin-top:2px;
+    font-size:15px;
+    line-height:1;
+  }
+}
+@media(max-width:360px){
+  .production-summary{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}

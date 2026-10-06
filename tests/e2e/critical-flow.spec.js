@@ -248,6 +248,21 @@ test('histórico local permite restaurar uma versão anterior', async ({ page })
   await expect(page.locator('#result')).toContainText('Marketing para pequenos negócios Versão');
 });
 
+test('calendário alterna entre semana e mês e filtra plataforma', async ({ page }) => {
+  await localMode(page);
+  await createPack(page, ' Calendário avançado');
+
+  await expect(page.locator('#calendar-grid .calendar-day')).toHaveCount(7);
+  await page.locator('#calendar-view').selectOption('month');
+  await expect(page.locator('#calendar-grid .calendar-day')).toHaveCount(42);
+
+  await page.locator('#calendar-platform').selectOption('Instagram');
+  await expect(page.locator('#calendar-grid')).toContainText('Marketing para pequenos negócios Calendário avançado');
+
+  await page.locator('#calendar-platform').selectOption('TikTok');
+  await expect(page.locator('#calendar-grid')).toContainText('Marketing para pequenos negócios Calendário avançado');
+});
+
 test('exporta planejamento editorial em iCalendar', async ({ page }) => {
   await localMode(page);
   await createPack(page, ' Calendário');

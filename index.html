@@ -157,11 +157,25 @@ Uma semana de ideias.</h1>
         <div class="panel-title-row">
           <div><h2>Pacote de conteúdo</h2><p class="sub">Os últimos projetos aparecem aqui. Entre na sua conta para sincronizar entre dispositivos.</p></div>
         </div>
+        <section id="focus-dashboard" class="focus-dashboard" aria-label="Prioridades de conteúdo"></section>
         <div id="production-summary" class="production-summary" aria-label="Resumo de produção"></div>
         <div class="history-toolbar">
           <label class="history-search"><span>Buscar</span><input id="project-search" type="search" placeholder="Tema ou público" autocomplete="off"></label>
           <label class="status-filter"><span>Status</span><select id="project-status-filter"><option value="all">Todos</option><option value="draft">Rascunhos</option><option value="ready">Prontos</option><option value="published">Publicados</option></select></label>
         </div>
+        <details class="advanced-filters">
+          <summary>Filtros avançados</summary>
+          <div class="advanced-filter-grid">
+            <label class="field compact-field"><span>Plataforma</span><select id="project-platform-filter"><option value="all">Todas</option><option value="Instagram">Instagram</option><option value="TikTok">TikTok</option><option value="YouTube Shorts">YouTube Shorts</option></select></label>
+            <label class="field compact-field"><span>Objetivo</span><select id="project-goal-filter"><option value="all">Todos</option><option value="conversa">Conversa</option><option value="alcance">Alcance</option><option value="oferta">Oferta</option></select></label>
+            <label class="field compact-field"><span>Tom</span><select id="project-tone-filter"><option value="all">Todos</option><option value="natural">Natural</option><option value="didatico">Didático</option><option value="humor">Humor</option></select></label>
+            <label class="field compact-field"><span>Origem</span><select id="project-generation-filter"><option value="all">Todas</option><option value="local">Gerador local</option><option value="ai">IA</option></select></label>
+            <label class="field compact-field"><span>Mídia</span><select id="project-media-filter"><option value="all">Todos</option><option value="with">Com mídia</option><option value="without">Sem mídia</option></select></label>
+            <label class="field compact-field"><span>De</span><input id="project-date-from" type="date"></label>
+            <label class="field compact-field"><span>Até</span><input id="project-date-to" type="date"></label>
+            <button id="project-filter-reset" class="secondary compact" type="button">Limpar filtros</button>
+          </div>
+        </details>
         <div id="local-backup-controls" class="local-backup-controls">
           <div><strong>Backup local</strong><small>Proteja os pacotes salvos neste dispositivo.</small></div>
           <div class="local-backup-actions">

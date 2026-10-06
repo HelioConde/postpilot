@@ -63,6 +63,7 @@ let calendarMonthOffset = 0;
 let calendarView = 'week';
 let pendingMediaFile = null;
 let activeMediaUpload = null;
+let activeMediaUploadReject = null;
 
 function currentLocale() {
   return window.AppI18n?.locale?.() || 'pt-BR';
@@ -317,6 +318,7 @@ async function uploadMediaResumable(file, path) {
   const publishableKey = window.POSTPILOT_SUPABASE?.publishableKey || '';
 
   await new Promise((resolve, reject) => {
+    activeMediaUploadReject = reject;
     const upload = new window.tus.Upload(file, {
       endpoint,
       retryDelays: [0, 3000, 5000, 10000, 20000],
@@ -335,6 +337,7 @@ async function uploadMediaResumable(file, path) {
       },
       onError(error) {
         activeMediaUpload = null;
+        activeMediaUploadReject = null;
         setMediaProgress(0, false);
         reject(error);
       },
@@ -344,6 +347,7 @@ async function uploadMediaResumable(file, path) {
       },
       onSuccess() {
         activeMediaUpload = null;
+        activeMediaUploadReject = null;
         setMediaProgress(100, false);
         resolve();
       }
@@ -1950,7 +1954,10 @@ mediaCancelUploadButton?.addEventListener('click', async () => {
   try {
     await activeMediaUpload.abort(true);
     activeMediaUpload = null;
+    const rejectUpload = activeMediaUploadReject;
+    activeMediaUploadReject = null;
     setMediaProgress(0, false);
+    rejectUpload?.(new Error('upload-cancelled'));
     if (mediaStatus) mediaStatus.textContent = uiText('Upload cancelado.');
     showToast('Upload cancelado.');
   } catch (error) {

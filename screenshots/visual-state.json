@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-06T18:19:49.952Z",
+  "generatedAt": "2026-10-06T18:20:51.748Z",
   "source": "http://127.0.0.1:4175",
   "captures": {
     "desktop": {
@@ -25,6 +25,11 @@
     "desktopPopulated": {
       "width": 1440,
       "height": 1000,
+      "fullPage": true
+    },
+    "tabletPopulated": {
+      "width": 768,
+      "height": 1024,
       "fullPage": true
     },
     "mobilePopulated": {

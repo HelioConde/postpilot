@@ -6,10 +6,14 @@
     window.POSTPILOT_SUPABASE = { client: null };
     return;
   }
+  const url = 'https://bnlvvsjgpywpbfhwdcan.supabase.co';
+  const publishableKey = 'sb_publishable_8q954VgGB7IUEgwWYA55-Q_MUyDd17c';
   window.POSTPILOT_SUPABASE = {
+    url,
+    publishableKey,
     client: sdk.createClient(
-      'https://bnlvvsjgpywpbfhwdcan.supabase.co',
-      'sb_publishable_8q954VgGB7IUEgwWYA55-Q_MUyDd17c',
+      url,
+      publishableKey,
       {
         auth: {
           persistSession: true,

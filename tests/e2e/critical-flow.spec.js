@@ -191,6 +191,47 @@ test('dashboard de foco e filtros avançados organizam a produção', async ({ p
   await expect(page.locator('#list')).toContainText('Marketing para pequenos negócios Filtros');
 });
 
+test('editor de transcrição permite editar e dividir segmentos', async ({ page }) => {
+  await localMode(page);
+  await page.evaluate(() => {
+    localStorage.setItem('postpilot-packs', JSON.stringify([{
+      id: '33333333-3333-4333-8333-333333333333',
+      topic: 'Editor de transcrição',
+      transcript: 'Primeiro trecho completo. Segundo trecho completo.',
+      platforms: ['Instagram'],
+      channel: 'Instagram',
+      tone: 'natural',
+      goal: 'alcance',
+      audience: '',
+      publishAt: '',
+      publishChecklist: {},
+      generationMode: 'local',
+      generationData: {},
+      transcriptionSegments: [
+        { start: 0, end: 20, text: 'Primeiro trecho completo com contexto suficiente para dividir em duas partes úteis.' },
+        { start: 20, end: 35, text: 'Segundo trecho completo para continuar o teste.' }
+      ],
+      cutOverrides: [],
+      contentOverrides: {},
+      versions: [],
+      status: 'draft',
+      createdAt: Date.now(),
+      time: Date.now()
+    }]));
+  });
+  await page.reload();
+  await page.locator('[data-pack="33333333-3333-4333-8333-333333333333"]').click();
+  await page.locator('.transcript-editor summary').click();
+
+  await expect(page.locator('[data-segment-index]')).toHaveCount(2);
+  await page.locator('[data-segment-index="0"] [data-segment-split]').click();
+  await expect(page.locator('[data-segment-index]')).toHaveCount(3);
+
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('postpilot-packs') || '[]')[0]);
+  expect(saved.transcriptionSegments).toHaveLength(3);
+  expect(saved.transcript.length).toBeGreaterThan(20);
+});
+
 test('editor de cortes persiste ajustes no modo local', async ({ page }) => {
   await localMode(page);
   await page.evaluate(() => {

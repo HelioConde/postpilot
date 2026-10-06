@@ -117,7 +117,20 @@ Uma semana de ideias.</h1>
             </div>
           </div>
           <label class="field"><span>Tema do vídeo</span><input name="f0" type="text" maxlength="140" placeholder="Ex.: como comecei meu negócio" required></label>
-          <label class="field"><span>Transcrição ou resumo</span><textarea name="f1" maxlength="12000" placeholder="Cole aqui uma transcrição ou descreva os pontos principais..." required></textarea></label>
+          <div class="media-ingest">
+            <div>
+              <span class="eyebrow">MÍDIA BETA</span>
+              <strong>Envie áudio ou vídeo para transcrever</strong>
+              <small>Disponível com conta. Até 6 MB nesta primeira versão; o arquivo fica privado.</small>
+            </div>
+            <label class="media-upload-button">
+              <input id="media-file" type="file" accept="audio/mpeg,audio/mp4,audio/wav,audio/webm,video/mp4,video/webm,video/quicktime" disabled>
+              <span id="media-file-label">Escolher mídia</span>
+            </label>
+            <button id="media-clear" class="secondary compact" type="button" hidden>Remover mídia</button>
+            <p id="media-status" class="field-help" role="status" aria-live="polite"></p>
+          </div>
+          <label class="field"><span>Transcrição ou resumo</span><textarea name="f1" maxlength="12000" placeholder="Cole uma transcrição/resumo ou envie uma mídia acima..."></textarea><small class="field-help">É necessário informar texto ou enviar uma mídia para transcrição.</small></label>
           <div class="brief-grid">
             <label class="field"><span>Público-alvo</span><input name="audience" type="text" maxlength="120" placeholder="Ex.: donos de pequenos negócios"></label>
             <label class="field"><span>Publicar em</span><input name="publishAt" type="date"></label>

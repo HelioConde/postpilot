@@ -91,6 +91,10 @@ Uma semana de ideias.</h1>
       <section class="panel">
         <h2>Seu próximo vídeo</h2>
         <p class="sub">Quanto mais contexto você incluir, melhores serão os rascunhos para revisar.</p>
+        <div id="composer-mode" class="composer-mode" hidden>
+          <div><span class="eyebrow">EDIÇÃO</span><strong id="composer-mode-title">Editando pacote</strong></div>
+          <button id="composer-cancel" class="secondary compact" type="button">Cancelar edição</button>
+        </div>
         <form id="form">
           <label class="field"><span>Tema do vídeo</span><input name="f0" type="text" maxlength="140" placeholder="Ex.: como comecei meu negócio" required></label>
           <label class="field"><span>Transcrição ou resumo</span><textarea name="f1" maxlength="12000" placeholder="Cole aqui uma transcrição ou descreva os pontos principais..." required></textarea></label>
@@ -108,7 +112,7 @@ Uma semana de ideias.</h1>
             </div>
           </fieldset>
           <label class="field"><span>Tom de voz</span><select name="f3"><option value="natural">Natural e direto</option><option value="didatico">Didático</option><option value="humor">Bem-humorado</option></select></label>
-          <button class="primary" type="submit">Montar pacote</button>
+          <button class="primary" id="composer-submit" type="submit">Montar pacote</button>
         </form>
       </section>
 
@@ -125,6 +129,23 @@ Uma semana de ideias.</h1>
         <div id="result" class="result"></div>
       </section>
     </main>
+
+    <section class="editorial-calendar" aria-labelledby="editorial-calendar-title">
+      <div class="calendar-head">
+        <div>
+          <span class="eyebrow">PLANEJAMENTO</span>
+          <h2 id="editorial-calendar-title">Calendário editorial</h2>
+          <p>Veja o que está planejado para cada dia e abra o pacote sem procurar no histórico.</p>
+        </div>
+        <div class="calendar-nav" aria-label="Navegação do calendário">
+          <button id="calendar-prev" class="secondary compact" type="button" aria-label="Semana anterior">←</button>
+          <button id="calendar-today" class="secondary compact" type="button">Esta semana</button>
+          <button id="calendar-next" class="secondary compact" type="button" aria-label="Próxima semana">→</button>
+        </div>
+      </div>
+      <div id="calendar-range" class="calendar-range"></div>
+      <div id="calendar-grid" class="calendar-grid"></div>
+    </section>
 
     <section class="monetization-note" aria-labelledby="monetization-title">
       <div>

@@ -52,6 +52,12 @@ O PostPilot possui Browser E2E em Chromium cobrindo o fluxo local crítico: brie
 O primeiro run dessa suíte passou integralmente no GitHub Actions.
 
 
+## Geração por IA no backend
+
+O PostPilot possui integração opcional com a Edge Function `postpilot-generate`. A chave do fornecedor nunca fica no navegador: URL, modelo e credencial são lidos apenas dos segredos `POSTPILOT_AI_API_URL`, `POSTPILOT_AI_MODEL` e `POSTPILOT_AI_API_KEY` no backend.
+
+A IA exige sessão autenticada, valida origem, briefing e plataformas, e devolve um pacote estruturado por plataforma. Se a função, a migration ou o fornecedor ainda não estiverem disponíveis, o frontend faz fallback para o gerador local em vez de bloquear a criação. O código está preparado no repositório; ativação real depende de aplicar a migration e implantar/configurar a Edge Function no Supabase.
+
 ## Exportações
 
 Cada pacote pode ser baixado em TXT para leitura rápida, Markdown para documentos e publicação, JSON para integrações/backup estruturado e CSV para planilhas. As exportações respeitam o idioma ativo e mantêm os entregáveis separados por plataforma.

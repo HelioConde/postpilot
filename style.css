@@ -330,3 +330,42 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .empty-pack-action{display:inline-flex;align-items:center;margin-top:2px;text-decoration:none}
 
 @media(max-width:520px){.empty-pack-action{width:100%;min-height:40px;justify-content:center}}
+
+/* Mobile header — intentionally two rows to avoid cramped actions */
+@media(max-width:500px){
+  .nav{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+    min-height:0;
+    height:auto;
+    padding:13px 0 11px;
+  }
+  .brand{
+    font-size:19px;
+    line-height:1;
+    justify-self:start;
+  }
+  .nav-actions{
+    width:100%;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    align-items:center;
+    gap:10px;
+  }
+  .nav-actions .language-switcher{
+    order:0;
+    justify-self:start;
+  }
+  .nav-actions #account-open{
+    justify-self:end;
+    margin-left:0;
+    min-height:36px;
+    padding:8px 13px;
+  }
+  .nav-actions .install-app:not([hidden]){
+    grid-column:1/-1;
+    width:100%;
+    justify-self:stretch;
+  }
+}

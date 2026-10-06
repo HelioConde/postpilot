@@ -509,6 +509,7 @@ async function persistTranscriptionResult(pack, transcript, segments) {
   };
 
   if (currentUser) {
+    await recordCloudVersion(pack);
     const { data, error } = await supabaseClient
       .from('postpilot_projects')
       .update({
@@ -526,7 +527,6 @@ async function persistTranscriptionResult(pack, transcript, segments) {
     if (error) throw error;
     const saved = mapCloudPack(data);
     cloudPacks = cloudPacks.map(item => item.id === saved.id ? saved : item);
-    await recordCloudVersion(saved);
     return saved;
   }
 

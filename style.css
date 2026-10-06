@@ -805,3 +805,83 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     min-height:40px;
   }
 }
+
+/* Project history actions — keep the primary path obvious on small screens */
+.item-actions{
+  display:grid;
+  gap:7px;
+}
+.item-actions-primary{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+}
+.project-more-actions{
+  width:100%;
+}
+.project-more-actions summary{
+  display:none;
+}
+.project-more-actions-body{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+}
+.project-delete-action{
+  color:#8b3d45;
+  background:#fbf0f1;
+}
+@media(max-width:620px){
+  .item-actions-primary{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    width:100%;
+  }
+  .item-actions-primary .project-status-select{
+    width:100%;
+    min-height:40px;
+  }
+  .project-open-action{
+    min-height:40px;
+    padding-inline:14px;
+  }
+  .project-more-actions{
+    border:1px solid var(--line);
+    border-radius:9px;
+    background:#fafaf8;
+  }
+  .project-more-actions summary{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    min-height:38px;
+    padding:8px 10px;
+    color:var(--muted);
+    font-size:9px;
+    font-weight:800;
+    cursor:pointer;
+    list-style:none;
+  }
+  .project-more-actions summary::-webkit-details-marker{display:none}
+  .project-more-actions summary::after{
+    content:'+';
+    color:var(--accent);
+    font-size:14px;
+  }
+  .project-more-actions[open] summary::after{content:'−'}
+  .project-more-actions-body{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+    padding:0 8px 8px;
+  }
+  .project-more-actions-body .secondary{
+    width:100%;
+    min-height:38px;
+  }
+  .project-more-actions-body .project-delete-action{
+    grid-column:1/-1;
+  }
+}

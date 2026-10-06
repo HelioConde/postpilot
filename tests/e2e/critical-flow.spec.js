@@ -113,6 +113,16 @@ test('navegação por teclado oferece skip link e foco principal', async ({ page
   await expect(skip).toHaveText(/Skip to content/i);
 });
 
+test('novo pacote leva o foco para a área de revisão', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await localMode(page);
+  await createPack(page, ' Foco');
+
+  const review = page.locator('#result');
+  await expect(review).toHaveClass(/show/);
+  await expect(review).toBeFocused({ timeout: 2000 });
+});
+
 test('fluxo local cria pacote editorial e atualiza painel de produção', async ({ page }) => {
   await localMode(page);
   await expect(page.locator('#ai-generation')).toBeDisabled();

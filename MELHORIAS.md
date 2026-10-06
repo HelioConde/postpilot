@@ -39,6 +39,7 @@ O objetivo é validar o menor estúdio de conteúdo realmente útil para criador
 - [ ] Transcrição automática. Edge Function implantada; falta configurar os segredos do fornecedor de transcrição.
 - [x] Sugestões e editor de cortes com timestamps, favorito, descarte, ajuste de início/fim e navegação pelo player. Validação com mídia real depende do fornecedor de transcrição ativo.
 - [x] Exportações adicionais (Markdown/CSV/JSON).
+- [x] Exportações estruturadas incluem mídia, segmentos de transcrição, cortes, favoritos e descartes.
 - [x] Integração opcional com calendário externo via exportação iCalendar (.ics), compatível com Google Calendar, Outlook e Apple Calendar.
 - [x] Publicação assistida: copiar conteúdo preparado e abrir Instagram, TikTok ou YouTube Studio para conclusão manual. Integração direta via APIs fica para uma etapa futura dependente de aprovação das plataformas.
 
@@ -60,7 +61,7 @@ Não adicionar processamento de vídeo pesado, cobrança ou automação de publi
 - [x] Editor persistente de cortes.
 - [x] Upload TUS resumível com progresso, retomada e cancelamento; limite continua 6 MB até validar o provedor de transcrição.
 - [x] Páginas bilíngues Sobre, Privacidade, Termos e Contato + sitemap.
-- [x] Visual Snapshot automático desktop/mobile salvo no GitHub.
+- [x] Visual Snapshot automático desktop/tablet/mobile salvo no GitHub.
 - [x] Health check autenticado para IA/transcrição no painel da conta.
 - [x] Quota por usuário: 20 gerações de IA/h e 10 transcrições/h, com contador atômico em schema privado.
 - [x] Painel da conta mostra quota restante e horário de renovação sem consumir requisições.

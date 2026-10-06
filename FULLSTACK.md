@@ -11,11 +11,7 @@ Tables:
 All user-owned data is protected by RLS using `auth.uid()`.
 
 ## Production path
-1. Add Supabase Auth to the current prototype.
-2. Replace localStorage project history with `postpilot_projects`.
-3. Persist generated deliverables in `postpilot_outputs`.
-4. Add server-side/Edge Function generation for AI tasks so provider secrets never reach the browser.
-5. Add quota enforcement through `product_subscriptions`.
+Supabase Auth, cloud project history and output persistence are already connected. The current MVP can generate one project for multiple target platforms (Instagram, TikTok and YouTube Shorts), stores one output snapshot per platform and tracks the workflow as draft/ready/published. The next production steps are server-side AI generation, transcription/video ingestion, quota enforcement through `product_subscriptions` and richer export formats.
 
 ## QA gates
 Authentication isolation, generation retries, empty transcript handling, long input limits, mobile layout and accessibility are mandatory before public launch.

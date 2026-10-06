@@ -131,3 +131,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .feedback-actions .primary{width:auto;margin:0}
 .feedback-honeypot{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;overflow:hidden!important}
 @media(max-width:620px){.content-template-picker,.beta-feedback-card{grid-template-columns:1fr}.content-template-controls{display:grid;grid-template-columns:1fr auto}.content-template-controls select{min-width:0;width:100%}.beta-feedback-card .secondary{justify-self:start}.feedback-actions{display:grid;grid-template-columns:1fr 1fr}.feedback-actions button{width:100%!important}}
+
+.export-format{display:inline-flex;align-items:center;gap:6px;padding:5px 7px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--muted);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.45px}
+.export-format select{min-height:30px;border:0;background:transparent;color:var(--ink);font-size:10px;font-weight:700;outline:none;text-transform:none;letter-spacing:0}
+@media(max-width:620px){.result-actions{display:grid;grid-template-columns:1fr 1fr}.result-actions .secondary,.export-format{width:100%}.export-format{justify-content:space-between}.export-format select{flex:1}}

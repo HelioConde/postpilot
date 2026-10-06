@@ -43,3 +43,10 @@ Cada pacote pode registrar público-alvo e data planejada de publicação. O his
 ## Monetização
 
 O PostPilot permanece gratuito e está preparado para anúncios responsivos fora do formulário e dos pacotes de conteúdo. A integração fica desativada até existirem Publisher ID e slot reais.
+
+
+## QA no navegador
+
+O PostPilot possui Browser E2E em Chromium cobrindo o fluxo local crítico: briefing com público/data, geração multiplataforma, painel de produção, busca, mudança de status, exportação .txt, troca PT/EN e smoke responsivo em 360 px, 768 px e 1440 px.
+
+O primeiro run dessa suíte passou integralmente no GitHub Actions.

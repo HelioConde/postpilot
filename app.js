@@ -71,6 +71,7 @@ let calendarView = 'week';
 let pendingMediaFile = null;
 let activeMediaUpload = null;
 let activeMediaUploadReject = null;
+let pendingUploadedMedia = null;
 let serviceHealth = {
   ai: { configured: null, hourlyLimit: 20 },
   transcription: { configured: null, hourlyLimit: 10, maxBytes: 6 * 1024 * 1024 }
@@ -309,6 +310,7 @@ function setMediaProgress(percent = 0, active = false) {
 
 function resetMediaSelection() {
   pendingMediaFile = null;
+  pendingUploadedMedia = null;
   activeMediaUpload = null;
   if (mediaFileInput) mediaFileInput.value = '';
   if (mediaFileLabel) mediaFileLabel.textContent = uiText('Escolher mídia');
@@ -379,38 +381,60 @@ async function uploadMediaResumable(file, path) {
   });
 }
 
-async function uploadAndTranscribeMedia(file, packId) {
+async function uploadAndTranscribeMedia(file, packId, { transcribe = true } = {}) {
   if (!supabaseClient || !currentUser) throw new Error('Entre na sua conta para enviar mídia.');
   if (!file || !allowedMediaType(file.type)) throw new Error('Formato de mídia não suportado.');
   if (file.size > 6 * 1024 * 1024) throw new Error('O arquivo deve ter no máximo 6 MB.');
 
-  const safeName = String(file.name || 'media')
-    .normalize('NFD').replace(/\p{M}/gu, '')
-    .replace(/[^a-zA-Z0-9._-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 100) || 'media';
-  const path = currentUser.id + '/' + packId + '/' + Date.now() + '-' + safeName;
+  const fingerprint = [file.name, file.size, file.lastModified].join(':');
+  let media = pendingUploadedMedia?.fingerprint === fingerprint
+    ? pendingUploadedMedia
+    : null;
 
-  if (mediaStatus) mediaStatus.textContent = uiText('Enviando mídia privada…');
-  await uploadMediaResumable(file, path);
+  if (!media) {
+    const safeName = String(file.name || 'media')
+      .normalize('NFD').replace(/\p{M}/gu, '')
+      .replace(/[^a-zA-Z0-9._-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 100) || 'media';
+    const path = currentUser.id + '/' + packId + '/' + Date.now() + '-' + safeName;
 
-  try {
-    if (mediaStatus) mediaStatus.textContent = uiText('Transcrevendo mídia…');
-    const { data, error } = await supabaseClient.functions.invoke('postpilot-transcribe', {
-      body: { path, name: file.name, locale: currentLocale() }
-    });
-    if (error) throw error;
-    if (!data?.transcript) throw new Error('Transcrição vazia.');
-    return {
-      transcript: String(data.transcript).slice(0, 12000),
-      segments: Array.isArray(data.segments) ? data.segments : [],
+    if (mediaStatus) mediaStatus.textContent = uiText('Enviando mídia privada…');
+    await uploadMediaResumable(file, path);
+    media = {
+      fingerprint,
       mediaPath: path,
       mediaName: file.name,
       mediaType: file.type,
       mediaSizeBytes: file.size
     };
+    pendingUploadedMedia = media;
+  }
+
+  if (!transcribe) {
+    return {
+      ...media,
+      transcript: '',
+      segments: [],
+      transcriptionSkipped: true
+    };
+  }
+
+  try {
+    if (mediaStatus) mediaStatus.textContent = uiText('Transcrevendo mídia…');
+    const { data, error } = await supabaseClient.functions.invoke('postpilot-transcribe', {
+      body: { path: media.mediaPath, name: file.name, locale: currentLocale() }
+    });
+    if (error) throw error;
+    if (!data?.transcript) throw new Error('Transcrição vazia.');
+    return {
+      ...media,
+      transcript: String(data.transcript).slice(0, 12000),
+      segments: Array.isArray(data.segments) ? data.segments : [],
+      rateLimit: data.rateLimit || null
+    };
   } catch (error) {
-    await supabaseClient.storage.from('postpilot-media').remove([path]).catch(() => {});
+    if (error && typeof error === 'object') error.uploadedMedia = media;
     throw error;
   }
 }
@@ -2133,24 +2157,47 @@ form.addEventListener('submit', async event => {
     submit.disabled = true;
     try {
       if (pendingMediaFile) {
+        if (serviceHealth.transcription.configured === null) await refreshServiceHealth();
+        const canTranscribe = serviceHealth.transcription.configured === true;
+        if (!canTranscribe && !manualTranscript) {
+          showToast('A transcrição ainda não está ativa. Adicione um resumo para continuar com a mídia.');
+          if (mediaStatus) mediaStatus.textContent = uiText('Transcrição indisponível. A mídia será preservada quando houver um resumo manual.');
+          form.elements.f1.focus();
+          return;
+        }
+
         try {
-          const media = await uploadAndTranscribeMedia(pendingMediaFile, pack.id);
-          pack.transcript = media.transcript;
-          pack.transcriptionSegments = media.segments;
+          const media = await uploadAndTranscribeMedia(pendingMediaFile, pack.id, { transcribe: canTranscribe });
           pack.mediaPath = media.mediaPath;
           pack.mediaName = media.mediaName;
           pack.mediaType = media.mediaType;
           pack.mediaSizeBytes = media.mediaSizeBytes;
-          form.elements.f1.value = media.transcript;
-          if (mediaStatus) mediaStatus.textContent = uiText('Transcrição concluída.');
+
+          if (media.transcript) {
+            pack.transcript = media.transcript;
+            pack.transcriptionSegments = media.segments;
+            form.elements.f1.value = media.transcript;
+            if (mediaStatus) mediaStatus.textContent = uiText('Transcrição concluída.');
+          } else {
+            pack.transcript = manualTranscript;
+            if (mediaStatus) mediaStatus.textContent = uiText('Mídia enviada. Usando o resumo manual.');
+          }
         } catch (mediaError) {
           console.warn('PostPilot transcription:', mediaError);
+          const uploaded = mediaError?.uploadedMedia;
+          if (uploaded) {
+            pack.mediaPath = uploaded.mediaPath;
+            pack.mediaName = uploaded.mediaName;
+            pack.mediaType = uploaded.mediaType;
+            pack.mediaSizeBytes = uploaded.mediaSizeBytes;
+          }
           if (!manualTranscript) {
-            showToast('Transcrição indisponível. Cole um resumo para continuar.');
-            if (mediaStatus) mediaStatus.textContent = uiText('Não foi possível transcrever. Use o campo de texto para continuar.');
+            showToast('Mídia preservada. Adicione um resumo ou tente transcrever novamente.');
+            if (mediaStatus) mediaStatus.textContent = uiText('Mídia preservada. A transcrição falhou; você pode tentar novamente.');
             return;
           }
-          showToast('Mídia não transcrita. Usando o texto informado.');
+          pack.transcript = manualTranscript;
+          showToast('Mídia preservada. Usando o texto informado.');
         }
       }
 
@@ -2243,7 +2290,13 @@ mediaFileInput?.addEventListener('change', () => {
   if (mediaClearButton) mediaClearButton.hidden = false;
   if (mediaStatus) mediaStatus.textContent = mediaFileText(file);
 });
-mediaClearButton?.addEventListener('click', resetMediaSelection);
+mediaClearButton?.addEventListener('click', async () => {
+  const uploadedPath = pendingUploadedMedia?.mediaPath;
+  if (uploadedPath && supabaseClient && currentUser) {
+    await supabaseClient.storage.from('postpilot-media').remove([uploadedPath]).catch(() => {});
+  }
+  resetMediaSelection();
+});
 mediaCancelUploadButton?.addEventListener('click', async () => {
   if (!activeMediaUpload) return;
   try {

@@ -18,7 +18,8 @@ O objetivo é validar o menor estúdio de conteúdo realmente útil para criador
 - [x] Busca e resumo de produção.
 - [x] Browser E2E para o fluxo local crítico: briefing editorial, geração, busca, status, exportação e PT/EN.
 - [x] Smoke responsivo automatizado em 360 px, 768 px e 1440 px sem overflow horizontal.
-- [ ] Homologar autenticação e isolamento no Supabase real.
+- [x] Homologar isolamento RLS no Supabase real com duas identidades autenticadas em transação e rollback.
+- [ ] Homologar cadastro, confirmação de e-mail, login, recuperação de senha e sessão com conta humana real.
 
 ## P1 — diferenciação
 

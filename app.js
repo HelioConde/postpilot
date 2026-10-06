@@ -202,7 +202,10 @@ function sanitizeImportedPack(raw) {
       : [],
     versions: Array.isArray(raw.versions)
       ? raw.versions.slice(-10).filter(item => item && typeof item === 'object' && item.snapshot && typeof item.snapshot === 'object')
-      : []
+      : [],
+    contentOverrides: raw.contentOverrides && typeof raw.contentOverrides === 'object' && !Array.isArray(raw.contentOverrides)
+      ? raw.contentOverrides
+      : {}
   };
   pack.publishChecklist = normalizePublishChecklist(pack);
   return pack;

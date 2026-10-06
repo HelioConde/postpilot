@@ -1991,7 +1991,16 @@ function renderPack(pack) {
 
   result.innerHTML = `
     <div class="result-heading">
-      <div><h3>${escapeHtml(pack.topic)}</h3><p>${packPlatforms(pack).length} ${packPlatforms(pack).length > 1 ? uiText('plataformas') : uiText('plataforma')} · ${escapeHtml(toneLabel(pack.tone))}${pack.audience ? ' · ' + escapeHtml(uiText('Público')) + ': ' + escapeHtml(pack.audience) : ''}${pack.publishAt ? ' · ' + escapeHtml(uiText('Planejado para')) + ' ' + escapeHtml(formatPlannedDate(pack.publishAt)) : ''}</p><small class="pack-checklist-progress">${uiText('Checklist')}: ${checklistStats.done}/${checklistStats.total}</small></div>
+      <div class="result-heading-main">
+        <h3>${escapeHtml(pack.topic)}</h3>
+        <div class="pack-meta-chips">
+          <span>${packPlatforms(pack).length} ${packPlatforms(pack).length > 1 ? uiText('plataformas') : uiText('plataforma')}</span>
+          <span>${escapeHtml(toneLabel(pack.tone))}</span>
+          ${pack.audience ? '<span>' + escapeHtml(uiText('Público')) + ': ' + escapeHtml(pack.audience) + '</span>' : ''}
+          ${pack.publishAt ? '<span>' + escapeHtml(uiText('Planejado para')) + ' ' + escapeHtml(formatPlannedDate(pack.publishAt)) + '</span>' : ''}
+        </div>
+        <small class="pack-checklist-progress">${uiText('Checklist')}: ${checklistStats.done}/${checklistStats.total}</small>
+      </div>
       <span class="project-status status-${escapeHtml(pack.status || 'draft')}">${statusLabel(pack.status || 'draft')}</span>
     </div>
     ${pack.mediaName ? '<div class="media-linked"><strong>' + escapeHtml(uiText('Mídia vinculada')) + ':</strong> <span>' + escapeHtml(pack.mediaName) + '</span>' + (pack.mediaSizeBytes ? '<small>' + escapeHtml(formatFileSize(pack.mediaSizeBytes)) + '</small>' : '') + '<small data-media-duration></small>' + (currentUser ? '<button class="secondary compact media-retranscribe" type="button" data-transcribe-existing' + (serviceHealth.transcription.configured === true && Number(serviceHealth.transcription.remaining) > 0 ? '' : ' disabled') + '>' + escapeHtml(

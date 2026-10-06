@@ -57,3 +57,8 @@ O primeiro run dessa suíte passou integralmente no GitHub Actions.
 O PostPilot possui uma visão semanal de segunda a domingo baseada na data planejada de publicação. Pacotes agendados podem ser abertos diretamente pelo calendário.
 
 Pacotes existentes também podem ser editados no mesmo formulário sem criar outro projeto. A ação **Usar como modelo** reutiliza briefing, plataformas, tom e objetivo, mas inicia um novo rascunho e não herda a data de publicação para evitar duplicações acidentais.
+
+
+## Checklist de publicação
+
+Cada plataforma do pacote possui um checklist próprio com três etapas: texto revisado, mídia pronta e publicado na plataforma. O progresso fica persistido no modo local e na nuvem sem gerar novos snapshots de conteúdo a cada clique.

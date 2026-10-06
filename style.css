@@ -595,3 +595,54 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     font-size:10px;
   }
 }
+
+/* Package footer actions — separate editing from export utilities */
+.result-actions{
+  display:grid;
+  grid-template-columns:minmax(0,.9fr) minmax(0,1.4fr);
+  gap:10px;
+  margin-top:12px;
+}
+.result-action-group{
+  display:grid;
+  gap:6px;
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#fff;
+}
+.result-action-label{
+  color:var(--muted);
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+}
+.result-action-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.result-export-group .result-action-row{
+  justify-content:flex-start;
+}
+.sr-only{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  padding:0!important;
+  margin:-1px!important;
+  overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;
+  white-space:nowrap!important;
+  border:0!important;
+}
+@media(max-width:620px){
+  .result-actions{grid-template-columns:1fr}
+  .result-action-row{display:grid;grid-template-columns:1fr 1fr}
+  .result-export-group .result-action-row{grid-template-columns:1fr auto}
+  .result-export-group #copy{grid-column:1/-1}
+  .result-action-row .secondary{width:100%}
+  .result-export-group #export-format{min-height:38px}
+}

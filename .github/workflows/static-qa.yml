@@ -155,6 +155,8 @@ jobs:
           grep -qi 'SUPABASE_SECRET_KEYS' supabase/functions/postpilot-beta-feedback/index.ts
           grep -qi 'disponíveis nesta hora' app.js
           grep -qi 'export-account-data' index.html
+          grep -qi 'desktop-workflow-guide' index.html
+          grep -qi 'FLUXO RÁPIDO' i18n.js
           grep -qi 'exportAccountData' app.js
           grep -qi 'fetchAllAccountRows' app.js
           grep -qi 'counts:' app.js

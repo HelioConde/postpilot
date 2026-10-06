@@ -150,6 +150,7 @@
     "para continuar":"to continue",
     "Filtros avançados":"Advanced filters",
     "Plataforma":"Platform",
+    "Todas":"All",
     "Objetivo":"Goal",
     "Origem":"Source",
     "Mídia":"Media",

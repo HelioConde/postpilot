@@ -1940,7 +1940,7 @@ function renderList() {
     : '<div class="empty empty-pack-state"><span class="empty-pack-icon" aria-hidden="true">✦</span><strong>' + uiText('Seu primeiro pacote começa no briefing.') + '</strong><p>' + uiText('Preencha o tema e a transcrição à esquerda. O PostPilot organiza o restante para revisão e planejamento.') + '</p><a class="secondary compact empty-pack-action" href="#form">' + uiText('Começar briefing') + '</a></div>';
 }
 
-function renderPack(pack) {
+function renderPack(pack, { expandFirst = false } = {}) {
   openedPackId = pack.id;
   const checklist = normalizePublishChecklist(pack);
   const cards = packPlatforms(pack).map((platform, platformIndex) => {
@@ -1949,7 +1949,7 @@ function renderPack(pack) {
     const platformProgress = Number(state.reviewed) + Number(state.mediaReady) + Number(state.published);
     const bodyId = 'platform-body-' + platformIndex;
     const compactViewport = window.matchMedia?.('(max-width: 620px)').matches;
-    const expanded = platformIndex === 0 && !compactViewport;
+    const expanded = platformIndex === 0 && (expandFirst || !compactViewport);
     return `
       <article class="platform-card${expanded ? '' : ' is-collapsed'}">
         <div class="platform-card-head">
@@ -2640,7 +2640,7 @@ form.addEventListener('submit', async event => {
         supabaseClient.storage.from('postpilot-media').remove([existing.mediaPath]).catch(() => {});
       }
       cloudPacks = [saved, ...cloudPacks.filter(item => item.id !== saved.id)].slice(0, 20);
-      renderPack(saved);
+      renderPack(saved, { expandFirst: !existing });
       renderList();
       cancelComposerEdit();
       resetMediaSelection();
@@ -2663,7 +2663,7 @@ form.addEventListener('submit', async event => {
     ? readPacks().map(item => item.id === pack.id ? pack : item)
     : [...readPacks(), pack];
   localStorage.setItem(storageKey, JSON.stringify(packs.slice(-20)));
-  renderPack(pack);
+  renderPack(pack, { expandFirst: !existing });
   renderList();
   cancelComposerEdit();
   showToast(existing ? 'Alterações salvas neste dispositivo.' : 'Pacote salvo neste dispositivo.');

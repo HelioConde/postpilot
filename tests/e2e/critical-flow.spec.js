@@ -155,3 +155,23 @@ test('editar atualiza o pacote e usar como modelo cria outro rascunho', async ({
   await expect(page.locator('#list')).toContainText('Marketing derivado do modelo');
   await expect(page.locator('#list .item')).toHaveCount(2);
 });
+
+
+test('checklist de publicação persiste por plataforma', async ({ page }) => {
+  await localMode(page);
+  await createPack(page, ' Checklist');
+
+  const card = page.locator('.platform-card').filter({ hasText: 'Instagram' }).first();
+  await card.locator('[data-check-step="reviewed"]').check();
+  await card.locator('[data-check-step="mediaReady"]').check();
+  await expect(page.locator('.pack-checklist-progress')).toContainText('2/9');
+
+  await page.reload();
+  const item = page.locator('#list .item').filter({ hasText: 'Marketing para pequenos negócios Checklist' }).first();
+  await item.getByRole('button', { name: /Abrir|Open/i }).click();
+
+  const restored = page.locator('.platform-card').filter({ hasText: 'Instagram' }).first();
+  await expect(restored.locator('[data-check-step="reviewed"]')).toBeChecked();
+  await expect(restored.locator('[data-check-step="mediaReady"]')).toBeChecked();
+  await expect(restored.locator('[data-check-step="published"]')).not.toBeChecked();
+});

@@ -763,3 +763,45 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .brief-grid .field{margin:10px 0}
   .brief-grid input{min-height:42px}
 }
+
+/* Canonical mobile calendar controls — keep navigation, filters and export readable */
+@media(max-width:620px){
+  .calendar-nav{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:9px;
+    width:100%;
+  }
+  .calendar-period-actions{
+    display:grid;
+    grid-template-columns:1fr 2fr 1fr;
+    gap:7px;
+    width:100%;
+  }
+  .calendar-period-actions .secondary{
+    width:100%;
+    min-height:40px;
+  }
+  .calendar-filter-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    width:100%;
+  }
+  .calendar-control{
+    min-width:0;
+    width:100%;
+  }
+  .calendar-control select{
+    width:100%;
+    min-width:0;
+    min-height:40px;
+    padding:7px 24px 7px 9px;
+    font-size:10px;
+  }
+  .calendar-export{
+    grid-column:auto;
+    width:100%;
+    min-height:40px;
+  }
+}

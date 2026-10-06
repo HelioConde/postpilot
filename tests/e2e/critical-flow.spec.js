@@ -172,6 +172,25 @@ test('exibe sugestões de cortes quando existem timestamps de transcrição', as
   await expect(page.locator('.cut-suggestions')).toContainText('0:31–0:49');
 });
 
+test('dashboard de foco e filtros avançados organizam a produção', async ({ page }) => {
+  await localMode(page);
+  await createPack(page, ' Filtros');
+  await expect(page.locator('#focus-dashboard')).toBeVisible();
+  await expect(page.locator('#focus-dashboard')).toContainText(/Rascunhos|Drafts/i);
+
+  await page.locator('#project-platform-filter').selectOption('Instagram');
+  await expect(page.locator('#list')).toContainText('Marketing para pequenos negócios Filtros');
+
+  await page.locator('#project-platform-filter').selectOption('YouTube Shorts');
+  await expect(page.locator('#list')).toContainText('Marketing para pequenos negócios Filtros');
+
+  await page.locator('#project-generation-filter').selectOption('ai');
+  await expect(page.locator('#list')).not.toContainText('Marketing para pequenos negócios Filtros');
+
+  await page.locator('#project-filter-reset').click();
+  await expect(page.locator('#list')).toContainText('Marketing para pequenos negócios Filtros');
+});
+
 test('exporta planejamento editorial em iCalendar', async ({ page }) => {
   await localMode(page);
   await createPack(page, ' Calendário');

@@ -59,6 +59,7 @@ const aiServiceLimit = document.querySelector('#ai-service-limit');
 const transcriptionServiceStatus = document.querySelector('#transcription-service-status');
 const transcriptionServiceLimit = document.querySelector('#transcription-service-limit');
 const refreshServiceHealthButton = document.querySelector('#refresh-service-health');
+const exportAccountDataButton = document.querySelector('#export-account-data');
 
 let currentUser = null;
 let cloudPacks = [];
@@ -1339,6 +1340,107 @@ async function saveCloudPack(pack) {
   return savedPack;
 }
 
+function portableProject(row) {
+  const pack = mapCloudPack(row);
+  return {
+    id: pack.id,
+    topic: pack.topic,
+    transcript: pack.transcript,
+    platforms: packPlatforms(pack),
+    tone: normalizeTone(pack.tone),
+    goal: pack.goal,
+    audience: pack.audience || '',
+    publishAt: pack.publishAt || '',
+    publishChecklist: normalizePublishChecklist(pack),
+    generationMode: pack.generationMode || 'local',
+    generationData: pack.generationData || {},
+    transcriptionSegments: cleanTranscriptionSegments(pack.transcriptionSegments),
+    cutOverrides: normalizeCutOverrides(pack),
+    contentOverrides: pack.contentOverrides || {},
+    status: pack.status || 'draft',
+    createdAt: new Date(pack.createdAt || Date.now()).toISOString(),
+    updatedAt: new Date(pack.time || pack.createdAt || Date.now()).toISOString(),
+    media: pack.mediaName ? {
+      name: pack.mediaName,
+      type: pack.mediaType || '',
+      sizeBytes: Number(pack.mediaSizeBytes || 0),
+      privateFileStored: Boolean(row.media_path)
+    } : null
+  };
+}
+
+function safeAccountOutput(row) {
+  return {
+    projectId: String(row.project_id || ''),
+    kind: safeBackupText(row.kind, 80),
+    title: safeBackupText(row.title, 180),
+    body: String(row.body || '').slice(0, 30000),
+    metadata: row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata) ? row.metadata : {},
+    createdAt: row.created_at || null
+  };
+}
+
+function safeAccountVersion(row) {
+  return {
+    projectId: String(row.project_id || ''),
+    createdAt: row.created_at || null,
+    snapshot: row.snapshot && typeof row.snapshot === 'object' && !Array.isArray(row.snapshot) ? row.snapshot : {}
+  };
+}
+
+async function exportAccountData() {
+  if (!supabaseClient || !currentUser) return;
+  exportAccountDataButton.disabled = true;
+  const originalLabel = exportAccountDataButton.textContent;
+  exportAccountDataButton.textContent = uiText('Preparando exportação…');
+
+  try {
+    const [projectsResult, versionsResult, outputsResult] = await Promise.all([
+      supabaseClient.from('postpilot_projects').select('*').order('updated_at', { ascending: false }).limit(1000),
+      supabaseClient.from('postpilot_project_versions').select('project_id,snapshot,created_at').order('created_at', { ascending: false }).limit(10000),
+      supabaseClient.from('postpilot_outputs').select('project_id,kind,title,body,metadata,created_at').order('created_at', { ascending: false }).limit(5000)
+    ]);
+
+    const firstError = projectsResult.error || versionsResult.error || outputsResult.error;
+    if (firstError) throw firstError;
+
+    const payload = {
+      format: 'postpilot-account-export',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      account: {
+        id: currentUser.id,
+        email: currentUser.email || ''
+      },
+      notes: {
+        privateMediaFilesIncluded: false,
+        signedUrlsIncluded: false,
+        credentialsIncluded: false
+      },
+      projects: (projectsResult.data || []).map(portableProject),
+      versions: (versionsResult.data || []).map(safeAccountVersion),
+      outputs: (outputsResult.data || []).map(safeAccountOutput)
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'postpilot-dados-da-conta-' + localDateKey(new Date()) + '.json';
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('Dados da conta exportados.');
+  } catch (error) {
+    console.error('PostPilot account export:', error);
+    showToast('Não foi possível exportar os dados da conta.');
+  } finally {
+    exportAccountDataButton.disabled = false;
+    exportAccountDataButton.textContent = originalLabel;
+  }
+}
+
 async function cleanupOrphanMedia() {
   if (!supabaseClient || !currentUser) return;
   const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
@@ -2272,6 +2374,7 @@ function initAccount() {
 
   localImportButton.addEventListener('click', importLocalPacks);
   refreshServiceHealthButton?.addEventListener('click', refreshServiceHealth);
+  exportAccountDataButton?.addEventListener('click', exportAccountData);
 
   if (!supabaseClient) {
     showAccountMessage('Sincronização indisponível. O modo local continua funcionando.');

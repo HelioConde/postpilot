@@ -992,3 +992,40 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     text-align:center;
   }
 }
+
+/* Mobile empty package compact pass */
+@media(max-width:500px){
+  .empty-pack-state{
+    grid-template-columns:auto minmax(0,1fr);
+    align-items:center;
+    justify-items:stretch;
+    column-gap:10px;
+    row-gap:3px;
+    padding:12px;
+  }
+  .empty-pack-icon{
+    grid-row:1/3;
+    align-self:center;
+    width:28px;
+    height:28px;
+  }
+  .empty-pack-state strong{
+    align-self:end;
+    font-size:10.5px;
+  }
+  .empty-pack-state p{
+    align-self:start;
+    max-width:none;
+    font-size:8.5px;
+    line-height:1.4;
+  }
+  .empty-pack-action{
+    grid-column:1/-1;
+    min-height:36px;
+    margin-top:6px;
+  }
+  .local-backup-controls{
+    margin-top:7px;
+    padding:9px 10px;
+  }
+}

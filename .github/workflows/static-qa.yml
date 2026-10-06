@@ -71,6 +71,7 @@ jobs:
           test -f privacidade.html
           test -f termos.html
           test -f contato.html
+          test -f SECURITY.md
       - name: Check SEO and backend boot
         run: |
           grep -qi '<title' index.html
@@ -145,6 +146,11 @@ jobs:
           grep -qi 'pendingUploadedMedia' app.js
           grep -qi 'postpilot_usage_status' supabase/functions/postpilot-generate/index.ts
           grep -qi 'postpilot_usage_status' supabase/functions/postpilot-transcribe/index.ts
+          grep -qi 'SUPABASE_PUBLISHABLE_KEYS' supabase/functions/postpilot-generate/index.ts
+          grep -qi 'SUPABASE_PUBLISHABLE_KEYS' supabase/functions/postpilot-transcribe/index.ts
+          grep -qi 'SUPABASE_SECRET_KEYS' supabase/functions/postpilot-generate/index.ts
+          grep -qi 'SUPABASE_SECRET_KEYS' supabase/functions/postpilot-transcribe/index.ts
+          grep -qi 'SUPABASE_SECRET_KEYS' supabase/functions/postpilot-beta-feedback/index.ts
           grep -qi 'disponíveis nesta hora' app.js
           grep -qi '48 hours' supabase/migrations/20261006152000_usage_retention.sql
           grep -qi 'postpilot-tablet.png' .github/workflows/visual-snapshot.yml

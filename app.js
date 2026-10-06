@@ -186,7 +186,16 @@ function sanitizeImportedPack(raw) {
     status,
     createdAt,
     time,
-    publishChecklist: raw.publishChecklist && typeof raw.publishChecklist === 'object' ? raw.publishChecklist : {}
+    publishChecklist: raw.publishChecklist && typeof raw.publishChecklist === 'object' ? raw.publishChecklist : {},
+    cutOverrides: Array.isArray(raw.cutOverrides)
+      ? raw.cutOverrides.slice(0, 20).filter(item => item && typeof item === 'object').map(item => ({
+          key: safeBackupText(item.key, 80),
+          start: Math.max(0, Number(item.start) || 0),
+          end: Math.max(0, Number(item.end) || 0),
+          favorite: Boolean(item.favorite),
+          rejected: Boolean(item.rejected)
+        }))
+      : []
   };
   pack.publishChecklist = normalizePublishChecklist(pack);
   return pack;

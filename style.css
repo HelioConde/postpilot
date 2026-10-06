@@ -696,3 +696,42 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .production-metrics>summary{min-height:38px;display:flex;align-items:center;justify-content:space-between}
   .production-metrics>summary::after{float:none}
 }
+
+/* Content review — full-width workspace after briefing/history */
+.result-standalone.show{
+  display:block;
+  margin:0 0 24px;
+  padding:22px;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 12px 40px #171a1208;
+}
+.result-standalone .platform-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  align-items:start;
+}
+.result-standalone .platform-card{
+  min-width:0;
+  background:#fbfafE;
+}
+.result-standalone .result-heading{
+  padding-bottom:12px;
+  border-bottom:1px solid var(--line);
+}
+.result-standalone .generator-note{
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#fafaf8;
+}
+.result-standalone .version-history{
+  background:#fafaf8;
+}
+@media(max-width:900px){
+  .result-standalone .platform-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:620px){
+  .result-standalone.show{margin-bottom:18px;padding:18px;border-radius:16px}
+  .result-standalone .platform-grid{grid-template-columns:1fr}
+}

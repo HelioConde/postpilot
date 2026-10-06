@@ -273,6 +273,13 @@ function allowedMediaType(type) {
   return ['audio/mpeg','audio/mp4','audio/wav','audio/webm','video/mp4','video/webm','video/quicktime'].includes(String(type || ''));
 }
 
+function formatFileSize(bytes) {
+  const value = Number(bytes) || 0;
+  if (value <= 0) return '';
+  if (value < 1024 * 1024) return Math.max(1, Math.round(value / 1024)) + ' KB';
+  return (value / (1024 * 1024)).toFixed(value >= 10 * 1024 * 1024 ? 0 : 1) + ' MB';
+}
+
 function mediaFileText(file) {
   if (!file) return '';
   const size = file.size < 1024 * 1024
@@ -514,6 +521,13 @@ async function renderMediaPreview(pack) {
   }
   const tag = String(pack.mediaType || '').startsWith('video/') ? 'video' : 'audio';
   host.innerHTML = '<' + tag + ' id="media-preview-player" controls preload="metadata" src="' + escapeHtml(data.signedUrl) + '"></' + tag + '>';
+  const player = host.querySelector('#media-preview-player');
+  player?.addEventListener('loadedmetadata', () => {
+    const duration = result.querySelector('[data-media-duration]');
+    if (duration && Number.isFinite(player.duration)) {
+      duration.textContent = uiText('Duração') + ': ' + formatTimestamp(player.duration);
+    }
+  }, { once: true });
 }
 
 function packSnapshot(pack) {
@@ -1557,7 +1571,7 @@ function renderPack(pack) {
       <div><h3>${escapeHtml(pack.topic)}</h3><p>${packPlatforms(pack).length} ${packPlatforms(pack).length > 1 ? uiText('plataformas') : uiText('plataforma')} · ${escapeHtml(toneLabel(pack.tone))}${pack.audience ? ' · ' + escapeHtml(uiText('Público')) + ': ' + escapeHtml(pack.audience) : ''}${pack.publishAt ? ' · ' + escapeHtml(uiText('Planejado para')) + ' ' + escapeHtml(formatPlannedDate(pack.publishAt)) : ''}</p><small class="pack-checklist-progress">${uiText('Checklist')}: ${checklistStats.done}/${checklistStats.total}</small></div>
       <span class="project-status status-${escapeHtml(pack.status || 'draft')}">${statusLabel(pack.status || 'draft')}</span>
     </div>
-    ${pack.mediaName ? '<p class="media-linked"><strong>' + escapeHtml(uiText('Mídia vinculada')) + ':</strong> ' + escapeHtml(pack.mediaName) + '</p><div id="media-preview-host" class="media-preview-host"></div>' : ''}
+    ${pack.mediaName ? '<div class="media-linked"><strong>' + escapeHtml(uiText('Mídia vinculada')) + ':</strong> <span>' + escapeHtml(pack.mediaName) + '</span>' + (pack.mediaSizeBytes ? '<small>' + escapeHtml(formatFileSize(pack.mediaSizeBytes)) + '</small>' : '') + '<small data-media-duration></small></div><div id="media-preview-host" class="media-preview-host"></div>' : ''}
     ${transcriptEditorHtml}
     ${cutsHtml}
     <div class="platform-grid">${cards}</div>

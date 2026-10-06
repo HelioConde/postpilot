@@ -20,6 +20,7 @@ async function createPack(page, suffix = '') {
 test('fluxo local cria pacote editorial e atualiza painel de produção', async ({ page }) => {
   await localMode(page);
   await expect(page.locator('#ai-generation')).toBeDisabled();
+  await expect(page.locator('#media-file')).toBeDisabled();
   await expect(page.locator('.ai-generation-option')).toContainText(/Disponível ao entrar|Available after signing in/i);
   await createPack(page);
 
@@ -135,6 +136,40 @@ test('calendário semanal mostra pacote agendado e abre a prévia', async ({ pag
   await expect(calendar).toContainText('Conteúdo do calendário');
   await calendar.getByRole('button', { name: /Conteúdo do calendário/i }).click();
   await expect(page.locator('#result')).toContainText('Conteúdo do calendário');
+});
+
+test('exibe sugestões de cortes quando existem timestamps de transcrição', async ({ page }) => {
+  await localMode(page);
+  await page.evaluate(() => {
+    localStorage.setItem('postpilot-packs', JSON.stringify([{
+      id: '11111111-1111-4111-8111-111111111111',
+      topic: 'Vídeo com timestamps',
+      transcript: 'Primeiro trecho relevante. Segundo trecho com uma explicação prática.',
+      platforms: ['Instagram'],
+      channel: 'Instagram',
+      tone: 'natural',
+      goal: 'alcance',
+      audience: '',
+      publishAt: '',
+      publishChecklist: {},
+      generationMode: 'local',
+      generationData: {},
+      transcriptionSegments: [
+        { start: 8.2, end: 23.8, text: 'Explique o problema com um exemplo simples e mostre a solução em seguida.' },
+        { start: 31.0, end: 49.5, text: 'Mostre o resultado final e termine com uma chamada para ação objetiva.' }
+      ],
+      status: 'draft',
+      createdAt: Date.now(),
+      time: Date.now()
+    }]));
+  });
+  await page.reload();
+
+  await page.locator('[data-pack="11111111-1111-4111-8111-111111111111"]').click();
+  await expect(page.locator('.cut-suggestions')).toBeVisible();
+  await expect(page.locator('.cut-suggestions')).toContainText(/Sugestões de cortes|Clip suggestions/i);
+  await expect(page.locator('.cut-suggestions')).toContainText('0:08–0:23');
+  await expect(page.locator('.cut-suggestions')).toContainText('0:31–0:49');
 });
 
 test('exporta planejamento editorial em iCalendar', async ({ page }) => {

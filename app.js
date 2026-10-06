@@ -418,6 +418,7 @@ function packSnapshot(pack) {
     generationData: pack.generationData && typeof pack.generationData === 'object' ? pack.generationData : {},
     transcriptionSegments: Array.isArray(pack.transcriptionSegments) ? pack.transcriptionSegments : [],
     cutOverrides: normalizeCutOverrides(pack),
+    contentOverrides: pack.contentOverrides && typeof pack.contentOverrides === 'object' ? pack.contentOverrides : {},
     status: pack.status || 'draft'
   };
 }
@@ -630,16 +631,102 @@ async function persistPublishChecklist(pack, nextChecklist) {
   return updated;
 }
 
+function contentOverrideKey(platform, label) {
+  return platform + '::' + label;
+}
+
+function withContentOverrides(pack, deliverable) {
+  const overrides = pack?.contentOverrides && typeof pack.contentOverrides === 'object' ? pack.contentOverrides : {};
+  return {
+    ...deliverable,
+    lines: deliverable.lines.map(([label, value]) => {
+      const override = overrides[contentOverrideKey(deliverable.title, label)];
+      return [label, typeof override?.value === 'string' && override.value ? override.value : value];
+    })
+  };
+}
+
+function regenerateFieldValue(pack, platform, label, current, revision = 0) {
+  const english = currentLocale() === 'en';
+  const ideas = splitIntoIdeas(pack.transcript);
+  const lead = ideas[revision % Math.max(ideas.length, 1)] || pack.topic;
+  const audience = pack.audience ? (english ? ` for ${pack.audience}` : ` para ${pack.audience}`) : '';
+  const normalized = String(label || '').toLocaleLowerCase(currentLocale());
+
+  if (normalized.includes('hashtag')) {
+    const tags = topicHashtags(pack.topic).split(' ').filter(Boolean);
+    const extras = english ? ['#creator', '#contenttips', '#shortform'] : ['#criacao', '#conteudodigital', '#reelsbrasil'];
+    return [...new Set(tags.concat(extras).slice(revision % 2, revision % 2 + 5))].join(' ');
+  }
+  if (normalized.includes('cta') || normalized.includes('chamada')) {
+    const options = english
+      ? ['Save this idea and try it in your next post.', 'Comment with the part you want to test first.', 'Share this with someone who can use it today.']
+      : ['Salve esta ideia e teste no seu próximo conteúdo.', 'Comente qual parte você quer testar primeiro.', 'Compartilhe com alguém que pode aplicar isso hoje.'];
+    return options[revision % options.length];
+  }
+  if (normalized.includes('gancho') || normalized.includes('abertura') || normalized.includes('título') || normalized.includes('title')) {
+    const options = english
+      ? [
+          `${pack.topic}: the detail most creators overlook${audience}.`,
+          `Before you publish about ${pack.topic}, check this${audience}.`,
+          `A simpler way to approach ${pack.topic}${audience}.`
+        ]
+      : [
+          `${pack.topic}: o detalhe que muita gente ignora${audience}.`,
+          `Antes de publicar sobre ${pack.topic}, confira isso${audience}.`,
+          `Uma forma mais simples de abordar ${pack.topic}${audience}.`
+        ];
+    return options[revision % options.length];
+  }
+
+  const cta = callToAction(pack.goal);
+  const options = english
+    ? [`${lead} ${cta}`, `Start with this: ${lead} Then connect it directly to your audience.`, `${lead} Keep the message specific and finish with one clear next step.`]
+    : [`${lead} ${cta}`, `Comece por aqui: ${lead} Depois conecte a ideia diretamente ao seu público.`, `${lead} Mantenha a mensagem específica e finalize com um próximo passo claro.`];
+  return options[revision % options.length];
+}
+
+async function persistContentOverride(pack, platform, label, current) {
+  const key = contentOverrideKey(platform, label);
+  const source = pack?.contentOverrides && typeof pack.contentOverrides === 'object' ? pack.contentOverrides : {};
+  const previous = source[key] && typeof source[key] === 'object' ? source[key] : {};
+  const revision = (Number(previous.revision) || 0) + 1;
+  const contentOverrides = {
+    ...source,
+    [key]: {
+      value: regenerateFieldValue(pack, platform, label, current, revision),
+      revision
+    }
+  };
+
+  if (currentUser) {
+    const { data, error } = await supabaseClient
+      .from('postpilot_projects')
+      .update({ content_overrides: contentOverrides, updated_at: new Date().toISOString() })
+      .eq('id', pack.id)
+      .select('*')
+      .single();
+    if (error) throw error;
+    const saved = mapCloudPack(data);
+    cloudPacks = cloudPacks.map(item => item.id === saved.id ? saved : item);
+    return saved;
+  }
+
+  const saved = { ...pack, contentOverrides, time: Date.now() };
+  localStorage.setItem(storageKey, JSON.stringify(readPacks().map(item => item.id === saved.id ? saved : item)));
+  return saved;
+}
+
 function platformDeliverable(pack, platform) {
   const generated = pack?.generationData?.platforms?.[platform];
   if (generated && Array.isArray(generated.lines) && generated.lines.length) {
-    return {
+    return withContentOverrides(pack, {
       title: platform,
       lines: generated.lines
         .filter(line => line && typeof line.label === 'string' && typeof line.value === 'string')
         .slice(0, 6)
         .map(line => [line.label, line.value])
-    };
+    });
   }
 
   const ideas = splitIntoIdeas(pack.transcript);
@@ -655,7 +742,7 @@ function platformDeliverable(pack, platform) {
   const hashtags = topicHashtags(pack.topic);
 
   if (platform === 'TikTok') {
-    return {
+    return withContentOverrides(pack, {
       title: 'TikTok',
       lines: [
         [uiText('Gancho de 2 segundos'), hook],
@@ -663,11 +750,11 @@ function platformDeliverable(pack, platform) {
         [uiText('Legenda curta'), `${lead} ${cta}`],
         [uiText('Hashtags'), hashtags]
       ]
-    };
+    });
   }
 
   if (platform === 'YouTube Shorts') {
-    return {
+    return withContentOverrides(pack, {
       title: 'YouTube Shorts',
       lines: [
         [uiText('Título'), pack.topic.slice(0, 90)],
@@ -675,10 +762,10 @@ function platformDeliverable(pack, platform) {
         [uiText('Descrição'), `${lead}\n\n${cta}`],
         [uiText('Hashtags'), hashtags]
       ]
-    };
+    });
   }
 
-  return {
+  return withContentOverrides(pack, {
     title: 'Instagram',
     lines: [
       [uiText('Gancho para Reels'), hook],
@@ -686,7 +773,7 @@ function platformDeliverable(pack, platform) {
       [uiText('Carrossel / apoio'), ideas.slice(0, 3).map((idea, index) => `${index + 1}. ${idea}`).join('\n')],
       [uiText('Hashtags'), hashtags]
     ]
-  };
+  });
 }
 
 function platformText(pack, platform) {
@@ -833,6 +920,7 @@ function mapCloudPack(row) {
     mediaSizeBytes: Number(row.media_size_bytes || 0),
     transcriptionSegments: Array.isArray(row.transcription_segments) ? row.transcription_segments : [],
     cutOverrides: Array.isArray(row.cut_overrides) ? row.cut_overrides : [],
+    contentOverrides: row.content_overrides && typeof row.content_overrides === 'object' ? row.content_overrides : {},
     versions: [],
     status: row.status || 'draft',
     createdAt: Date.parse(row.created_at),
@@ -883,6 +971,7 @@ async function saveCloudPack(pack) {
     media_size_bytes: pack.mediaSizeBytes || null,
     transcription_segments: Array.isArray(pack.transcriptionSegments) ? pack.transcriptionSegments : [],
     cut_overrides: normalizeCutOverrides(pack),
+    content_overrides: pack.contentOverrides && typeof pack.contentOverrides === 'object' ? pack.contentOverrides : {},
     status: pack.status || 'draft',
     created_at: new Date(pack.createdAt || pack.time || Date.now()).toISOString(),
     updated_at: now
@@ -1302,7 +1391,7 @@ function renderPack(pack) {
     return `
       <article class="platform-card">
         <div class="platform-card-head"><div><h4>${escapeHtml(deliverable.title)}</h4><small class="platform-progress">${platformProgress}/3 ${uiText('concluídos')}</small></div><button class="copy-platform" type="button" data-copy-platform="${escapeHtml(platform)}">${uiText('Copiar')}</button></div>
-        ${deliverable.lines.map(([label, value]) => `<div class="deliverable"><span>${escapeHtml(label)}</span><p>${escapeHtml(value).replace(/\n/g, '<br>')}</p></div>`).join('')}
+        ${deliverable.lines.map(([label, value]) => `<div class="deliverable" data-deliverable-platform="${escapeHtml(platform)}" data-deliverable-label="${escapeHtml(label)}"><div class="deliverable-head"><span>${escapeHtml(label)}</span><button class="regenerate-field" type="button" data-regenerate-field>${uiText('Nova versão')}</button></div><p>${escapeHtml(value).replace(/\n/g, '<br>')}</p></div>`).join('')}
         <fieldset class="publish-checklist">
           <legend>${uiText('Checklist de publicação')}</legend>
           <label><input type="checkbox" data-check-platform="${escapeHtml(platform)}" data-check-step="reviewed"${state.reviewed ? ' checked' : ''}><span>${uiText('Texto revisado')}</span></label>
@@ -1355,6 +1444,26 @@ function renderPack(pack) {
   document.querySelector('#export').addEventListener('click', () => downloadPackage(pack, document.querySelector('#export-format')?.value || 'txt'));
   result.querySelectorAll('[data-copy-platform]').forEach(button => {
     button.addEventListener('click', () => copyText(platformText(pack, button.dataset.copyPlatform)));
+  });
+  result.querySelectorAll('[data-regenerate-field]').forEach(button => {
+    button.addEventListener('click', async () => {
+      const field = button.closest('[data-deliverable-platform]');
+      const platform = field?.dataset.deliverablePlatform;
+      const label = field?.dataset.deliverableLabel;
+      const current = field?.querySelector('p')?.innerText || '';
+      if (!platform || !label) return;
+      button.disabled = true;
+      try {
+        const saved = await persistContentOverride(pack, platform, label, current);
+        renderPack(saved);
+        renderList();
+        showToast('Nova versão criada.');
+      } catch (error) {
+        console.error(error);
+        button.disabled = false;
+        showToast('Não foi possível criar outra versão.');
+      }
+    });
   });
   result.querySelectorAll('[data-seek-cut]').forEach(button => {
     button.addEventListener('click', () => {
@@ -1639,6 +1748,7 @@ form.addEventListener('submit', async event => {
     mediaSizeBytes: existing?.mediaSizeBytes || 0,
     transcriptionSegments: existing?.transcriptionSegments || [],
     cutOverrides: existing?.cutOverrides || [],
+    contentOverrides: existing?.contentOverrides || {},
     versions: existing?.versions || [],
     status: existing?.status || 'draft',
     createdAt: existing?.createdAt || existing?.time || Date.now(),

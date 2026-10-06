@@ -46,6 +46,10 @@
     "Escolher mídia":"Choose media",
     "Trocar mídia":"Change media",
     "Remover mídia":"Remove media",
+    "Cancelar upload":"Cancel upload",
+    "Upload cancelado.":"Upload cancelled.",
+    "Não foi possível cancelar o upload.":"Could not cancel the upload.",
+
     "Cole uma transcrição/resumo ou envie uma mídia acima...":"Paste a transcript/summary or upload media above...",
     "É necessário informar texto ou enviar uma mídia para transcrição.":"Enter text or upload media for transcription.",
     "Informe uma transcrição/resumo ou envie uma mídia.":"Enter a transcript/summary or upload media.",

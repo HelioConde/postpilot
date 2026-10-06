@@ -62,3 +62,10 @@ Pacotes existentes também podem ser editados no mesmo formulário sem criar out
 ## Checklist de publicação
 
 Cada plataforma do pacote possui um checklist próprio com três etapas: texto revisado, mídia pronta e publicado na plataforma. O progresso fica persistido no modo local e na nuvem sem gerar novos snapshots de conteúdo a cada clique.
+
+
+## PWA e backup local
+
+O PostPilot pode ser instalado como PWA. Depois da primeira abertura, o shell principal fica em cache e o modo local continua disponível sem internet; autenticação e sincronização continuam exigindo conexão.
+
+Quem trabalha sem conta também pode exportar e restaurar um backup JSON dos pacotes locais. O arquivo pode conter transcrições e conteúdo do usuário e deve ser armazenado com cuidado.

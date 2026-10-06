@@ -17,6 +17,21 @@ async function createPack(page, suffix = '') {
   await page.getByRole('button', { name: /Montar pacote|Build content pack/i }).click();
 }
 
+test('navegação por teclado oferece skip link e foco principal', async ({ page }) => {
+  await localMode(page);
+
+  await page.keyboard.press('Tab');
+  const skip = page.locator('.skip-link');
+  await expect(skip).toBeFocused();
+  await expect(skip).toHaveAttribute('href', '#main-content');
+
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#main-content')).toBeFocused();
+
+  await page.locator('[data-language="en"]').click();
+  await expect(skip).toHaveText(/Skip to content/i);
+});
+
 test('fluxo local cria pacote editorial e atualiza painel de produção', async ({ page }) => {
   await localMode(page);
   await expect(page.locator('#ai-generation')).toBeDisabled();

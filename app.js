@@ -35,6 +35,8 @@ const calendarPrevButton = document.querySelector('#calendar-prev');
 const calendarTodayButton = document.querySelector('#calendar-today');
 const calendarNextButton = document.querySelector('#calendar-next');
 const calendarExportButton = document.querySelector('#calendar-export');
+const calendarViewSelect = document.querySelector('#calendar-view');
+const calendarPlatformSelect = document.querySelector('#calendar-platform');
 const localBackupControls = document.querySelector('#local-backup-controls');
 const exportBackupButton = document.querySelector('#export-backup');
 const importBackupButton = document.querySelector('#import-backup');
@@ -53,6 +55,8 @@ let cloudLoading = false;
 let openedPackId = null;
 let editingPackId = null;
 let calendarWeekOffset = 0;
+let calendarMonthOffset = 0;
+let calendarView = 'week';
 let pendingMediaFile = null;
 
 function currentLocale() {
@@ -1033,6 +1037,34 @@ function exportEditorialCalendar() {
   showToast('Calendário exportado em .ics.');
 }
 
+function startOfCalendarMonth(offset = calendarMonthOffset) {
+  const date = new Date();
+  date.setHours(12, 0, 0, 0);
+  date.setDate(1);
+  date.setMonth(date.getMonth() + offset);
+  return date;
+}
+
+async function persistPublishDate(pack, publishAt) {
+  const updated = { ...pack, publishAt, time: Date.now() };
+  if (currentUser) {
+    const { data, error } = await supabaseClient
+      .from('postpilot_projects')
+      .update({ publish_at: publishAt || null, updated_at: new Date().toISOString() })
+      .eq('id', pack.id)
+      .select('*')
+      .single();
+    if (error) throw error;
+    const saved = mapCloudPack(data);
+    cloudPacks = cloudPacks.map(item => item.id === saved.id ? saved : item)
+      .sort((a, b) => b.time - a.time);
+    return saved;
+  }
+
+  localStorage.setItem(storageKey, JSON.stringify(readPacks().map(item => item.id === updated.id ? updated : item)));
+  return updated;
+}
+
 function startOfCalendarWeek(offset = calendarWeekOffset) {
   const date = new Date();
   date.setHours(12, 0, 0, 0);
@@ -1044,30 +1076,65 @@ function startOfCalendarWeek(offset = calendarWeekOffset) {
 
 function renderEditorialCalendar(source = visiblePacks()) {
   if (!calendarGrid || !calendarRange) return;
-  const start = startOfCalendarWeek();
-  const end = new Date(start);
-  end.setDate(end.getDate() + 6);
-
-  calendarRange.textContent = start.toLocaleDateString(currentLocale(), { day: '2-digit', month: 'short' })
-    + ' – '
-    + end.toLocaleDateString(currentLocale(), { day: '2-digit', month: 'short', year: 'numeric' });
-
+  const platformFilter = calendarPlatformSelect?.value || 'all';
+  const filteredSource = platformFilter === 'all'
+    ? source
+    : source.filter(pack => packPlatforms(pack).includes(platformFilter));
   const today = localDateKey(new Date());
-  calendarGrid.innerHTML = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(start);
-    date.setDate(start.getDate() + index);
+
+  let days = [];
+  if (calendarView === 'month') {
+    const monthStart = startOfCalendarMonth();
+    const monthEnd = new Date(monthStart);
+    monthEnd.setMonth(monthEnd.getMonth() + 1);
+    monthEnd.setDate(0);
+
+    const gridStart = new Date(monthStart);
+    const weekday = gridStart.getDay();
+    const mondayDelta = weekday === 0 ? -6 : 1 - weekday;
+    gridStart.setDate(gridStart.getDate() + mondayDelta);
+
+    days = Array.from({ length: 42 }, (_, index) => {
+      const date = new Date(gridStart);
+      date.setDate(gridStart.getDate() + index);
+      return date;
+    });
+
+    calendarRange.textContent = monthStart.toLocaleDateString(currentLocale(), { month: 'long', year: 'numeric' });
+    calendarGrid.classList.add('is-month');
+    calendarGrid.classList.remove('is-week');
+  } else {
+    const start = startOfCalendarWeek();
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    days = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(start);
+      date.setDate(start.getDate() + index);
+      return date;
+    });
+
+    calendarRange.textContent = start.toLocaleDateString(currentLocale(), { day: '2-digit', month: 'short' })
+      + ' – '
+      + end.toLocaleDateString(currentLocale(), { day: '2-digit', month: 'short', year: 'numeric' });
+    calendarGrid.classList.add('is-week');
+    calendarGrid.classList.remove('is-month');
+  }
+
+  const activeMonth = calendarView === 'month' ? startOfCalendarMonth().getMonth() : null;
+  calendarGrid.innerHTML = days.map(date => {
     const key = localDateKey(date);
-    const dayPacks = source
+    const dayPacks = filteredSource
       .filter(pack => pack.publishAt === key)
       .sort((a, b) => String(a.topic).localeCompare(String(b.topic), currentLocale()));
+    const outsideMonth = calendarView === 'month' && date.getMonth() !== activeMonth;
 
-    return '<article class="calendar-day' + (key === today ? ' is-today' : '') + '">' +
+    return '<article class="calendar-day' + (key === today ? ' is-today' : '') + (outsideMonth ? ' is-outside' : '') + '" data-calendar-date="' + key + '">' +
       '<header><span>' + escapeHtml(date.toLocaleDateString(currentLocale(), { weekday: 'short' })) + '</span>' +
       '<strong>' + escapeHtml(String(date.getDate()).padStart(2, '0')) + '</strong></header>' +
       '<div class="calendar-day-items">' +
       (dayPacks.length
         ? dayPacks.map(pack =>
-          '<button type="button" class="calendar-pack status-' + escapeHtml(pack.status || 'draft') + '" data-calendar-pack="' + escapeHtml(pack.id) + '">' +
+          '<button draggable="true" type="button" class="calendar-pack status-' + escapeHtml(pack.status || 'draft') + '" data-calendar-pack="' + escapeHtml(pack.id) + '">' +
             '<strong>' + escapeHtml(pack.topic) + '</strong>' +
             '<small>' + escapeHtml(statusLabel(pack.status || 'draft')) + ' · ' + escapeHtml(packPlatforms(pack).join(' + ')) + '</small>' +
           '</button>'
@@ -1709,23 +1776,65 @@ composerCancelButton?.addEventListener('click', () => {
   showToast('Edição cancelada.');
 });
 calendarPrevButton?.addEventListener('click', () => {
-  calendarWeekOffset -= 1;
+  if (calendarView === 'month') calendarMonthOffset -= 1;
+  else calendarWeekOffset -= 1;
   renderEditorialCalendar();
 });
 calendarTodayButton?.addEventListener('click', () => {
   calendarWeekOffset = 0;
+  calendarMonthOffset = 0;
   renderEditorialCalendar();
 });
 calendarNextButton?.addEventListener('click', () => {
-  calendarWeekOffset += 1;
+  if (calendarView === 'month') calendarMonthOffset += 1;
+  else calendarWeekOffset += 1;
   renderEditorialCalendar();
 });
+calendarViewSelect?.addEventListener('change', () => {
+  calendarView = calendarViewSelect.value === 'month' ? 'month' : 'week';
+  renderEditorialCalendar();
+});
+calendarPlatformSelect?.addEventListener('change', renderEditorialCalendar);
 calendarExportButton?.addEventListener('click', exportEditorialCalendar);
 calendarGrid?.addEventListener('click', event => {
   const button = event.target.closest('[data-calendar-pack]');
   if (!button) return;
   const pack = visiblePacks().find(item => item.id === button.dataset.calendarPack);
   if (pack) renderPack(pack);
+});
+calendarGrid?.addEventListener('dragstart', event => {
+  const button = event.target.closest('[data-calendar-pack]');
+  if (!button || !event.dataTransfer) return;
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/postpilot-pack', button.dataset.calendarPack);
+});
+calendarGrid?.addEventListener('dragover', event => {
+  const day = event.target.closest('[data-calendar-date]');
+  if (!day) return;
+  event.preventDefault();
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+  day.classList.add('is-drop-target');
+});
+calendarGrid?.addEventListener('dragleave', event => {
+  event.target.closest('[data-calendar-date]')?.classList.remove('is-drop-target');
+});
+calendarGrid?.addEventListener('drop', async event => {
+  const day = event.target.closest('[data-calendar-date]');
+  if (!day || !event.dataTransfer) return;
+  event.preventDefault();
+  day.classList.remove('is-drop-target');
+  const id = event.dataTransfer.getData('text/postpilot-pack');
+  const pack = visiblePacks().find(item => item.id === id);
+  if (!pack || pack.publishAt === day.dataset.calendarDate) return;
+  try {
+    const saved = await persistPublishDate(pack, day.dataset.calendarDate);
+    if (openedPackId === saved.id) renderPack(saved);
+    renderList();
+    showToast('Data de publicação atualizada.');
+  } catch (error) {
+    console.error(error);
+    showToast('Não foi possível reagendar o pacote.');
+  }
 });
 window.addEventListener('app-language-change', () => {
   renderList();

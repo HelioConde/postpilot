@@ -98,6 +98,32 @@ test('estado vazio esconde controles de projeto e traduz o rodapé', async ({ pa
   await expect(footer).toContainText('Contact');
 });
 
+test('hero mostra sinais de confiança em PT e EN', async ({ page }) => {
+  await localMode(page);
+  const trust = page.locator('.hero-trust');
+  await expect(trust).toContainText('Grátis para começar');
+  await expect(trust).toContainText('Funciona sem conta');
+  await expect(trust).toContainText('Mídia privada');
+
+  await page.locator('[data-language="en"]').click();
+  await expect(trust).toContainText('Free to start');
+  await expect(trust).toContainText('Works without an account');
+  await expect(trust).toContainText('Private media');
+});
+
+test('páginas institucionais têm navegação consistente e traduzida', async ({ page }) => {
+  await page.goto('/privacidade.html');
+
+  await expect(page.locator('.static-back')).toHaveText('Voltar ao app');
+  await expect(page.locator('.static-tabs a[aria-current="page"]')).toHaveText('Privacidade');
+  await expect(page.locator('.legal-updated')).toContainText('7 de outubro de 2026');
+
+  await page.locator('[data-page-language="en"]').click();
+  await expect(page.locator('.static-back')).toHaveText('Back to app');
+  await expect(page.locator('.static-tabs a[aria-current="page"]')).toHaveText('Privacy');
+  await expect(page.locator('.legal-updated')).toContainText('October 7, 2026');
+});
+
 test('hero oferece caminho direto ao briefing em PT e EN', async ({ page }) => {
   await localMode(page);
   const cta = page.locator('.hero-cta');

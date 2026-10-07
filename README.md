@@ -4,6 +4,9 @@ Estúdio de conteúdo para criadores. A partir de tema e transcrição, organiza
 
 ## Estado atual
 
+> **Status:** MVP técnico avançado. Implementação de novas telas congelada até concluir a homologação dos provedores reais e do fluxo completo.
+
+
 - modo local sem conta;
 - Supabase Auth por e-mail/senha;
 - sincronização de projetos no `pizzaria-db`;
@@ -192,3 +195,18 @@ O Static QA também executa `npm ci --ignore-scripts`, então mudanças incompat
 ## Portabilidade dos dados
 
 Usuários autenticados podem baixar um JSON com todos os projetos sincronizados, versões editoriais e outputs acessíveis pela própria sessão/RLS. O export inclui apenas metadados da mídia privada (nome, tipo e tamanho) e nunca inclui arquivo bruto, `media_path`, signed URLs, tokens ou credenciais.
+
+
+## Gate final do MVP
+
+O PostPilot não precisa de novas telas antes do encerramento do MVP. O gate restante é operacional:
+
+1. configurar um provedor real de IA nos secrets do backend;
+2. configurar um provedor real de transcrição;
+3. validar o fluxo upload → transcrição → edição de cortes → pacote;
+4. confirmar quotas/rate limits com o provedor real;
+5. validar autenticação e sessão com usuário humano;
+6. testar mídia próxima/acima do limite atual e falhas/timeout do provedor;
+7. manter Browser E2E, Lighthouse, axe e Visual Snapshot verdes.
+
+Enquanto essas dependências não forem concluídas, o fallback local continua sendo o comportamento correto. **Não criar novas telas/features para compensar a ausência de credenciais externas.**

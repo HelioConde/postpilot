@@ -2,6 +2,20 @@
 
 Estúdio de conteúdo para criadores. A partir de tema e transcrição, organiza ganchos, ideias de cortes, legenda, CTA e hashtags.
 
+## Correções de QA — 07/10/2026
+
+Após teste manual no GitHub Pages:
+
+- conteúdo extremamente curto/genérico não gera mais um pacote artificialmente “pronto”;
+- pacotes antigos com contexto insuficiente exibem um aviso honesto de contexto insuficiente;
+- status de IA/transcrição distingue claramente **não configurado**, **indisponível**, **ativo** e **limite atingido**;
+- quotas só aparecem quando o serviço realmente está configurado;
+- modal de feedback e modal da conta respeitam melhor a altura do viewport;
+- a área da conta continua acessível mesmo se o SDK/backend de nuvem estiver indisponível, explicando o modo degradado;
+- E2E cobre o bloqueio de conteúdo insuficiente.
+
+O gerador local continua sendo fallback deliberado. O gate final do MVP ainda depende de provedores reais de IA/transcrição e da homologação ponta a ponta registrada na issue #8.
+
 ## Estado atual
 
 > **Status:** MVP técnico avançado. Implementação de novas telas congelada até concluir a homologação dos provedores reais e do fluxo completo.

@@ -1460,3 +1460,35 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .static-footer-nav{justify-content:flex-start;gap:6px}
   .static-footer-nav a{border:1px solid var(--line);background:#fff}
 }
+
+
+/* Hero trust cues */
+.hero-trust{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px 10px;
+  margin-top:13px;
+}
+.hero-trust span{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:6px 9px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:#fff;
+  color:var(--muted);
+  font-size:9.5px;
+  font-weight:700;
+  line-height:1.2;
+}
+@media(max-width:500px){
+  .hero-trust{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+  .hero-trust span{
+    justify-content:center;
+  }
+}

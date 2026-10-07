@@ -17,6 +17,17 @@ async function createPack(page, suffix = '') {
   await page.getByRole('button', { name: /Montar pacote|Build content pack/i }).click();
 }
 
+
+test('bloqueia pacote com contexto insuficiente para evitar conteúdo genérico', async ({ page }) => {
+  await localMode(page);
+  await page.locator('[name="f0"]').fill('Teste');
+  await page.locator('[name="f1"]').fill('Testes');
+  await page.getByRole('button', { name: /Montar pacote|Build content pack/i }).click();
+
+  await expect(page.locator('#toast')).toContainText(/Adicione mais contexto|Add more context/i);
+  await expect(page.locator('#result')).not.toHaveClass(/show/);
+});
+
 test('layout responsivo não cria overflow e mantém a semana completa', async ({ page }) => {
   const widths = [
     { width: 390, height: 844 },

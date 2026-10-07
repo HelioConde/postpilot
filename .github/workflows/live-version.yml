@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths-ignore:
       - version.json
+      - screenshots/**
 
 permissions:
   contents: write
@@ -21,17 +22,32 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Write deployed version
+      - name: Publish deployed version marker
         run: |
-          printf '{"sha":"%s","publishedAt":"%s"}\n' "$GITHUB_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > version.json
-
-      - name: Commit version marker
-        run: |
-          if git diff --quiet -- version.json; then
-            exit 0
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add version.json
-          git commit -m "chore: refresh live version"
-          git push
+
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+
+            target_sha="$(git log -1 --format=%H -- . ':(exclude)version.json' ':(exclude)screenshots/**')"
+            printf '{"sha":"%s","publishedAt":"%s"}\n' "$target_sha" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > version.json
+
+            git add version.json
+            if git diff --cached --quiet; then
+              echo "Version marker already current."
+              exit 0
+            fi
+
+            git commit -m "chore: refresh live version [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+
+            echo "Push raced with another automation; rebuilding marker on latest main..."
+            sleep 2
+          done
+
+          echo "Could not publish version marker after 3 attempts."
+          exit 1

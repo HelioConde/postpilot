@@ -15,6 +15,9 @@
       button.classList.toggle('active', active);
       button.setAttribute('aria-pressed', String(active));
     });
+    document.querySelectorAll('[data-page-pt][data-page-en]').forEach(element => {
+      element.textContent = lang === 'en' ? element.dataset.pageEn : element.dataset.pagePt;
+    });
     localStorage.setItem('postpilot-language', lang);
   }
 

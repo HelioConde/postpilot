@@ -2438,7 +2438,9 @@ function updateAccountButtonLabel() {
 
 function updateAccountUi() {
   const localCount = readPacks().length;
-  accountOpenButton.disabled = !supabaseClient;
+  // Keep the account dialog reachable even when the cloud SDK/backend is unavailable.
+  // The dialog explains the degraded state while local mode keeps working.
+  accountOpenButton.disabled = false;
   updateAccountButtonLabel();
   syncStatus.textContent = currentUser
     ? (cloudLoading ? 'Sincronizando…' : 'Nuvem · ' + (currentUser.email || 'conta conectada'))

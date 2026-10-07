@@ -786,6 +786,74 @@ function splitIntoIdeas(transcript) {
   return clean ? [clean.slice(0, 220)] : [];
 }
 
+function assessContentContext(topic, transcript) {
+  const clean = String(transcript || '').replace(/\s+/g, ' ').trim();
+  const normalized = clean
+    .toLocaleLowerCase('pt-BR')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+  const words = normalized.match(/[a-z0-9]+/g) || [];
+  const generic = new Set(['teste', 'testes', 'test', 'testing', 'demo', 'rascunho', 'exemplo']);
+  const meaningfulWords = words.filter(word => word.length > 2 && !generic.has(word));
+  const topicNormalized = String(topic || '')
+    .toLocaleLowerCase('pt-BR')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .trim();
+  const topicIsGeneric = generic.has(topicNormalized);
+  const enough = clean.length >= 24 && words.length >= 4 && meaningfulWords.length >= 2 && !(topicIsGeneric && meaningfulWords.length < 3);
+
+  return { enough, length: clean.length, words: words.length, meaningfulWords: meaningfulWords.length };
+}
+
+function sparseContextDeliverable(pack, platform) {
+  const english = currentLocale() === 'en';
+  const topic = String(pack.topic || '').trim() || (english ? 'this topic' : 'este tema');
+  const message = english
+    ? 'There is not enough source context to create a useful publish-ready draft yet.'
+    : 'Ainda não há contexto suficiente para criar um rascunho útil e pronto para publicar.';
+  const nextStep = english
+    ? 'Add at least one main idea plus an example, explanation, or conclusion in the transcript/summary.'
+    : 'Adicione ao menos uma ideia principal e um exemplo, explicação ou conclusão na transcrição/resumo.';
+  const outline = english
+    ? '1. Main idea\n2. Practical example\n3. Clear next step'
+    : '1. Ideia principal\n2. Exemplo prático\n3. Próximo passo claro';
+
+  if (platform === 'TikTok') {
+    return withContentOverrides(pack, {
+      title: 'TikTok',
+      lines: [
+        [uiText('Gancho de 2 segundos'), message],
+        [uiText('Texto na tela'), topic],
+        [uiText('Legenda curta'), nextStep],
+        [uiText('Hashtags'), '—']
+      ]
+    });
+  }
+
+  if (platform === 'YouTube Shorts') {
+    return withContentOverrides(pack, {
+      title: 'YouTube Shorts',
+      lines: [
+        [uiText('Título'), topic.slice(0, 90)],
+        [uiText('Abertura'), message],
+        [uiText('Descrição'), nextStep],
+        [uiText('Hashtags'), '—']
+      ]
+    });
+  }
+
+  return withContentOverrides(pack, {
+    title: 'Instagram',
+    lines: [
+      [uiText('Gancho para Reels'), message],
+      [uiText('Legenda'), nextStep],
+      [uiText('Carrossel / apoio'), outline],
+      [uiText('Hashtags'), '—']
+    ]
+  });
+}
+
 function callToAction(goal) {
   const english = currentLocale() === 'en';
   const messages = english ? {
@@ -966,15 +1034,17 @@ function platformDeliverable(pack, platform) {
     });
   }
 
+  if (!assessContentContext(pack.topic, pack.transcript).enough) {
+    return sparseContextDeliverable(pack, platform);
+  }
+
   const ideas = splitIntoIdeas(pack.transcript);
   const lead = ideas[0] || pack.topic;
   const english = currentLocale() === 'en';
-  const audiencePrefix = pack.audience
-    ? (english ? `For ${pack.audience}: ` : `Para ${pack.audience}: `)
-    : '';
-  const hook = english
-    ? `${audiencePrefix}${pack.topic} — one idea you can apply today.`
-    : `${audiencePrefix}${pack.topic} — uma ideia para você aplicar hoje.`;
+  const cleanLead = String(lead || '').replace(/[.!?]+$/, '').trim();
+  const hook = cleanLead.toLocaleLowerCase(currentLocale()).startsWith(String(pack.topic || '').trim().toLocaleLowerCase(currentLocale()))
+    ? cleanLead + (cleanLead.endsWith('?') ? '' : '.')
+    : `${pack.topic}: ${cleanLead}`;
   const cta = callToAction(pack.goal);
   const hashtags = topicHashtags(pack.topic);
 
@@ -2250,7 +2320,7 @@ function showAccountMessage(message) {
 function serviceStatusLabel(service) {
   if (service?.configured === true && Number(service.remaining) <= 0) return uiText('Limite da hora atingido');
   if (service?.configured === true) return uiText('Ativo');
-  if (service?.configured === false) return uiText('Aguardando configuração');
+  if (service?.configured === false) return uiText('Não configurado');
   return uiText('Verificando…');
 }
 
@@ -2258,26 +2328,41 @@ function renderServiceHealth() {
   if (!serviceHealthHost) return;
   if (aiServiceStatus) aiServiceStatus.textContent = serviceStatusLabel(serviceHealth.ai);
   if (transcriptionServiceStatus) transcriptionServiceStatus.textContent = serviceStatusLabel(serviceHealth.transcription);
+
   if (aiServiceLimit) {
-    const reset = serviceHealth.ai.resetAt
-      ? new Date(serviceHealth.ai.resetAt).toLocaleTimeString(currentLocale(), { hour: '2-digit', minute: '2-digit' })
-      : '';
-    aiServiceLimit.textContent = [
-      serviceHealth.ai.hourlyLimit ? serviceHealth.ai.remaining + '/' + serviceHealth.ai.hourlyLimit + ' ' + uiText('disponíveis nesta hora') : '',
-      reset ? uiText('renova às') + ' ' + reset : ''
-    ].filter(Boolean).join(' · ');
+    if (serviceHealth.ai.configured === true) {
+      const reset = serviceHealth.ai.resetAt
+        ? new Date(serviceHealth.ai.resetAt).toLocaleTimeString(currentLocale(), { hour: '2-digit', minute: '2-digit' })
+        : '';
+      aiServiceLimit.textContent = [
+        serviceHealth.ai.hourlyLimit ? serviceHealth.ai.remaining + '/' + serviceHealth.ai.hourlyLimit + ' ' + uiText('disponíveis nesta hora') : '',
+        reset ? uiText('renova às') + ' ' + reset : ''
+      ].filter(Boolean).join(' · ');
+    } else {
+      aiServiceLimit.textContent = serviceHealth.ai.configured === false
+        ? uiText('Gerador local ativo. Configure um provedor para liberar IA.')
+        : uiText('Serviço indisponível para verificação agora.');
+    }
   }
+
   if (transcriptionServiceLimit) {
     const max = formatFileSize(serviceHealth.transcription.maxBytes || 0);
-    const reset = serviceHealth.transcription.resetAt
-      ? new Date(serviceHealth.transcription.resetAt).toLocaleTimeString(currentLocale(), { hour: '2-digit', minute: '2-digit' })
-      : '';
-    transcriptionServiceLimit.textContent = [
-      serviceHealth.transcription.hourlyLimit ? serviceHealth.transcription.remaining + '/' + serviceHealth.transcription.hourlyLimit + ' ' + uiText('disponíveis nesta hora') : '',
-      max ? uiText('até') + ' ' + max : '',
-      reset ? uiText('renova às') + ' ' + reset : ''
-    ].filter(Boolean).join(' · ');
+    if (serviceHealth.transcription.configured === true) {
+      const reset = serviceHealth.transcription.resetAt
+        ? new Date(serviceHealth.transcription.resetAt).toLocaleTimeString(currentLocale(), { hour: '2-digit', minute: '2-digit' })
+        : '';
+      transcriptionServiceLimit.textContent = [
+        serviceHealth.transcription.hourlyLimit ? serviceHealth.transcription.remaining + '/' + serviceHealth.transcription.hourlyLimit + ' ' + uiText('disponíveis nesta hora') : '',
+        max ? uiText('até') + ' ' + max : '',
+        reset ? uiText('renova às') + ' ' + reset : ''
+      ].filter(Boolean).join(' · ');
+    } else {
+      transcriptionServiceLimit.textContent = serviceHealth.transcription.configured === false
+        ? uiText('Transcrição externa não configurada. Você ainda pode enviar mídia privada e usar um resumo manual.')
+        : uiText('Serviço indisponível para verificação agora.');
+    }
   }
+
   if (aiGenerationToggle) {
     const enabled = Boolean(currentUser)
       && serviceHealth.ai.configured === true
@@ -2547,7 +2632,12 @@ form.addEventListener('submit', async event => {
   const values = Object.fromEntries(new FormData(form));
   const manualTranscript = String(values.f1 || '').trim();
   if (!manualTranscript && !pendingMediaFile) {
-    showToast('Informe uma transcrição/resumo ou envie uma mídia.');
+    showToast(uiText('Informe uma transcrição/resumo ou envie uma mídia.'));
+    form.elements.f1.focus();
+    return;
+  }
+  if (!pendingMediaFile && !assessContentContext(values.f0, manualTranscript).enough) {
+    showToast(uiText('Adicione mais contexto antes de montar o pacote.'));
     form.elements.f1.focus();
     return;
   }
@@ -2591,8 +2681,8 @@ form.addEventListener('submit', async event => {
         if (serviceHealth.transcription.configured === null) await refreshServiceHealth();
         const canTranscribe = serviceHealth.transcription.configured === true
           && Number(serviceHealth.transcription.remaining) > 0;
-        if (!canTranscribe && !manualTranscript) {
-          showToast('A transcrição ainda não está ativa. Adicione um resumo para continuar com a mídia.');
+        if (!canTranscribe && !assessContentContext(values.f0, manualTranscript).enough) {
+          showToast(uiText('A transcrição ainda não está ativa. Adicione um resumo com mais contexto para continuar com a mídia.'));
           if (mediaStatus) mediaStatus.textContent = uiText('Transcrição indisponível. A mídia será preservada quando houver um resumo manual.');
           form.elements.f1.focus();
           return;
@@ -2623,8 +2713,8 @@ form.addEventListener('submit', async event => {
             pack.mediaType = uploaded.mediaType;
             pack.mediaSizeBytes = uploaded.mediaSizeBytes;
           }
-          if (!manualTranscript) {
-            showToast('Mídia preservada. Adicione um resumo ou tente transcrever novamente.');
+          if (!assessContentContext(values.f0, manualTranscript).enough) {
+            showToast(uiText('Mídia preservada. Adicione um resumo com mais contexto ou tente transcrever novamente.'));
             if (mediaStatus) mediaStatus.textContent = uiText('Mídia preservada. A transcrição falhou; você pode tentar novamente.');
             return;
           }

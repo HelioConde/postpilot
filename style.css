@@ -1576,3 +1576,23 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .static-page .brand{font-size:18px}
   .static-back{display:none}
 }
+
+
+/* Field helper inline text fix */
+.field-help span,
+.field-help-split span{
+  display:inline;
+  margin:0;
+  font-size:inherit;
+  font-weight:inherit;
+}
+.password-field{
+  margin-bottom:0!important;
+  font-size:inherit!important;
+  font-weight:inherit!important;
+}
+.feedback-field .field-help,
+.beta-feedback-dialog .field-help{
+  display:block;
+  line-height:1.45;
+}

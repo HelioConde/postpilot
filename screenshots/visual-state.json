@@ -1,29 +1,29 @@
 {
-  "generatedAt": "2026-10-07T05:07:49.506Z",
+  "generatedAt": "2026-10-07T05:09:43.313Z",
   "source": "http://127.0.0.1:4175",
   "captures": {
     "desktop": {
       "width": 1440,
-      "height": 2452,
-      "bytes": 331209,
+      "height": 2445,
+      "bytes": 330155,
       "fullPage": true
     },
     "mobile": {
       "width": 390,
-      "height": 3778,
-      "bytes": 249795,
+      "height": 3764,
+      "bytes": 249223,
       "fullPage": true
     },
     "tablet": {
       "width": 768,
-      "height": 3089,
-      "bytes": 289252,
+      "height": 3082,
+      "bytes": 289493,
       "fullPage": true
     },
     "mobileEnglish": {
       "width": 390,
-      "height": 3692,
-      "bytes": 243154,
+      "height": 3678,
+      "bytes": 242886,
       "fullPage": true
     },
     "mobileAccount": {
@@ -34,20 +34,20 @@
     },
     "desktopPopulated": {
       "width": 1440,
-      "height": 3346,
-      "bytes": 414950,
+      "height": 3339,
+      "bytes": 413993,
       "fullPage": true
     },
     "tabletPopulated": {
       "width": 768,
-      "height": 4819,
-      "bytes": 373341,
+      "height": 4813,
+      "bytes": 372683,
       "fullPage": true
     },
     "mobilePopulated": {
       "width": 390,
-      "height": 5737,
-      "bytes": 339116,
+      "height": 5722,
+      "bytes": 338306,
       "fullPage": true
     }
   }

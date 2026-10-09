@@ -31,10 +31,13 @@
 
 - [x] Teste de páginas legais passou a selecionar a versão exata PT/EN, em vez de selecionar os dois parágrafos simultaneamente.
 - [x] Teste de mostrar/ocultar senha usa cliente Supabase simulado sem sessão: em modo puramente local o formulário de login é corretamente oculto, portanto não deve ser testado nesse estado.
-- [ ] Confirmar novo Browser E2E após a correção: https://github.com/HelioConde/postpilot/actions/workflows/e2e.yml
+- [x] [Browser E2E — **46 de 46 testes aprovados** após as correções](https://github.com/HelioConde/postpilot/actions/runs/37945201211), incluindo 3 novos testes PWA.
 - [x] Static QA após a correção: https://github.com/HelioConde/postpilot/actions/runs/37945231696
 - [x] Live Update QA após a correção: https://github.com/HelioConde/postpilot/actions/runs/37945231518
-- [ ] Confirmar capturas atualizadas e Lighthouse após commits finais.
+- [x] [Capturas full-page desktop/tablet/mobile, estados preenchidos, EN e conta — aprovadas](https://github.com/HelioConde/postpilot/actions/runs/37945028166) e registradas em [visual-state.json](screenshots/visual-state.json) em 09/10/2026.
+- [x] [Lighthouse QA aprovado](https://github.com/HelioConde/postpilot/actions/runs/37945028197) na revisão de segurança.
+- [x] [CodeQL aprovado](https://github.com/HelioConde/postpilot/actions/runs/37945201066) após os novos testes.
+- [x] [GitHub Pages publicado](https://github.com/HelioConde/postpilot/actions/runs/37945258528) com as correções de código; observar novas publicações após commits de documentação.
 
 ## Gates externos e testes humanos
 

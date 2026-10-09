@@ -116,12 +116,12 @@ test('páginas institucionais têm navegação consistente e traduzida', async (
 
   await expect(page.locator('.static-back')).toHaveText('Voltar ao app');
   await expect(page.locator('.static-tabs a[aria-current="page"]')).toHaveText('Privacidade');
-  await expect(page.locator('.legal-updated')).toContainText('7 de outubro de 2026');
+  await expect(page.locator('article[data-lang="pt-BR"] .legal-updated')).toContainText('7 de outubro de 2026');
 
   await page.locator('[data-page-language="en"]').click();
   await expect(page.locator('.static-back')).toHaveText('Back to app');
   await expect(page.locator('.static-tabs a[aria-current="page"]')).toHaveText('Privacy');
-  await expect(page.locator('.legal-updated')).toContainText('October 7, 2026');
+  await expect(page.locator('article[data-lang="en"] .legal-updated')).toContainText('October 7, 2026');
 });
 
 test('hero oferece caminho direto ao briefing em PT e EN', async ({ page }) => {
@@ -135,10 +135,24 @@ test('hero oferece caminho direto ao briefing em PT e EN', async ({ page }) => {
   await expect(cta).toHaveText('Start my content pack');
 });
 
-test('modal de conta permite mostrar e ocultar a senha', async ({ page }) => {
+test('modal de conta permite mostrar e ocultar a senha quando Auth está disponível', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  // In pure local mode the sign-in form is intentionally hidden. Supply a minimal
+  // unauthenticated SDK stub to exercise the real password control without a live account.
+  await page.addInitScript(() => {
+    window.supabase = {
+      createClient: () => ({
+        auth: {
+          onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+          getSession: async () => ({ data: { session: null }, error: null })
+        }
+      })
+    };
+  });
   await localMode(page);
   await page.locator('#account-open').click();
+  await expect(page.locator('#account-dialog')).toBeVisible();
+  await expect(page.locator('#auth-form')).toBeVisible();
 
   const password = page.locator('#auth-form [name="password"]');
   const toggle = page.locator('#toggle-password');

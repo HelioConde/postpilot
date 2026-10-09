@@ -1,7 +1,7 @@
 # PostPilot IA — encerramento técnico e gates externos do MVP 1.0
 
 **Revisado:** 09/10/2026  
-**Status:** funcionalidades principais do MVP implementadas e revisadas. **O produto não está homologado como serviço de IA/transcrição completo**, pois as credenciais dos fornecedores e testes reais continuam pendentes. O modo local de criação está disponível.
+**Status:** funcionalidades principais do MVP implementadas e revisadas. **O produto ainda não está homologado para lançamento público**: faltam provedores/testes reais de IA e transcrição, validação humana de Auth e reforço de propriedade da relação output → projeto. O modo local de criação está disponível.
 
 ## Produto implementado
 
@@ -26,6 +26,8 @@
 - [x] `live-update.js` atualiza apenas o worker e apaga apenas caches `postpilot-shell-*`.
 - [x] Novos testes de regressão para URLs privadas, caches de outros sites, ativação de nova versão e shell offline.
 - [x] QA estático reforçado para impedir retorno ao cache de escopo global.
+- [x] Auditoria adicional confirmou **zero saídas e zero versões com proprietário divergente** no banco.
+- [ ] **P0 antes de liberar beta público:** completar a policy `postpilot_outputs` para exigir também propriedade do `project_id` em INSERT/UPDATE, e testar A ≠ B. A policy `postpilot_outputs_owner_all` hoje verifica somente o proprietário da própria saída. Tentativa de aplicar o reforço automaticamente foi bloqueada pela segurança da ferramenta; não foi realizada alteração de DDL neste ponto. [Issue #8](https://github.com/HelioConde/postpilot/issues/8).
 
 ## Correção das falhas de E2E anteriores
 
@@ -45,6 +47,7 @@
 - [ ] Definir fornecedor de transcrição e configurar `POSTPILOT_TRANSCRIBE_API_URL`, `POSTPILOT_TRANSCRIBE_MODEL`, `POSTPILOT_TRANSCRIBE_API_KEY`.
 - [ ] Testar fluxo real mídia → upload privado → transcrição → cortes → pacote, com limites de tempo, tamanho, custo e rate limiting.
 - [ ] Validar cadastro, confirmação de e-mail, reset de senha, renovação de sessão, logout e isolamento entre duas contas/dispositivos reais.
+- [ ] Aplicar e validar o reforço P0 de associação owner-output/project antes do lançamento público.
 - [ ] Testar feedback beta com conta real e instalação PWA num dispositivo compatível.
 - [ ] Confirmar publicação correta no GitHub Pages do SHA final.
 - [ ] Ativar anúncios somente após rede aprovar e fornecer IDs e mecanismo adequado de privacidade/consentimento.

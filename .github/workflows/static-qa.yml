@@ -27,6 +27,10 @@ jobs:
           node --check ads.js
           node --check pwa.js
           node --check beta-feedback.js
+          node --check sw.js
+          node --check live-update.js
+          node --check static-page.js
+          node --check tests/e2e/pwa-security.spec.js
       - name: Check required files
         run: |
           test -f index.html
@@ -109,7 +113,10 @@ jobs:
           grep -qi 'data-check-platform' app.js
           grep -qi 'manifest.webmanifest' index.html
           grep -qi 'serviceWorker' pwa.js
-          grep -qi 'postpilot-shell-v1' sw.js
+          grep -qi 'postpilot-shell-v2' sw.js
+          grep -q 'SHELL_PATHS.has(url.pathname)' sw.js
+          grep -q "postpilot-shell-" live-update.js
+          test -f tests/e2e/pwa-security.spec.js
           grep -qi 'local-backup-controls' index.html
           grep -qi 'exportLocalBackup' app.js
           grep -qi 'restoreLocalBackup' app.js

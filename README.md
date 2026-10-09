@@ -18,7 +18,7 @@ O gerador local continua sendo fallback deliberado. O gate final do MVP ainda de
 
 ## Estado atual
 
-> **Status:** MVP técnico avançado. Implementação de novas telas congelada até concluir a homologação dos provedores reais e do fluxo completo.
+> **PostPilot 1.0:** núcleo do modo local implementado e auditado em 09/10/2026. O produto **não está homologado como solução de IA/transcrição real** até configurar fornecedores e testar ponta a ponta com usuários. Novas funcionalidades congeladas; veja o [relatório técnico e gates externos](RELEASE_V1.md).
 
 
 - modo local sem conta;

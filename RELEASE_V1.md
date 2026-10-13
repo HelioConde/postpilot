@@ -27,7 +27,7 @@
 - [x] Novos testes de regressão para URLs privadas, caches de outros sites, ativação de nova versão e shell offline.
 - [x] QA estático reforçado para impedir retorno ao cache de escopo global.
 - [x] Auditoria adicional confirmou **zero saídas e zero versões com proprietário divergente** no banco.
-- [ ] **P0 antes de liberar beta público:** completar a policy `postpilot_outputs` para exigir também propriedade do `project_id` em INSERT/UPDATE, e testar A ≠ B. A policy `postpilot_outputs_owner_all` hoje verifica somente o proprietário da própria saída. Tentativa de aplicar o reforço automaticamente foi bloqueada pela segurança da ferramenta; não foi realizada alteração de DDL neste ponto. [Issue #8](https://github.com/HelioConde/postpilot/issues/8).
+- [x] **Reforço de propriedade aplicado em 12/10/2026:** a policy `postpilot_outputs_owner_all` agora exige que a saída e seu `project_id` pertençam ao usuário autenticado, tanto em leitura quanto em escrita. Migration `20261012221300_output_project_owner_rls.sql` aplicada no Supabase `pizzaria-db`. Validação de políticas no banco confirmada; teste humano A ≠ B ainda pendente antes do beta público. [Issue #8](https://github.com/HelioConde/postpilot/issues/8).
 
 ## Correção das falhas de E2E anteriores
 

@@ -1,4 +1,14 @@
-# PostPilot
+# PostPilot — Estúdio de conteúdo para criadores
+
+**Transforme ideias e transcrições em planejamento de conteúdo: ganchos, roteiros, legendas, hashtags e sugestões de cortes.**
+
+**O fluxo:** informe um tema ou contexto, revise as sugestões e organize entregáveis para diferentes canais.
+
+**Status do produto:** o núcleo local possui documentação e QA; provedores de IA e transcrição reais dependem de configuração e homologação. O modo demonstrativo não deve ser apresentado como automação inteligente comprovada.
+
+> Revise sempre o material antes de publicar e obtenha autorização para usar vídeos, vozes ou imagens de terceiros.
+
+---
 
 Estúdio de conteúdo para criadores. A partir de tema e transcrição, organiza ganchos, ideias de cortes, legenda, CTA e hashtags.
 
